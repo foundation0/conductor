@@ -32,22 +32,22 @@ export default function Workspace() {
     {
       id: "organizer",
       onClick: () => setActiveSidebarTab("organizer"),
-      icon: <RiChat2Fill className="h-4 w-4" />,
+      icon: <RiChat2Fill className="h-4 w-4 text-zinc-500 hover:text-zinc-200" />,
     },
     {
       id: "data",
       onClick: () => setActiveSidebarTab("data"),
-      icon: <FaFolderOpen className="h-4 w-4" />,
+      icon: <FaFolderOpen className="h-4 w-4 text-zinc-500 hover:text-zinc-200" />,
     },
     {
       id: "members",
       onClick: () => setActiveSidebarTab("members"),
-      icon: <HiUsers className="h-4 w-4" />,
+      icon: <HiUsers className="h-4 w-4 text-zinc-500 hover:text-zinc-200" />,
     },
     {
       id: "market",
       onClick: () => setActiveSidebarTab("market"),
-      icon: <AiFillAppstore className="h-4 w-4" />,
+      icon: <AiFillAppstore className="h-4 w-4 text-zinc-500 hover:text-zinc-200" />,
     },
   ]
 
