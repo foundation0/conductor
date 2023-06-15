@@ -67,7 +67,9 @@ export default function Workspace() {
           {sidebar_tabs.map((tab) => (
             <div
               key={tab.id}
-              className={`flex flex-1 tab px-2  ${active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"}`}
+              className={`flex flex-1 tab px-2  ${
+                active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
+              }`}
               onClick={tab.onClick}
             >
               {tab.icon}
