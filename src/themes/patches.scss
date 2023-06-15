@@ -1,0 +1,89 @@
+/* remove the extra space under Flowbite tabs */
+div[aria-label=Tabs]+div {
+  display: none;
+
+  div[role=tabpanel] {
+    padding-top: 0px !important;
+  }
+}
+
+/* remove field outlines */
+input,
+textarea,
+select {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* remove the border from tabs */
+.tab {
+  &.tab-active:not(.tab-disabled):not([disabled]) {
+    border: inherit !important;
+  }
+}
+
+/* react easy edit */
+.easy-edit-not-allowed {
+  cursor: pointer !important;
+}
+
+.easy-edit-inline-wrapper {
+  display: flex;
+  flex-grow: 1;
+
+  .easy-edit-component-wrapper {
+    display: flex;
+    flex-grow: 1;
+  }
+
+  .easy-edit-button-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+
+    .easy-edit-button {
+      &:first-child {
+        margin-left: 0.2rem;
+      }
+
+      margin: 0px;
+      padding: 0px;
+    }
+  }
+
+  textarea {
+    font-size: inherit;
+    line-height: inherit;
+    padding: 0px;
+    margin: 0px;
+  }
+}
+
+.Clipboard {
+  .easy-edit-button-wrapper {
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+  }
+}
+
+.Settings {
+  .easy-edit-wrapper {
+    /* expand to full width and set text align to right */
+    width: 100%;
+    text-align: right;
+    padding: 0.5rem;
+    border: 1px solid var(--border-zinc-700);
+  }
+
+  .easy-edit-component-wrapper {
+
+    input {
+      /* make the input field full width */
+      width: 100%;
+      text-align: right;
+      padding: 0.5rem;
+      background-color: $bg-zinc-700;
+    }
+  }
+}

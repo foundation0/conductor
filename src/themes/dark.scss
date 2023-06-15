@@ -1,0 +1,33 @@
+.dark {
+  background-color: #222222;
+  color: #fff;
+
+  #Menu,
+  #Inspector {
+    background-color: #292929;
+  }
+
+}
+
+button:disabled {
+  opacity: 0.5 !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  opacity: 0.1;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+
+}
