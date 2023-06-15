@@ -312,24 +312,26 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                             </DropdownMenu.Item>
                             <DropdownMenu.Separator />
 
-                            <DropdownMenu.Item
-                              className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200"
-                              onClick={() => {
-                                fetcher.submit(
-                                  {
-                                    workspace_id: workspace_id || "",
-                                    group_id: group.id,
-                                    folder_id: folder.id,
-                                  },
-                                  {
-                                    method: "DELETE",
-                                    action: "/conductor/workspace/folder",
-                                  }
-                                )
-                              }}
-                            >
-                              Delete
-                            </DropdownMenu.Item>
+                            {group.folders.length > 1 ? (
+                              <DropdownMenu.Item
+                                className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200"
+                                onClick={() => {
+                                  fetcher.submit(
+                                    {
+                                      workspace_id: workspace_id || "",
+                                      group_id: group.id,
+                                      folder_id: folder.id,
+                                    },
+                                    {
+                                      method: "DELETE",
+                                      action: "/conductor/workspace/folder",
+                                    }
+                                  )
+                                }}
+                              >
+                                Delete
+                              </DropdownMenu.Item>
+                            ) : null}
 
                             <DropdownMenu.Arrow className="fill-zinc-600 border-zinc-600" />
                           </DropdownMenu.Content>
