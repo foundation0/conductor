@@ -28,26 +28,27 @@ export default function Workspace() {
   }, [workspace_id])
 
   const [active_sidebar_tab, setActiveSidebarTab] = useState("organizer")
+  const sidebar_tab_class = "h-4 w-4 hover:text-zinc-200"
   const sidebar_tabs = [
     {
       id: "organizer",
       onClick: () => setActiveSidebarTab("organizer"),
-      icon: <RiChat2Fill className="h-4 w-4 text-zinc-500 hover:text-zinc-200" />,
+      icon: <RiChat2Fill className={sidebar_tab_class} />,
     },
     {
       id: "data",
       onClick: () => setActiveSidebarTab("data"),
-      icon: <FaFolderOpen className="h-4 w-4 text-zinc-500 hover:text-zinc-200" />,
+      icon: <FaFolderOpen className={sidebar_tab_class} />,
     },
     {
       id: "members",
       onClick: () => setActiveSidebarTab("members"),
-      icon: <HiUsers className="h-4 w-4 text-zinc-500 hover:text-zinc-200" />,
+      icon: <HiUsers className={sidebar_tab_class} />,
     },
     {
       id: "market",
       onClick: () => setActiveSidebarTab("market"),
-      icon: <AiFillAppstore className="h-4 w-4 text-zinc-500 hover:text-zinc-200" />,
+      icon: <AiFillAppstore className={sidebar_tab_class} />,
     },
   ]
 
@@ -66,7 +67,7 @@ export default function Workspace() {
           {sidebar_tabs.map((tab) => (
             <div
               key={tab.id}
-              className={`flex flex-1 tab px-2 ${active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : ""}`}
+              className={`flex flex-1 tab px-2  ${active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"}`}
               onClick={tab.onClick}
             >
               {tab.icon}
