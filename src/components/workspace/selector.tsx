@@ -25,7 +25,7 @@ export default function WorkspaceSelector() {
       <div className="flex w-fit">
         <div className="flex flex-col h-full justify-center items-center px-2">
           <div className="Logo flex items-center justify-center h-12">
-            <img src={PromptIcon} className="w-4 h-4" />
+            <img src={PromptIcon} className="w-4 h-4 opacity-60" />
           </div>
           <div className="flex flex-col flex-1">
             <For each={user_state.workspaces}>
@@ -45,8 +45,8 @@ export default function WorkspaceSelector() {
                   <div className="tooltip tooltip-right" data-tip={`Open ${workspace.name}`}>
                     <Link
                       to={`/conductor/${workspace.id}/${session_id}`}
-                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl cursor-pointer mb-2 text-zinc-500 ${
-                        workspace_id === workspace.id ? "bg-zinc-800" : "border-zinc-800 border hover:bg-zinc-800"
+                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl border cursor-pointer mb-2 text-zinc-500 ${
+                        workspace_id === workspace.id ? "bg-zinc-800 border-zinc-600" : "border-zinc-800 border hover:bg-zinc-800"
                       }`}
                       /* onClick={() => {
                   AppStateActions.updateAppState({ active_workspace_id: workspace.id })
