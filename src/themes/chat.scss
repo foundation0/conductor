@@ -6,15 +6,17 @@
   ol {
     list-style: auto;
     list-style-position: inside;
+    margin-bottom: 0px !important;
   }
 
   li {
     list-style: auto;
     list-style-position: inside;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 
     &::marker {
       font-weight: bold;
+      color: #ffffffbf;
     }
 
     p {
@@ -43,6 +45,7 @@
     color: #c9d1d9;
     background: #0d1117;
     font-size: 0.8rem;
+    padding: 2px 5px;
   }
 
   p {
