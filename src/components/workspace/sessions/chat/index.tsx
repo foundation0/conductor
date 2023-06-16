@@ -2,7 +2,7 @@ import Input from "@/components/workspace/sessions/chat/input"
 import { ChatT, SessionsT, TextMessageT } from "@/data/loaders/sessions"
 import _ from "lodash"
 import AutoScroll from "@brianmcallister/react-auto-scroll"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import { nanoid } from "nanoid"
 import { buildMessageTree } from "@/components/libraries/computeMessageChain"
@@ -40,6 +40,10 @@ export default function Chat() {
     AI: <FaUser />,
   })
 
+  const eInput = useRef<HTMLDivElement | null>(null)
+  const eContainer = useRef<HTMLDivElement | null>(null)
+  const [input_height, setInputHeight] = useState<number>(eInput?.current?.offsetHeight || 0)
+  const [container_height, setContainerHeight] = useState<number>(eContainer?.current?.offsetHeight ? eContainer?.current?.offsetHeight - 80 : 0)
   const [genController, setGenController] = useState<any>(undefined)
 
   const navigate = useNavigate()
@@ -47,6 +51,27 @@ export default function Chat() {
   const [api_key, setApiKey] = useState<string>("")
 
   const [module, setModule] = useState<{ specs: z.infer<typeof ModuleS>; main: Function } | undefined>(undefined)
+
+  // keep track of input height
+  useEffect(() => {
+    const e_input = eInput.current;
+    if(!e_input) return
+    const input_observer = new ResizeObserver(() => {
+      console.log("input height changed", e_input.offsetHeight)
+      setInputHeight(e_input.offsetHeight)
+    });
+    setInputHeight(e_input.offsetHeight)
+    input_observer.observe(e_input);
+    
+    const e_container = eContainer.current;
+    if(!e_container) return
+    const container_observer = new ResizeObserver(() => {
+      console.log("container height changed", e_container.offsetHeight)
+      setContainerHeight(e_container.offsetHeight)
+    });
+    setContainerHeight(e_container.offsetHeight)
+    container_observer.observe(e_container);
+  }, [])
 
   // set module
   useEffect(() => {
@@ -355,22 +380,26 @@ export default function Chat() {
   }
 
   if (!session || !module) return null
-
+// style={{'marginBottom': '80px'}}
   return (
-    <div className="flex flex-1 flex-col pt-2">
-      <AutoScroll showOption={false} scrollBehavior="auto" className="flex flex-1">
+    <div className="flex flex-1 flex-col pt-2 relative" ref={eContainer}>
+      <div className="flex flex-1">
+
+      
+      <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`} >
         {messages && messages?.length > 0 ? (
           <div className="flex flex-grow text-xs justify-center text-zinc-500">
             Active module: {session.settings.module.id} / {session.settings.module.variant}
           </div>
         ) : null}
-        <div className="flex flex-1 flex-col" style={{ height }}>
+        <div className="Messages flex flex-1 flex-col" style={{ height }}>
           {messages && messages?.length > 0 ? (
             <ConversationTree
               rows={messages}
               onNewBranchClick={onNewBranchClick}
               onBranchClick={onBranchClick}
               participants={participants}
+              paddingBottom={input_height + 30}
             />
           ) : api_key ? (
             <div className="flex h-full flex-col justify-center items-center">
@@ -407,7 +436,8 @@ export default function Chat() {
           )}
         </div>
       </AutoScroll>
-      <div id="Input" className={`flex flex-shrink my-4 px-4 ${!api_key ? "opacity-25" : ""}`}>
+      </div>
+      <div id="Input" ref={eInput} className={`absolute bottom-0 left-0 right-0 my-4 px-4 ${!api_key ? "opacity-25" : ""}`}>
         <Input
           send={addMessage}
           session_id={session_id}

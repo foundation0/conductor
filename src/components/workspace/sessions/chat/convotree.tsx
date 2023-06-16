@@ -11,15 +11,16 @@ type ConversationTreeProps = {
   onBranchClick: (msg_id: string) => void
   rows: MessageRowT[] | undefined
   participants: { [key: string]: ReactElement }
+  paddingBottom: number
 }
 
-const ConversationTree: React.FC<ConversationTreeProps> = ({ onNewBranchClick, onBranchClick, rows, participants }) => {
+const ConversationTree: React.FC<ConversationTreeProps> = ({ onNewBranchClick, onBranchClick, rows, participants, paddingBottom }) => {
   if (!rows) {
     return null
   }
 
   return (
-    <div className="flex flex-col gap-6 px-4">
+    <div className="flex flex-col gap-6 px-4" style={{ paddingBottom: `${paddingBottom}px`}}>
       {rows.map((row, index) => {
         return (
           <div key={index} className="flex flex-grow-1">
@@ -34,10 +35,8 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({ onNewBranchClick, o
                 </div>
               </div>
             </div>
-            <div className={`flex flex-grow-1 ${row[2].length > 0 ? "flex-shrink-0" : ""}`}>
+            <div className={`Message flex flex-grow-1 ${row[2].length > 0 ? "flex-shrink-0" : ""}`}>
               <Message message={row[1]} isActive={true} onClick={() => {}} />
-            </div>
-            <div className="flex flex-nowrap flex-row items-center gap-2">
               {row[1].parent_id !== "first" && row[1].type === "human" ? (
                 <div
                   className="p-0 ml-1 mr-4 cursor-pointer flex h-full justify-center items-center"
@@ -48,8 +47,11 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({ onNewBranchClick, o
                   <RiAddCircleFill className="text-zinc-500 hover:text-zinc-100" />
                 </div>
               ) : null}
+            </div>
+            <div className="flex flex-nowrap flex-row items-center gap-2">
               {row[2].map((msg) => {
                 if (msg.hash === "1337") return null
+                if(msg.text.length > 100) msg.text = msg.text.slice(0, 100) + "..."
                 return (
                   <Message
                     key={msg.id}

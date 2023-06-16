@@ -33,8 +33,8 @@ export default function Input({
   disabled: boolean
 }) {
   const [message, setMessage] = useState<string>("")
-
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  const [rows, setRows] = useState<number>(1)
+  const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
   // if session is switched
   useEffect(() => {
@@ -58,8 +58,27 @@ export default function Input({
       }, 100)
   }, [gen_in_progress])
 
+  function handleKeyDown(event: any) {
+    const linebreaks = event.target.value.split("\n")
+    if (linebreaks.length > 0) setRows(linebreaks.length)
+    else setRows(1)
+    if (event.target.value.trim() === "") setRows(1)
+
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault()
+      sendMessage()
+    }
+  }
+
+  function sendMessage() {
+    if (gen_in_progress) return
+    send({ message })
+    setMessage("")
+    setRows(1)
+  }
+
   const button_class =
-    "absolute inset-y-0 right-0 m-1 text-white focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
+    "flex inset-y-0 right-0 m-1 text-white focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
 
   return (
     <div className="flex flex-1">
@@ -68,17 +87,15 @@ export default function Input({
         onSubmit={async (e) => {
           e.preventDefault()
           // if (message === "") return
-          if (gen_in_progress) return
-          send({ message })
-          setMessage("")
+          sendMessage()
         }}
       >
-        <div className="relative">
-          <input
+        <div className="flex flex-row backdrop-blur bg-zinc-800 bg-opacity-80 border border-zinc-700 rounded-lg items-center">
+          <textarea
             ref={inputRef}
-            type="text"
+            rows={rows}
             id="input"
-            className="w-full p-4 py-3 text-sm border-0 rounded bg-zinc-700 placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent"
+            className="flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent"
             placeholder={
               disabled ||
               gen_in_progress ||
@@ -87,9 +104,14 @@ export default function Input({
                 : "Type a message"
             }
             required
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value)
+              handleKeyDown(e)
+            }}
             value={message}
             autoComplete="off"
+            style={{ resize: "none", height: "auto" }}
+            onKeyDown={handleKeyDown}
             disabled={
               disabled ||
               gen_in_progress ||
