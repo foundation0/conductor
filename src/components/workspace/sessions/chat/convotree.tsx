@@ -25,9 +25,9 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({ onNewBranchClick, o
           <div key={index} className="flex flex-grow-1">
             <div className="flex flex-shrink mr-2">
               <div className="flex">
-                <div className="avatar placeholder">
-                  <div className="bg-neutral-focus text-neutral-content rounded w-8 h-8">
-                    <span className="text-sm">
+                <div className="avatar placeholder mt-1">
+                  <div className="bg-zinc-800 text-zinc-200 rounded w-8 h-8 flex border border-zinc-900">
+                    <span className="text-sm w-6 h-6 flex justify-center items-center">
                       {row[1].type === "human" ? participants["user"] : participants[row[1].source || "AI"]}
                     </span>
                   </div>
