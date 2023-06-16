@@ -22,10 +22,27 @@
     }
   }
 
+  pre {
+    overflow: auto;
+    width: 100%;
+    text-wrap: balance;
+    background: #0d1117;
+    border-radius: 5px;
+
+    &>code {
+      color: #c9d1d9;
+      background: #0d1117;
+      display: block;
+      overflow-x: auto;
+      padding: 1em;
+    }
+  }
+
   code {
     border-radius: 5px;
     color: #c9d1d9;
     background: #0d1117;
+    font-size: 0.8rem;
   }
 
   p {

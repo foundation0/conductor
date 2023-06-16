@@ -141,7 +141,7 @@ export default function Settings() {
               title={user_state.workspaces.length === 1 ? "Can't delete last workspace" : ""}
               onClick={() => {
                 if (user_state.workspaces.length === 1) return null
-                if(!confirm(`Are you sure you want to delete ${workspace.name}? This can't be undone.`)) return null
+                if (!confirm(`Are you sure you want to delete ${workspace.name}? This can't be undone.`)) return null
                 fetcher.submit(
                   {
                     workspace_id,
