@@ -51,16 +51,21 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick }) => {
     <Selection.Root open={selection_open} onOpenChange={setSelectionOpen}>
       <Selection.Trigger>
         <div
-          className={`chat flex flex-col py-2 px-4 text-sm rounded-lg justify-start items-start ${
-            isActive ? "bg-zinc-700 text-white" : "bg-zinc-800 text-xs h-fit border border-dashed border-zinc-700"
-          } ${message.type === "ai" ? "bg-zinc-800" : ""}`}
+          className={`chat flex flex-col border border-zinc-900 py-2 px-4 text-sm rounded-lg justify-start items-start ${
+            isActive
+              ? " text-white"
+              : "bg-zinc-800 text-zinc-100 text-xs h-fit hover:bg-zinc-700 border-zinc-700 cursor-pointer"
+          } ${message.type === "ai" ? "bg-zinc-800" : "border-zinc-800 bg-zinc-800 text-zinc-300"}
+          ${message.hash === "1337" ? "italic text-xs" : ""}`}
           onClick={() => {
             if (!isActive) {
               onClick()
             }
           }}
         >
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeHighlight]}>{message.text}</ReactMarkdown>
+          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeHighlight]}>{`${message.text} ${
+            message.id === "temp" ? "▮" : ""
+          }`}</ReactMarkdown>
         </div>
       </Selection.Trigger>
       <Selection.Portal>

@@ -407,11 +407,6 @@ export default function Chat() {
           )}
         </div>
       </AutoScroll>
-      {/* {gen_in_progress ? (
-        <div onClick={() => {
-          if(genController?.abort) genController.abort()
-        }}>Stop generating</div>
-      ) : null} */}
       <div id="Input" className={`flex flex-shrink my-4 px-4 ${!api_key ? "opacity-25" : ""}`}>
         <Input
           send={addMessage}
