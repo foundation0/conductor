@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useLoaderData, useNavigate, useParams } from "react-router-dom"
+import { useFetcher, useLoaderData, useNavigate, useParams } from "react-router-dom"
 import { UserT } from "@/data/loaders/user"
 import UserActions from "@/data/actions/user"
 import _ from "lodash"
@@ -12,9 +12,11 @@ export default function Settings() {
   const navigate = useNavigate()
   const { user_state } = useLoaderData() as { user_state: UserT }
   const [field_edit_id, setFieldEditId] = useState("")
-  const workspace_id = useParams().workspace_id
+  const workspace_id = useParams().workspace_id as string
   const [workspace, setWorkspace] = useState(user_state.workspaces.find((w) => w.id === workspace_id))
   const [workspace_i, setWorkspace_i] = useState(0)
+
+  const fetcher = useFetcher()
 
   // update workspace
   useEffect(() => {
@@ -124,6 +126,28 @@ export default function Settings() {
             </select>
           </div>
         </div>
+
+        <div className=" text-zinc-400 shadow font-semibold text-lg mb-3 mt-8">Destructive actions</div>
+        <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-delete-workspace`}>
+          <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Delete workspace (can't be undone)</div>
+          <div
+            className="flex flex-grow text-end text-sm justify-end"
+            onClick={() => {
+              fetcher.submit(
+                {
+                  workspace_id,
+                },
+                {
+                  method: "DELETE",
+                  action: `/conductor/workspace`,
+                }
+              )
+            }}
+          >
+            <div className="bg-red-800 hover:bg-red-700 text-zinc-50 rounded-lg block px-3 py-2 text-xs font-semibold cursor-pointer">Delete workspace</div>
+          </div>
+        </div>
+
       </div>
     </div>
   )
