@@ -8,13 +8,33 @@
     list-style-position: inside;
   }
 
+  li {
+    list-style: auto;
+    list-style-position: inside;
+    margin-bottom: 1rem;
+
+    &::marker {
+      font-weight: bold;
+    }
+
+    p {
+      display: inline;
+    }
+  }
+
   code {
     border-radius: 5px;
     color: #c9d1d9;
     background: #0d1117;
   }
 
-  p>code {
-    padding: 0.1rem 0.4rem;
+  p {
+    line-height: 1.4rem;
+    text-rendering: optimizeLegibility;
+
+    &>code {
+      padding: 0.1rem 0.4rem;
+    }
   }
+
 }
