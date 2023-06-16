@@ -129,25 +129,34 @@ export default function Settings() {
 
         <div className=" text-zinc-400 shadow font-semibold text-lg mb-3 mt-8">Destructive actions</div>
         <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-delete-workspace`}>
-          <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Delete workspace (can't be undone)</div>
-          <div
-            className="flex flex-grow text-end text-sm justify-end"
-            onClick={() => {
-              fetcher.submit(
-                {
-                  workspace_id,
-                },
-                {
-                  method: "DELETE",
-                  action: `/conductor/workspace`,
-                }
-              )
-            }}
-          >
-            <div className="bg-red-800 hover:bg-red-700 text-zinc-50 rounded-lg block px-3 py-2 text-xs font-semibold cursor-pointer">Delete workspace</div>
+          <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
+            Delete workspace (can't be undone)
+          </div>
+          <div className="flex flex-grow text-end text-sm justify-end">
+            <button
+              className={`bg-red-800 hover:bg-red-700 text-zinc-50 rounded-lg block px-3 py-2 text-xs font-semibold cursor-pointer ${
+                user_state.workspaces.length === 1 ? "disabled" : ""
+              }`}
+              disabled={user_state.workspaces.length === 1}
+              title={user_state.workspaces.length === 1 ? "Can't delete last workspace" : ""}
+              onClick={() => {
+                if (user_state.workspaces.length === 1) return null
+                if(!confirm(`Are you sure you want to delete ${workspace.name}? This can't be undone.`)) return null
+                fetcher.submit(
+                  {
+                    workspace_id,
+                  },
+                  {
+                    method: "DELETE",
+                    action: `/conductor/workspace`,
+                  }
+                )
+              }}
+            >
+              Delete workspace
+            </button>
           </div>
         </div>
-
       </div>
     </div>
   )
