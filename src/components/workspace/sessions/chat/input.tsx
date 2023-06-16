@@ -21,6 +21,7 @@ export default function Input({
   send,
   gen_in_progress,
   is_new_branch,
+  genController,
   disabled,
 }: {
   session_id: string
@@ -28,6 +29,7 @@ export default function Input({
   send: Function
   gen_in_progress: boolean
   is_new_branch: boolean | string
+  genController: any
   disabled: boolean
 }) {
   const [message, setMessage] = useState<string>("")
@@ -55,6 +57,9 @@ export default function Input({
         inputRef?.current?.focus()
       }, 100)
   }, [gen_in_progress])
+
+  const button_class =
+    "absolute inset-y-0 right-0 m-1 text-white focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
 
   return (
     <div className="flex flex-1">
@@ -93,35 +98,28 @@ export default function Input({
           />
           <Switch>
             <Match when={!gen_in_progress && _.last(messages)?.[1].hash === "1337"}>
-              <button
-                type="submit"
-                className="absolute inset-y-0 right-0 m-1 text-white  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2  dark:focus:ring-blue-800"
-              >
+              <button type="submit" className={button_class}>
                 Send
               </button>
             </Match>
             <Match when={gen_in_progress}>
               <button
-                disabled={true}
+                onClick={() => {
+                  if (typeof genController?.abort === "function") genController.abort()
+                }}
                 type="submit"
-                className="absolute inset-y-0 right-0 m-1 text-white  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2  dark:focus:ring-blue-800"
+                className={button_class}
               >
-                Generating...
+                Stop
               </button>
             </Match>
             <Match when={!gen_in_progress && (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)}>
-              <button
-                type="submit"
-                className="absolute inset-y-0 right-0 m-1 text-white  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2  dark:focus:ring-blue-800"
-              >
+              <button type="submit" className={button_class}>
                 Send
               </button>
             </Match>
             <Match when={!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch}>
-              <button
-                type="submit"
-                className="absolute inset-y-0 right-0 m-1 text-white  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2  dark:focus:ring-blue-800"
-              >
+              <button type="submit" className={button_class}>
                 Resend
               </button>
             </Match>

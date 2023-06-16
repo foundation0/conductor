@@ -60,7 +60,7 @@ export const OutputS = z.string()
 type InputT = z.infer<typeof InputS>
 export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>) => {
   const { model, prompt, max_tokens, temperature, top_p, n, api_key, history } = InputS.parse(input)
-  const { onData, onClose, onError } = StreamingS.parse(callbacks)
+  const { setGenController, onData, onClose, onError } = StreamingS.parse(callbacks)
 
   const llm = new ChatOpenAI({
     temperature: temperature || 0,
@@ -73,6 +73,9 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
       n: n || 1,
     },
   })
+
+  const controller = new AbortController()
+  setGenController(controller)
 
   const llm_prompt = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(prompt.instructions || ""),
@@ -102,7 +105,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
   })
 
   try {
-    const response = await chain.call({ input: prompt.user }, [
+    const response = await chain.call({ input: prompt.user, signal: controller.signal }, [
       {
         handleLLMNewToken(token: string) {
           if (typeof onData === "function") onData({ data: token })

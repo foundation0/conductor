@@ -34,9 +34,10 @@ const ModuleHooksS = z.object({
 
 export const StreamingS = z.object({
   _v: z.number().default(1),
+  setGenController: z.any(),
   onData: z.function().args(z.object({ data: z.any() })),
   onClose: z.function().args(z.object({ reason: z.enum(["close", "error", "end"]).default("end") })),
-  onError: z.function().args(z.object({ error: z.string(), data: z.any().optional() })),
+  onError: z.function(),
 })
 export type StreamingT = {
   onData: (data: any) => void

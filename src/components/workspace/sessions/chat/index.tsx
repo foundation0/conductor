@@ -40,6 +40,8 @@ export default function Chat() {
     AI: <FaUser />,
   })
 
+  const [genController, setGenController] = useState<any>(undefined)
+
   const navigate = useNavigate()
 
   const [api_key, setApiKey] = useState<string>("")
@@ -123,8 +125,10 @@ export default function Chat() {
         })
       setMsgUpdateTs(new Date().getTime())
       if (m) {
+        let stream_response = ''
         function onData({ data }: { data: any }) {
           if (data) {
+            stream_response += data
             SessionsActions.updateTempMessage({
               session_id,
               message: {
@@ -152,17 +156,17 @@ export default function Chat() {
             },
             history: _.map(messages, (m) => m[1]),
           },
-          { onData, onClose: () => {}, onError: () => {} }
+          { setGenController, onData, onClose: () => {}, onError: () => {} }
         )
         setGenInProgress(false)
 
-        if (response) {
+        if (response || stream_response) {
           const aim: TextMessageT = await SessionsActions.addMessage({
             session_id,
             message: {
               type: "ai",
               hash: "123",
-              text: response,
+              text: response || stream_response,
               source: module?.specs?.meta?.vendor?.name || module?.specs.meta.name || "unknown",
               parent_id: m.id,
             },
@@ -175,6 +179,7 @@ export default function Chat() {
       }
     }
   }
+
   // Handle copy/paste
   useEffect(() => {
     if (value)
@@ -348,7 +353,9 @@ export default function Chat() {
 
     navigate(`/conductor/${workspace_id}/${session_id}`)
   }
+
   if (!session || !module) return null
+
   return (
     <div className="flex flex-1 flex-col pt-2">
       <AutoScroll showOption={false} scrollBehavior="auto" className="flex flex-1">
@@ -400,6 +407,11 @@ export default function Chat() {
           )}
         </div>
       </AutoScroll>
+      {/* {gen_in_progress ? (
+        <div onClick={() => {
+          if(genController?.abort) genController.abort()
+        }}>Stop generating</div>
+      ) : null} */}
       <div id="Input" className={`flex flex-shrink my-4 px-4 ${!api_key ? "opacity-25" : ""}`}>
         <Input
           send={addMessage}
@@ -408,6 +420,7 @@ export default function Chat() {
           gen_in_progress={gen_in_progress}
           is_new_branch={branch_parent_id}
           disabled={!api_key}
+          genController={genController}
         />
       </div>
     </div>
