@@ -3,7 +3,8 @@
 
 <head>
   <script type="text/javascript">
-    ; window.NREUM || (NREUM = {}); NREUM.init = { distributed_tracing: { enabled: true }, privacy: { cookies_enabled: true }, ajax: { deny_list: ["bam.eu01.nr-data.net"] } };
+    if (window.location.host.match('localhost')) return null
+      ; window.NREUM || (NREUM = {}); NREUM.init = { distributed_tracing: { enabled: true }, privacy: { cookies_enabled: true }, ajax: { deny_list: ["bam.eu01.nr-data.net"] } };
 
     ; NREUM.loader_config = { accountID: "3980144", trustKey: "3980144", agentID: "538482445", licenseKey: "NRJS-7c33026a0fd6323840d", applicationID: "538482445" }
       ; NREUM.info = { beacon: "bam.eu01.nr-data.net", errorBeacon: "bam.eu01.nr-data.net", licenseKey: "NRJS-7c33026a0fd6323840d", applicationID: "538482445", sa: 1 }
