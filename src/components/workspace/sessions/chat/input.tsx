@@ -59,15 +59,25 @@ export default function Input({
   }, [gen_in_progress])
 
   function handleKeyDown(event: any) {
-    const linebreaks = event.target.value.split("\n")
-    if (linebreaks.length > 0) setRows(linebreaks.length)
-    else setRows(1)
     if (event.target.value.trim() === "") setRows(1)
-
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault()
       sendMessage()
+      return
     }
+
+    // optimize textarea height
+    const textarea = event.target
+    const lineHeight = parseInt(getComputedStyle(textarea).lineHeight)
+    const padding = parseInt(getComputedStyle(textarea).paddingTop) + parseInt(getComputedStyle(textarea).paddingBottom)
+    const border =
+      parseInt(getComputedStyle(textarea).borderTopWidth) + parseInt(getComputedStyle(textarea).borderBottomWidth)
+    const contentHeight = textarea.scrollHeight - padding - border
+    const area_rows = Math.floor(contentHeight / lineHeight)
+
+    if(rows != area_rows) {
+      setRows(area_rows)
+    } else if (event.target.value.split("\n").length !== rows) setRows(event.target.value.split("\n").length)
   }
 
   function sendMessage() {
