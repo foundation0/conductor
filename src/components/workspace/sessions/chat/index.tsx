@@ -18,6 +18,8 @@ import { z } from "zod"
 import { Link } from "react-router-dom"
 import generateLLMModuleOptions from "@/components/libraries/generateLLMModuleOptions"
 import { WorkspaceS } from "@/data/schemas/workspace"
+import { error } from "@/components/libraries/logging"
+
 const padding = 50
 
 export type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
@@ -172,7 +174,7 @@ export default function Chat() {
             setMsgUpdateTs(new Date().getTime())
           }
         }
-
+        let has_error = false
         const response = await module?.main(
           {
             model: session?.settings.module.variant,
@@ -183,7 +185,15 @@ export default function Chat() {
             },
             history: _.map(messages, (m) => m[1]),
           },
-          { setGenController, onData, onClose: () => {}, onError: () => {} }
+          {
+            setGenController,
+            onData,
+            onClose: () => {},
+            onError: (data: any) => {
+              has_error = true
+              error({ message: data.message || data.code, data })
+            },
+          }
         )
         setGenInProgress(false)
 
@@ -200,8 +210,8 @@ export default function Chat() {
           })
           setBranchParentId(false)
           setMsgUpdateTs(new Date().getTime())
-        } else {
-          throw new Error("No response")
+        } else if (!has_error && !response && !stream_response) {
+          error({ message: "no response from the module", data: { module_id: module.specs.id } })
         }
       }
     }

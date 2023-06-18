@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid"
 import { z } from "zod"
 
 export const ActiveSessionS = z.object({
@@ -24,6 +25,15 @@ export const OpenSessionS = z.object({
   order: z.number().optional(),
 })
 
+export const LogItemS = z.object({
+  _v: z.number().default(1),
+  id: z.string().catch(() => nanoid(10)),
+  timestamp: z.number().catch(() => Date.now()),
+  type: z.string(),
+  message: z.string(),
+  data: z.any().optional(),
+})
+
 export const AppStateS = z.object({
   _v: z.number().default(1),
   active_workspace_id: z.string(),
@@ -31,4 +41,5 @@ export const AppStateS = z.object({
   active_message_id: z.string().optional(),
   open_folders: z.array(OpenFolderS),
   open_sessions: z.array(OpenSessionS),
+  logs: z.array(LogItemS).optional()
 })

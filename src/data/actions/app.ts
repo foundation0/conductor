@@ -7,6 +7,7 @@ import { nanoid } from "nanoid"
 import _ from "lodash"
 import { AppState, UserState } from "@/data/loaders"
 import UserActions from "@/data/actions/user"
+import { LogItemS } from "@/data/schemas/app"
 
 async function getActiveWorkspace() {
   const app_state: AppStateT = AppState.get()
@@ -16,7 +17,7 @@ async function getActiveWorkspace() {
     : undefined
 }
 
-export default {
+const API = {
   updateAppState: async function (new_state: Partial<AppStateT>) {
     const state: AppStateT = AppState.get()
     const updated_state = { ...state, ...new_state }
@@ -145,4 +146,21 @@ export default {
     }
     return active_session
   },
+  addLogItem: async function ({ message, type, data }: Partial<z.infer<typeof LogItemS>>) {
+    const li = LogItemS.safeParse({
+      _v: 1,
+      message,
+      type,
+      data,
+    })
+    if (!li.success) return console.error("Invalid log item")
+    const app_state: AppStateT = AppState.get()
+    await AState.set({
+      ...app_state,
+      logs: [...(app_state.logs || []), li.data],
+    })
+    return li.data.id
+  },
 }
+
+export default API

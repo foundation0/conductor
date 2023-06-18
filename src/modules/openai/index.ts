@@ -113,8 +113,13 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
         handleLLMEnd() {
           if (typeof onClose === "function") onClose({ reason: "end" })
         },
-        handleLLMError(error: string) {
-          if (typeof onError === "function") onError({ error })
+        handleLLMError(err: any) {
+          const error = {
+            code: err.response.data.error.code,
+            message: err.response.data.error.message,
+            status: err.response.status,
+          }
+          if (typeof onError === "function") onError(error)
         },
       },
     ])

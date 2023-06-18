@@ -1,7 +1,11 @@
 import WorkspaceSelector from "@/components/workspace/selector"
-import { Outlet } from "react-router-dom"
+import { Outlet, useLoaderData } from "react-router-dom"
 import PromptIcon from "@/assets/prompt.svg"
 import { useLocation } from "react-router-dom"
+import ToastNotification from "../notifications/toast"
+import { AppStateT } from "@/data/loaders/app"
+import { useEffect, useState } from "react"
+import _ from "lodash"
 
 export default function Conductor() {
   const location = useLocation()
@@ -23,6 +27,7 @@ export default function Conductor() {
           </div>
         )}
       </div>
+      <ToastNotification />
     </main>
   )
 }
