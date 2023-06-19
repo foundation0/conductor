@@ -6,7 +6,7 @@ import { state as AppState } from "@/data/loaders/app"
 import { specs as OpenAI } from "@/modules/openai/"
 import { specs as Anthropic } from "@/modules/anthropic/"
 import ExampleProjectIcon from "@/assets/example-project-icon.svg"
-
+import ExampleProjectIcon2 from "@/assets/icons/venn.svg"
 export type UserT = z.infer<typeof UserS>
 export const state = await store<UserT>({
   name: "user",
@@ -43,7 +43,7 @@ export const state = await store<UserT>({
           id: active_session.workspace_id,
           name: "Project",
           members: { _v: 1, read: [id], write: [id] },
-          icon: ExampleProjectIcon,
+          icon: ExampleProjectIcon2,
           defaults: {
             llm_module: {
               id: "openai",

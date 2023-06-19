@@ -79,8 +79,8 @@ export default function Workspace() {
               onClick={tab.onClick}
             >
               <div className={`flex w-7 h-7 rounded justify-center items-center saturate-0 ${
-                active_sidebar_tab === tab.id ? " text-zinc-200 bg-zinc-900/30 border-t border-t-zinc-700/70" : "text-zinc-500 "
-              } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 `}>
+                active_sidebar_tab === tab.id ? " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 " : "text-zinc-500 "
+              } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 hover:saturate-100 hover:contrast-100`}>
                 {tab.icon}
                 </div>
             </div>
