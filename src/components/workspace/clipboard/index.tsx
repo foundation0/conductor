@@ -39,7 +39,7 @@ export default function Clipboard() {
   }
 
   return (
-    <div className="Clipboard flex flex-col px-3 pt-2 gap-2 w-full bg-zinc-800 border-l border-zinc-700">
+    <div className="Clipboard flex flex-col px-3 pt-2 gap-2 w-full bg-zinc-800 border-l border-zinc-700 overflow-auto">
       <div className="flex flex-row text-zinc-300 text-sm font-semibold pb-1">
         <div className="flex-grow">Clipboard</div>
         <div className="flex items-center">
