@@ -1,5 +1,5 @@
 import { OpenSessionS } from "@/data/schemas/app"
-import { WorkspaceS } from "@/data/schemas/workspace"
+import { FolderS, GroupS, WorkspaceS } from "@/data/schemas/workspace"
 import { useEffect, useState } from "react"
 import { z } from "zod"
 import _ from "lodash"
@@ -128,17 +128,21 @@ export default function Tabs({
       app_state.open_sessions.filter(
         (session: z.infer<typeof OpenSessionS>) => session.workspace_id === active_workspace.id
       ) || []
-    
-    const session_in_open_session = workspace_open_sessions.find((session: z.infer<typeof OpenSessionS>) => session.session_id === session_id)
+
+    const session_in_open_session = workspace_open_sessions.find(
+      (session: z.infer<typeof OpenSessionS>) => session.session_id === session_id
+    )
 
     if (!session_in_open_session) {
       // get session data based on session id
       const s = _.find(
-        active_workspace.groups.flatMap((g) => g.folders.flatMap((f) => {
-          return _.map(f.sessions, s => {
-            return { ...s, group_id: g.id, folder_id: f.id }
+        active_workspace.groups.flatMap((g) =>
+          g.folders.flatMap((f) => {
+            return _.map(f.sessions, (s) => {
+              return { ...s, group_id: g.id, folder_id: f.id }
+            })
           })
-        })),
+        ),
         { id: session_id }
       )
       if (!s) return
@@ -162,9 +166,21 @@ export default function Tabs({
       <div
         className="h-full flex items-center p-4 leading-none cursor-pointer text-zinc-500 hover:text-zinc-200"
         onClick={async () => {
+          // get folder_id based on active session_id
+          const group = _.find(
+            user_state.workspaces.flatMap((ws) => ws.groups),
+            (g) => g.folders.find((f) => f?.sessions?.find((s) => s.id === session_id))
+          ) as z.infer<typeof GroupS>
+
+          const folder = group.folders.find((f) => f?.sessions?.find((s) => s.id === session_id)) as z.infer<
+            typeof FolderS
+          >
+
           fetcher.submit(
             {
               workspace_id: workspace_id || "",
+              group_id: group?.id || "",
+              folder_id: folder?.id || "",
             },
             {
               method: "PUT",
