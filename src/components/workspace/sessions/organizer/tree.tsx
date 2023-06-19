@@ -145,7 +145,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button className="outline-none">
-                      <RxDotsHorizontal className="w-3 h-3" />
+                      <RxDotsHorizontal className="w-3 h-3 text-zinc-400" />
                     </button>
                   </DropdownMenu.Trigger>
 
@@ -190,7 +190,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button className="outline-none">
-                      <RxPlus className="w-3 h-3" />
+                      <RxPlus className="w-3 h-3 text-zinc-400" />
                     </button>
                   </DropdownMenu.Trigger>
 
