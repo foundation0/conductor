@@ -11,6 +11,11 @@ import { MdSettingsSuggest } from "react-icons/md"
 import { FaFolderOpen } from "react-icons/fa"
 import { HiUsers } from "react-icons/hi"
 import { AiFillAppstore } from "react-icons/ai"
+import GridIcon from "@/assets/icons/grid.svg"
+import MembersIcon from "@/assets/icons/members.svg"
+import FolderIcon from "@/assets/icons/folder.svg"
+import CabinetIcon from "@/assets/icons/cabinet.svg"
+import Comment1Icon from "@/assets/icons/comment-1.svg"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
@@ -28,27 +33,27 @@ export default function Workspace() {
   }, [workspace_id])
 
   const [active_sidebar_tab, setActiveSidebarTab] = useState("organizer")
-  const sidebar_tab_class = "h-4 w-4 hover:text-zinc-200"
+  const sidebar_tab_class = "h-5 w-5 hover:text-zinc-200"
   const sidebar_tabs = [
     {
       id: "organizer",
       onClick: () => setActiveSidebarTab("organizer"),
-      icon: <RiChat2Fill className={sidebar_tab_class} />,
+      icon: <img src={Comment1Icon} className={sidebar_tab_class} />,
     },
     {
       id: "data",
       onClick: () => setActiveSidebarTab("data"),
-      icon: <FaFolderOpen className={sidebar_tab_class} />,
+      icon: <img src={CabinetIcon} className={sidebar_tab_class} />,
     },
     {
       id: "members",
       onClick: () => setActiveSidebarTab("members"),
-      icon: <HiUsers className={sidebar_tab_class} />,
+      icon: <img src={MembersIcon} className={sidebar_tab_class} />,
     },
     {
       id: "market",
       onClick: () => setActiveSidebarTab("market"),
-      icon: <AiFillAppstore className={sidebar_tab_class} />,
+      icon: <img src={GridIcon} className={sidebar_tab_class} />,
     },
   ]
 
@@ -67,12 +72,16 @@ export default function Workspace() {
           {sidebar_tabs.map((tab) => (
             <div
               key={tab.id}
-              className={`flex flex-1 tab px-2  ${
+              className={`flex flex-1 tab px-2 ${
                 active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
               }`}
               onClick={tab.onClick}
             >
-              {tab.icon}
+              <div className={`flex w-7 h-7 rounded justify-center items-center saturate-0 ${
+                active_sidebar_tab === tab.id ? " text-zinc-200 bg-zinc-900/30 border-t border-t-zinc-700/70" : "text-zinc-500 "
+              } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 `}>
+                {tab.icon}
+                </div>
             </div>
           ))}
         </div>
