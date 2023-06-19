@@ -24,7 +24,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   if (!rows) {
     return null
   }
-
+  if(paddingBottom < 80) paddingBottom = 80
   return (
     <div className="flex flex-col gap-6 px-4" style={{ paddingBottom: `${paddingBottom}px` }}>
       {rows.map((row, index) => {
