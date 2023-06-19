@@ -16,6 +16,7 @@ import MembersIcon from "@/assets/icons/members.svg"
 import FolderIcon from "@/assets/icons/folder.svg"
 import CabinetIcon from "@/assets/icons/cabinet.svg"
 import Comment1Icon from "@/assets/icons/comment-1.svg"
+import IntersectIcon from "@/assets/icons/intersect.svg"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
@@ -33,7 +34,7 @@ export default function Workspace() {
   }, [workspace_id])
 
   const [active_sidebar_tab, setActiveSidebarTab] = useState("organizer")
-  const sidebar_tab_class = "h-5 w-5 hover:text-zinc-200"
+  const sidebar_tab_class = "h-5 w-5 hover:text-zinc-200 contrast-150"
   const sidebar_tabs = [
     {
       id: "organizer",
@@ -53,7 +54,7 @@ export default function Workspace() {
     {
       id: "market",
       onClick: () => setActiveSidebarTab("market"),
-      icon: <img src={GridIcon} className={sidebar_tab_class} />,
+      icon: <img src={IntersectIcon} className={sidebar_tab_class} />,
     },
   ]
 

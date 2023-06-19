@@ -45,8 +45,10 @@ export default function WorkspaceSelector() {
                   <div className="tooltip tooltip-right" data-tip={`Open ${workspace.name}`}>
                     <Link
                       to={`/conductor/${workspace.id}/${session_id}`}
-                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl border cursor-pointer mb-2 text-zinc-500 ${
-                        workspace_id === workspace.id ? "bg-zinc-800 border-zinc-600" : "border-zinc-800 border hover:bg-zinc-800"
+                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl border-t mb-2 text-zinc-500 ${
+                        workspace_id === workspace.id
+                          ? "bg-zinc-800 border-t-zinc-700"
+                          : "border-zinc-800 border hover:bg-zinc-800 hover:border-t-zinc-700 cursor-pointer"
                       }`}
                       /* onClick={() => {
                   AppStateActions.updateAppState({ active_workspace_id: workspace.id })
@@ -62,12 +64,14 @@ export default function WorkspaceSelector() {
                 )
               }}
             </For>
-            <Link
-              className="flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl cursor-pointer border-zinc-700 border border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500"
-              to={`workspace/create`}
-            >
-              <HiPlus className="w-3 h-3 " />
-            </Link>
+            <div className="tooltip tooltip-right" data-tip="Create a new workspace">
+              <Link
+                className="flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl cursor-pointer border-zinc-700 border border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500"
+                to={`workspace/create`}
+              >
+                <HiPlus className="w-3 h-3 " />
+              </Link>
+            </div>
           </div>
           <div className="flex">
             <div className="avatar rounded-full h-12 w-12 justify-center items-center">
