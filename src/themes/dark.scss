@@ -31,3 +31,9 @@ button:disabled {
   background: rgba(255, 255, 255, 0.1);
 
 }
+
+/* Tooltip tweaks */
+.tooltip.tooltip-open:before, .tooltip.tooltip-open:after, .tooltip:hover:before, .tooltip:hover:after, .tooltip:before {
+  font-size: 0.7rem !important;
+  border-top: 1px solid #ffffff20;
+}

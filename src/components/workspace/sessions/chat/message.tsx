@@ -51,7 +51,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick }) => {
     <Selection.Root open={selection_open} onOpenChange={setSelectionOpen}>
       <Selection.Trigger>
         <div
-          className={`chat flex flex-col border border-zinc-900 py-2 px-4 text-sm rounded-lg justify-center h-full items-start ${
+          className={`chat flex flex-col border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-center h-full items-start ${
             isActive
               ? " text-white"
               : "bg-zinc-800 text-zinc-100 text-xs h-fit hover:bg-zinc-700 border-zinc-700 cursor-pointer"

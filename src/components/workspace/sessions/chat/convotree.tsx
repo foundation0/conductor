@@ -14,20 +14,26 @@ type ConversationTreeProps = {
   paddingBottom: number
 }
 
-const ConversationTree: React.FC<ConversationTreeProps> = ({ onNewBranchClick, onBranchClick, rows, participants, paddingBottom }) => {
+const ConversationTree: React.FC<ConversationTreeProps> = ({
+  onNewBranchClick,
+  onBranchClick,
+  rows,
+  participants,
+  paddingBottom,
+}) => {
   if (!rows) {
     return null
   }
 
   return (
-    <div className="flex flex-col gap-6 px-4" style={{ paddingBottom: `${paddingBottom}px`}}>
+    <div className="flex flex-col gap-6 px-4" style={{ paddingBottom: `${paddingBottom}px` }}>
       {rows.map((row, index) => {
         return (
           <div key={index} className="flex flex-grow-1">
             <div className="flex flex-shrink mr-2">
               <div className="flex">
                 <div className="avatar placeholder mt-1">
-                  <div className="bg-zinc-800 text-zinc-200 rounded w-8 h-8 flex border border-zinc-900">
+                  <div className="bg-zinc-800 text-zinc-200 rounded w-8 h-8 flex border-t border-zinc-700">
                     <span className="text-sm w-6 h-6 flex justify-center items-center">
                       {row[1].type === "human" ? participants["user"] : participants[row[1].source || "AI"]}
                     </span>
@@ -44,14 +50,16 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({ onNewBranchClick, o
                     onNewBranchClick(row[1].parent_id)
                   }}
                 >
-                  <RiAddCircleFill className="text-zinc-500 hover:text-zinc-100" />
+                  <div className="tooltip tooltip-top" data-tip="Start a new branch">
+                    <RiAddCircleFill className="text-zinc-500 hover:text-zinc-100" />
+                  </div>
                 </div>
               ) : null}
             </div>
             <div className="flex flex-nowrap flex-row items-center gap-2">
               {row[2].map((msg) => {
                 if (msg.hash === "1337") return null
-                if(msg.text.length > 100) msg.text = msg.text.slice(0, 100) + "..."
+                if (msg.text.length > 100) msg.text = msg.text.slice(0, 100) + "..."
                 return (
                   <Message
                     key={msg.id}
