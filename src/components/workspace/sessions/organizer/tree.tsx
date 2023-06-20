@@ -117,7 +117,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       {groups.map((group) => (
         <div key={group.id} className="OrganizerGroup flex flex-1 flex-col gap-2">
           <div className="flex flex-row items-center">
-            <div className="flex flex-1 cursor-pointer items-center text-zinc-500 text-xs font-bold" data-id={group.id}>
+            <div className="flex flex-1 cursor-pointer items-center text-zinc-500 text-xs font-bold ml-1" data-id={group.id}>
               <EasyEdit
                 type="text"
                 editMode={field_edit_id === group.id}
@@ -137,11 +137,11 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
               />
             </div>
             <div
-              className={`flex cursor-pointer flex-row gap-2 items-center justify-center ${
+              className={`flex cursor-pointer flex-row gap-2 items-center justify-center mr-1 ${
                 field_edit_id === group.id ? "hidden" : ""
               }`}
             >
-              <div className="tooltip tooltip-bottom" data-tip="Modify group...">
+              <div className="tooltip tooltip-bottom flex items-center justify-center" data-tip="Modify group...">
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button className="outline-none">
@@ -186,7 +186,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                   </DropdownMenu.Portal>
                 </DropdownMenu.Root>
               </div>
-              <div className="tooltip tooltip-bottom" data-tip="Add new folder...">
+              <div className="tooltip tooltip-bottom flex items-center justify-center" data-tip="Add new folder...">
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button className="outline-none">
@@ -244,7 +244,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
           </div>
           {group.folders.map((folder) => (
             <div key={folder.id} className={`OrganizerFolder flex flex-1 flex-col`}>
-              <div className="flex flex-row items-center pb-1 text-sm text-zinc-400">
+              <div className="flex flex-row items-center pb-1 text-xs font-semibold text-zinc-400">
                 <div
                   className={`flex h-5 items-center cursor-pointer`}
                   onClick={() => {
@@ -262,7 +262,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                   )}
                 </div>
                 <div
-                  className="flex flex-1 h-5 items-center cursor-pointer text-zinc-400 font-semibold"
+                  className="flex flex-1 h-5 items-center cursor-pointer text-zinc-400 font-xs"
                   data-id={folder.id}
                   onClick={() => {
                     if (field_edit_id === folder.id) return
@@ -291,8 +291,8 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                   />
                 </div>
                 <div className={`flex cursor-pointer ${field_edit_id === folder.id ? "hidden" : ""}`}>
-                  <div className="flex cursor-pointer flex-row gap-2 items-center justify-center">
-                    <div className="tooltip tooltip-bottom" data-tip="Modify folder...">
+                  <div className="flex cursor-pointer flex-row gap-2 items-center justify-center mr-1">
+                    <div className="tooltip tooltip-bottom flex items-center justify-center" data-tip="Modify folder...">
                       <DropdownMenu.Root>
                         <DropdownMenu.Trigger asChild>
                           <button className="outline-none">
@@ -338,7 +338,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         </DropdownMenu.Portal>
                       </DropdownMenu.Root>
                     </div>
-                    <div className="tooltip tooltip-bottom" data-tip="Add new session">
+                    <div className="tooltip tooltip-bottom flex items-center justify-center" data-tip="Add new session">
                       <button
                         onClick={() => {
                           fetcher.submit(
@@ -366,7 +366,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                   folder.sessions?.map((session) => (
                     <div
                       key={session.id}
-                      className="OrganizerSession flex flex-1 flex-row pl-3 pr-0 h-5 py-0"
+                      className={`OrganizerSession flex flex-1 flex-row pl-3 h-5 py-0 mb-0.5 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-900 hover:border-t-zinc-700/70 rounded ${session.id === session_id ? 'bg-zinc-900/30 border border-zinc-900  border-t-zinc-700/70' : ''}`}
                       data-id={session.id}
                     >
                       <div className="flex items-center">
@@ -375,7 +375,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         />
                       </div>
                       <Link
-                        className={`flex flex-1 items-center cursor-pointer font-semibold text-sm ${
+                        className={`flex flex-1 items-center cursor-pointer text-xs ${
                           session.id === session_id ? " text-zinc-100" : "text-zinc-400"
                         }`}
                         to={`/conductor/${workspace_id}/${session.id}`}
@@ -400,7 +400,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         />
                       </Link>
                       <div
-                        className={`flex cursor-pointer flex-row gap-2 items-center justify-center ${
+                        className={`flex cursor-pointer flex-row gap-2 items-center justify-center mr-2 ${
                           field_edit_id === session_id ? "hidden" : ""
                         }`}
                       >
@@ -417,7 +417,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                             </DropdownMenu.Trigger>
                             <DropdownMenu.Portal>
                               <DropdownMenu.Content
-                                className="bg-zinc-800 border border-zinc-600 text-zinc-300 rounded-md shadow-lg shadow-zinc-900 outline-none"
+                                className="bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-md shadow-lg shadow-zinc-900 outline-none"
                                 sideOffset={5}
                               >
                                 <DropdownMenu.Item className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200">

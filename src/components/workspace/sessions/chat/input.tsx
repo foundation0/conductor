@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import _ from "lodash"
 import { MessageRowT } from "@/components/workspace/sessions/chat"
 import { Switch, Match } from "react-solid-flow"
+import MessageIcon from "@/assets/icons/message.svg"
 
 function checkForLocalStorage() {
   try {
@@ -88,24 +89,24 @@ export default function Input({
   }
 
   const button_class =
-    "flex inset-y-0 right-0 m-1 text-white focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
+    "flex inset-y-0 right-0 m-1 text-white focus:outline-none font-medium rounded-lg text-sm px-4 py-2 saturate-50 hover:saturate-100 animate"
 
   return (
-    <div className="flex flex-1">
+    <div className="flex flex-1 justify-center items-center">
       <form
-        className="w-full"
+        className={(!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch) ? "" : `w-full`}
         onSubmit={async (e) => {
           e.preventDefault()
           // if (message === "") return
           sendMessage()
         }}
       >
-        <div className="flex flex-row backdrop-blur bg-zinc-800 bg-opacity-80 border border-zinc-700 rounded-lg items-center">
+        <div className={`flex flex-row backdrop-blur bg-zinc-700/30 bg-opacity-80 border border-zinc-900 border-t-zinc-700 rounded-lg items-center ${(!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch) ? "hover:bg-zinc-700/50 hover:border-t-zinc-600" : ''}`}>
           <textarea
             ref={inputRef}
             rows={rows}
             id="input"
-            className="flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent"
+            className={`flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ${(!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch) ? "hidden" : ''}`}
             placeholder={
               disabled ||
               gen_in_progress ||
@@ -131,7 +132,7 @@ export default function Input({
           <Switch>
             <Match when={!gen_in_progress && _.last(messages)?.[1].hash === "1337"}>
               <button type="submit" className={button_class}>
-                Send
+                <img src={MessageIcon} className="w-4 h-4" />
               </button>
             </Match>
             <Match when={gen_in_progress}>
@@ -147,12 +148,12 @@ export default function Input({
             </Match>
             <Match when={!gen_in_progress && (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)}>
               <button type="submit" className={button_class}>
-                Send
+              <img src={MessageIcon} className="w-6 h-6" />
               </button>
             </Match>
             <Match when={!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch}>
-              <button type="submit" className={button_class}>
-                Resend
+              <button type="submit" className={button_class + ' text-xs'}>
+                Resend message
               </button>
             </Match>
           </Switch>

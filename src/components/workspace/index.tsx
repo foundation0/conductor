@@ -86,7 +86,7 @@ export default function Workspace() {
             </div>
           ))}
         </div>
-        <div className="px-4 w-52">
+        <div className="px-2 w-52">
           <Switch fallback={""}>
             <Match when={active_sidebar_tab === "organizer"}>
               <Organizer app_state={app_state} user_state={user_state} />
