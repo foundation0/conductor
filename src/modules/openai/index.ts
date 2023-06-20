@@ -8,7 +8,7 @@ import {
   MessagesPlaceholder,
 } from "langchain/prompts"
 import { ConversationChain } from "langchain/chains"
-import { BufferMemory } from "langchain/memory"
+import { BufferMemory, BufferWindowMemory } from "langchain/memory"
 import { TextMessageS } from "@/data/schemas/sessions"
 import _ from "lodash"
 import Icon from "./icon.svg"
@@ -58,7 +58,9 @@ const InputS = z.object({
 export const OutputS = z.string()
 
 type InputT = z.infer<typeof InputS>
-export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>) => {
+type OutputT = z.infer<typeof OutputS>
+
+export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>): Promise<OutputT> => {
   const { model, prompt, max_tokens, temperature, top_p, n, api_key, history } = InputS.parse(input)
   const { setGenController, onData, onClose, onError } = StreamingS.parse(callbacks)
 
@@ -68,7 +70,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
     streaming: true,
     modelName: model || "gpt-3.5-turbo",
     modelKwargs: {
-      max_tokens: max_tokens || 2000,
+      max_tokens: max_tokens || null,
       top_p: top_p || 1,
       n: n || 1,
     },
@@ -83,7 +85,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
     HumanMessagePromptTemplate.fromTemplate("{input}"),
   ])
 
-  const memory = new BufferMemory({ returnMessages: true, memoryKey: "memory" })
+  const memory = new BufferMemory({ inputKey: 'input', returnMessages: true, memoryKey: "memory" })
 
   if (history && history.length > 1) {
     for (let i = 0; i < history.length; i += 2) {
@@ -93,9 +95,9 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
         console.warn("Unexpected message sequence at index", i)
       }
     }
-    if (_.last(history)?.type === "human" && _.last(history)?.hash) {
+    /* if (_.last(history)?.type === "human" && _.last(history)?.hash) {
       await memory.saveContext({ input: _.last(history)?.text }, { output: "" })
-    }
+    } */
   }
 
   const chain = new ConversationChain({
@@ -123,8 +125,17 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
         },
       },
     ])
-    return response?.response
-  } catch (error) {
-    if (typeof onError === "function") onError({ error: JSON.stringify(error) })
+    return response?.response as string
+  } catch (error: any) {
+    if (typeof onError === "function") {
+      const err = {
+        code: "catch-openai",
+        message: error?.message || "Unknown error",
+        status: error?.status || 500,
+        data: error
+      }
+      onError(err)
+    }
   }
+  return ""
 }

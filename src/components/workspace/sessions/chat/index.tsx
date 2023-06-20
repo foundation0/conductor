@@ -19,6 +19,7 @@ import { Link } from "react-router-dom"
 import generateLLMModuleOptions from "@/components/libraries/generateLLMModuleOptions"
 import { WorkspaceS } from "@/data/schemas/workspace"
 import { error } from "@/components/libraries/logging"
+import { main as CostEstimator, InputT as CostEstimatorInputT } from "@/modules/openai-cost-estimator/"
 
 const padding = 50
 
@@ -113,6 +114,47 @@ export default function Chat() {
     setParticipants(p)
   }, [JSON.stringify(messages)])
 
+  async function compileSlidingWindowMemory({ model, prompt, messages }: any) {
+    // get module variant's token count
+    const variant = _.find(module?.specs.meta.variants, { id: model })
+    if (!variant) return error({ message: "variant not found", data: { model } })
+    const context_len = variant.context_len
+    if(!context_len) return error({ message: "context_len not found", data: { model } })
+
+    // reverse messages
+    const history = _.reverse(messages)
+
+    // for each message, calculate token count and USD cost
+    const msgs: { role: "system" | "user" | "assistant", content: string }[] = []
+    let token_count = 0
+    let usd_cost = 0
+
+    // compute instructions if any
+    if(prompt.instructions) {
+      const costs = await CostEstimator({ model, messages: [{ role: "system", content: prompt.instructions }] })
+      token_count += costs.tokens
+      usd_cost += costs.usd
+    }
+    if(token_count > context_len) return error({ message: "instructions too long", data: { model } })
+
+    for(let i = 0; i < history.length; i++) {
+      const m = history[i]
+      let tmp_m: { role: "system" | "user" | "assistant", content: string } = {
+        role: m.type === 'human' ? 'user' : 'assistant',
+        content: m.text
+      }
+      const costs = await CostEstimator({ model, messages: [tmp_m] })
+      
+      // when token count goes over selected model's token limit, stop
+      if(token_count + costs.tokens > context_len) break
+      token_count += costs.tokens
+      usd_cost += costs.usd
+      msgs.push(m)
+    }
+
+    return { history: msgs.reverse(), token_count, usd_cost }
+  }
+
   async function addMessage({ message }: { message: string }) {
     if (!api_key) return
     if (!module) throw new Error("No module")
@@ -175,15 +217,22 @@ export default function Chat() {
           }
         }
         let has_error = false
+        const prompt = {
+          instructions: "you are a helpful assistant",
+          user: m.text,
+        }
+        const memory = await compileSlidingWindowMemory({
+          model: session?.settings.module.variant,
+          prompt,
+          messages: _.map(messages, (m) => m[1]),
+        })
+        console.info(`Message tokens: ${memory?.token_count}, USD: $${memory?.usd_cost}`)
         const response = await module?.main(
           {
             model: session?.settings.module.variant,
             api_key,
-            prompt: {
-              instructions: "you are a helpful assistant",
-              user: m.text,
-            },
-            history: _.map(messages, (m) => m[1]),
+            prompt,
+            history: memory?.history || [],
           },
           {
             setGenController,
@@ -398,7 +447,7 @@ export default function Chat() {
       <div className="flex flex-1">
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
           {messages && messages?.length > 0 ? (
-            <div className="flex flex-grow text-xs justify-center text-zinc-500">
+            <div className="flex flex-grow text-xs justify-center text-zinc-500 pb-4">
               Active module: {session.settings.module.id} / {session.settings.module.variant}
             </div>
           ) : null}
