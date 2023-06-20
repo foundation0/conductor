@@ -12,6 +12,7 @@ type ConversationTreeProps = {
   rows: MessageRowT[] | undefined
   participants: { [key: string]: ReactElement }
   paddingBottom: number
+  msgs_in_mem?: string[]
 }
 
 const ConversationTree: React.FC<ConversationTreeProps> = ({
@@ -20,11 +21,12 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   rows,
   participants,
   paddingBottom,
+  msgs_in_mem,
 }) => {
   if (!rows) {
     return null
   }
-  if(paddingBottom < 80) paddingBottom = 80
+  if (paddingBottom < 80) paddingBottom = 80
   return (
     <div className="flex flex-col gap-6 px-4" style={{ paddingBottom: `${paddingBottom}px` }}>
       {rows.map((row, index) => {
@@ -42,7 +44,18 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
               </div>
             </div>
             <div className={`Message flex flex-grow-1 ${row[2].length > 0 ? "flex-shrink-0" : ""}`}>
-              <Message message={row[1]} isActive={true} onClick={() => {}} />
+              <Message
+                message={row[1]}
+                isActive={true}
+                onClick={() => {}}
+                className={
+                  row[1].hash !== "1337" && msgs_in_mem && msgs_in_mem?.length > 0
+                    ? _.includes(msgs_in_mem, row[1].id)
+                      ? ""
+                      : "" // for sliding window memory: "bg-zinc-800 opacity-70 hover:opacity-100"
+                    : "opacity-100"
+                }
+              />
               {row[1].parent_id !== "first" && row[1].type === "human" ? (
                 <div
                   className="p-0 ml-1 mr-4 cursor-pointer flex h-full justify-center items-center"

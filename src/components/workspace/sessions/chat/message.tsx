@@ -14,9 +14,10 @@ type MessageProps = {
   message: TextMessageT
   isActive: boolean
   onClick: () => void
+  className?: string
 }
 
-const Message: React.FC<MessageProps> = ({ message, isActive, onClick }) => {
+const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className }) => {
   const navigate = useNavigate()
   const workspace_id = useParams().workspace_id
   const session_id = useParams().session_id
@@ -56,7 +57,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick }) => {
               ? " text-white"
               : "bg-zinc-800 text-zinc-100 text-xs h-fit hover:bg-zinc-700 border-zinc-700 cursor-pointer"
           } ${message.type === "ai" ? "bg-zinc-800" : "border-zinc-800 bg-zinc-800 text-zinc-300"}
-          ${message.hash === "1337" ? "italic text-xs" : ""}`}
+          ${className} ${message.hash === "1337" ? "italic text-xs opacity-100" : ""}`}
           onClick={() => {
             if (!isActive) {
               onClick()

@@ -57,6 +57,8 @@ export default function Chat() {
 
   const [module, setModule] = useState<{ specs: z.infer<typeof ModuleS>; main: Function } | undefined>(undefined)
 
+  const [msgs_in_mem, setMsgsInMem] = useState<string[]>([])
+
   // keep track of input height
   useEffect(() => {
     const e_input = eInput.current
@@ -119,40 +121,45 @@ export default function Chat() {
     const variant = _.find(module?.specs.meta.variants, { id: model })
     if (!variant) return error({ message: "variant not found", data: { model } })
     const context_len = variant.context_len
-    if(!context_len) return error({ message: "context_len not found", data: { model } })
+    if (!context_len) return error({ message: "context_len not found", data: { model } })
 
     // reverse messages
     const history = _.reverse(messages)
 
     // for each message, calculate token count and USD cost
-    const msgs: { role: "system" | "user" | "assistant", content: string }[] = []
+    const msgs: { role: "system" | "user" | "assistant"; content: string }[] = []
     let token_count = 0
     let usd_cost = 0
 
     // compute instructions if any
-    if(prompt.instructions) {
+    if (prompt?.instructions) {
       const costs = await CostEstimator({ model, messages: [{ role: "system", content: prompt.instructions }] })
       token_count += costs.tokens
       usd_cost += costs.usd
     }
-    if(token_count > context_len) return error({ message: "instructions too long", data: { model } })
+    if (token_count > context_len) return error({ message: "instructions too long", data: { model } })
 
-    for(let i = 0; i < history.length; i++) {
+    const included_ids: string[] = []
+    for (let i = 0; i < history.length; i++) {
       const m = history[i]
-      let tmp_m: { role: "system" | "user" | "assistant", content: string } = {
-        role: m.type === 'human' ? 'user' : 'assistant',
-        content: m.text
+      let tmp_m: { role: "system" | "user" | "assistant"; content: string } = {
+        role: m.type === "human" ? "user" : "assistant",
+        content: m.text,
       }
       const costs = await CostEstimator({ model, messages: [tmp_m] })
-      
+
       // when token count goes over selected model's token limit, stop
-      if(token_count + costs.tokens > context_len) break
+      if (token_count + costs.tokens > context_len) break
       token_count += costs.tokens
       usd_cost += costs.usd
       msgs.push(m)
+      included_ids.push(m.id)
     }
 
-    return { history: msgs.reverse(), token_count, usd_cost }
+    // if the latest message is type ai, remove it
+    if (history[history.length - 1]?.type === "ai") msgs.pop()
+    setMsgsInMem(included_ids)
+    return { history: msgs.reverse(), included_ids, token_count, usd_cost }
   }
 
   async function addMessage({ message }: { message: string }) {
@@ -319,8 +326,18 @@ export default function Chat() {
 
     let rows = buildMessageTree({ messages: session?.messages || [], first_id: "first", activePath })
     setMessages(rows)
+
     // console.log("update messages", session_id, rows, session?.messages, activePath)
   }, [JSON.stringify(session)])
+
+  /*  
+ // compute sliding window memory when messages change
+ useEffect(() => {
+    if (!module) return
+    if (!session?.settings.module.variant) return
+    if (!messages) return
+    compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: messages.map((m) => m[1]) })
+  }, [JSON.stringify([module, session?.settings.module.variant, session_id, branch_parent_id])]) */
 
   // Declare a state variable for dimensions
   const [height, setHeight] = useState(
@@ -393,8 +410,8 @@ export default function Chat() {
       }
       return message
     })
-
     await SessionsActions.updateMessages({ session_id, messages: c.messages })
+    /* compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: c.messages }) */
     setBranchParentId(false)
     setMsgUpdateTs(new Date().getTime())
   }
@@ -421,6 +438,7 @@ export default function Chat() {
       return message
     })
     c.messages.push(newParentMessage)
+    /*     compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: c.messages }) */
     setSession(c)
     setBranchParentId(parent_id)
   }
@@ -459,6 +477,7 @@ export default function Chat() {
                 onBranchClick={onBranchClick}
                 participants={participants}
                 paddingBottom={input_height + 30}
+                msgs_in_mem={msgs_in_mem}
               />
             ) : api_key ? (
               <div className="flex h-full flex-col justify-center items-center">
