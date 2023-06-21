@@ -400,8 +400,8 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         />
                       </Link>
                       <div
-                        className={`flex cursor-pointer flex-row gap-2 items-center justify-center mr-2 ${
-                          field_edit_id === session_id ? "hidden" : ""
+                        className={`flex cursor-pointer flex-row gap-2 items-center justify-center mr-2 h-6 ${
+                          field_edit_id === session.id ? "hidden" : ""
                         }`}
                       >
                         <div className="tooltip tooltip-bottom" data-tip="Modify session...">

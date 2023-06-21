@@ -40,7 +40,8 @@ select {
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
-
+    margin-right: 0.2rem;
+    height: 24px;
     .easy-edit-button {
       &:first-child {
         margin-left: 0.2rem;
