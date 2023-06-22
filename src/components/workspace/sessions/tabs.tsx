@@ -74,8 +74,9 @@ export default function Tabs({
                   onClick={async (e) => {
                     e.preventDefault()
                     if (!session_id) return
-                    const new_tab = await AppStateActions.removeOpenSession({ session_id })
-                    navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
+                    const new_tab = await AppStateActions.removeOpenSession({ session_id: s.id })
+                    if(session_id === s.id) navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
+                    else navigate(`/conductor/${workspace_id}/${session_id}`)
                   }}
                 >
                   <RxPlus />
