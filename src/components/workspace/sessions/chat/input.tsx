@@ -59,8 +59,11 @@ export default function Input({
       }, 100)
   }, [gen_in_progress])
 
-  function handleKeyDown(event: any) {
-    if (event.target.value.trim() === "") setRows(1)
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // if event is focus, return
+    if (event.type === "focus") return
+
+    if (message.trim() === "") setRows(1)
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault()
       sendMessage()
@@ -68,7 +71,7 @@ export default function Input({
     }
 
     // optimize textarea height
-    const textarea = event.target
+    const textarea: any = event.target
     const lineHeight = parseInt(getComputedStyle(textarea).lineHeight)
     const padding = parseInt(getComputedStyle(textarea).paddingTop) + parseInt(getComputedStyle(textarea).paddingBottom)
     const border =
@@ -78,7 +81,7 @@ export default function Input({
 
     if(rows != area_rows) {
       setRows(area_rows)
-    } else if (event.target.value.split("\n").length !== rows) setRows(event.target.value.split("\n").length)
+    } else if (textarea.value.split("\n").length !== rows) setRows(textarea.value.split("\n").length)
   }
 
   function sendMessage() {
@@ -111,11 +114,14 @@ export default function Input({
               disabled ||
               gen_in_progress ||
               (_.last(messages)?.[1].type === "human" && _.last(messages)?.[1].hash !== "1337")
-                ? "..."
+                ? "thinking..."
                 : "Type a message"
             }
             required
-            onChange={(e) => {
+            onFocus={(e) => {
+              e.target.focus()
+            }}
+            onChange={(e: any) => {
               setMessage(e.target.value)
               handleKeyDown(e)
             }}

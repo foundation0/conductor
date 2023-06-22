@@ -3,7 +3,7 @@ import { TextMessageT } from "@/data/loaders/sessions"
 import Message from "./message"
 import _ from "lodash"
 import { RiAddCircleFill } from "react-icons/ri"
-
+import { fieldFocus } from "@/components/libraries/fieldFocus"
 type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 
 type ConversationTreeProps = {
@@ -61,6 +61,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                   className="p-0 ml-1 mr-4 cursor-pointer flex h-full justify-center items-center"
                   onClick={() => {
                     onNewBranchClick(row[1].parent_id)
+                    fieldFocus({ selector: "#input" })
                   }}
                 >
                   <div className="tooltip tooltip-top" data-tip="Start a new branch">
@@ -80,6 +81,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                     isActive={false}
                     onClick={() => {
                       onBranchClick(msg.id)
+                      fieldFocus({ selector: "#input" })
                     }}
                   />
                 )

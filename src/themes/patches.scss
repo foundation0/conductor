@@ -89,3 +89,7 @@ select {
     }
   }
 }
+
+.react-auto-scroll__scroll-container {
+  overflow-x: hidden !important;
+}

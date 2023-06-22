@@ -11,6 +11,7 @@ import AppStateActions from "@/data/actions/app"
 import { useEffect, useState } from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import UserActions from "@/data/actions/user"
+import { fieldFocus } from "@/components/libraries/fieldFocus"
 // @ts-ignore
 import EasyEdit from "react-easy-edit"
 
@@ -124,6 +125,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                 onSave={(name: any) => {
                   resetFieldEditId()
                   updateGroup({ group_id: group.id, name })
+                  fieldFocus({ selector: "#input" })
                 }}
                 onCancel={resetFieldEditId}
                 onBlur={resetFieldEditId}
@@ -278,6 +280,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                     onSave={(name: any) => {
                       resetFieldEditId()
                       updateFolder({ group_id: group.id, folder_id: folder.id, name })
+                      fieldFocus({ selector: "#input" })
                     }}
                     onCancel={resetFieldEditId}
                     onBlur={resetFieldEditId}
@@ -386,6 +389,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                           onSave={(name: any) => {
                             resetFieldEditId()
                             updateSession({ group_id: group.id, folder_id: folder.id, session_id: session.id, name })
+                            fieldFocus({ selector: "#input" })
                             return false
                           }}
                           onCancel={resetFieldEditId}
