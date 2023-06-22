@@ -11,6 +11,7 @@ import { UserT } from "@/data/loaders/user"
 import { useFetcher, useLoaderData, useNavigate, useParams } from "react-router-dom"
 import { Link } from "react-router-dom"
 import AppStateActions from "@/data/actions/app"
+import { useHotkeys } from "react-hotkeys-hook"
 
 export default function Tabs({
   setShowClipboard,
@@ -75,7 +76,7 @@ export default function Tabs({
                     e.preventDefault()
                     if (!session_id) return
                     const new_tab = await AppStateActions.removeOpenSession({ session_id: s.id })
-                    if(session_id === s.id) navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
+                    if (session_id === s.id) navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
                     else navigate(`/conductor/${workspace_id}/${session_id}`)
                   }}
                 >
@@ -160,6 +161,13 @@ export default function Tabs({
       })
     }
   }, [JSON.stringify([session_id, open_tabs])])
+
+  // keyboard shortcut for closing tab
+  useHotkeys("alt+w", async () => {
+    if (!session_id) return
+    const new_tab = await AppStateActions.removeOpenSession({ session_id })
+    navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
+  })
 
   return (
     <>

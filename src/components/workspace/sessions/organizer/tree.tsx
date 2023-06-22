@@ -1,5 +1,5 @@
-import { GroupS } from "@/data/schemas/workspace"
-import _ from "lodash"
+import { GroupS, FolderS } from "@/data/schemas/workspace"
+import _, { set } from "lodash"
 import { z } from "zod"
 import { RxDotsHorizontal, RxPlus } from "react-icons/rx"
 import { MdCheck, MdClose, MdOutlineKeyboardArrowDown, MdOutlineKeyboardArrowRight } from "react-icons/md"
@@ -12,8 +12,11 @@ import { useEffect, useState } from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import UserActions from "@/data/actions/user"
 import { fieldFocus } from "@/components/libraries/fieldFocus"
+import { useHotkeys } from "react-hotkeys-hook"
+
 // @ts-ignore
 import EasyEdit from "react-easy-edit"
+import { error } from "@/components/libraries/logging"
 
 type GroupT = z.infer<typeof GroupS>
 type LoaderT = { app_state: AppStateT; user_state: UserT }
@@ -113,12 +116,75 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
     }
   }, [field_edit_id])
 
+  // keyboard shortcut for renaming a session
+  useHotkeys("alt+r", () => {
+    if (field_edit_id || !session_id) return
+    setFieldEditId(session_id || "")
+  })
+
+  // keyboard shortcut for deleting a session
+  useHotkeys("shift+alt+d", () => {
+    if (field_edit_id || !session_id) return
+    if (app_state.open_sessions.length === 1) {
+      return error({ message: "You can't delete the last session." })
+    }
+    const session = _.find(app_state.open_sessions, { session_id })
+    if (session && confirm("Are you sure you want to delete this session?")) {
+      const session_index = _.findIndex(app_state.open_sessions, { session_id })
+      // get the previous session from open sessions
+      const next_session = app_state.open_sessions[session_index === 0 ? session_index + 1 : session_index - 1]
+
+      fetcher.submit(
+        {
+          workspace_id: workspace_id || "",
+          session_id: session_id || "",
+          group_id: session.group_id || "",
+          folder_id: session.folder_id || "",
+        },
+        {
+          method: "DELETE",
+          action: "/conductor/workspace/session",
+        }
+      )
+      navigate(`/conductor/${workspace_id}/${next_session.session_id}`)
+    }
+  })
+
+  // keyboard shortcut for creating new session
+  useHotkeys("alt+n", () => {
+    if (field_edit_id || !session_id) return
+    const session = _.find(app_state.open_sessions, { session_id })
+    fetcher.submit(
+      {
+        workspace_id: workspace_id || "",
+        folder_id: session?.folder_id || "",
+        group_id: session?.group_id || "",
+      },
+      {
+        method: "PUT",
+        action: `/conductor/workspace/session`,
+      }
+    )
+  })
+
+  /* TODO
+  // alt+up and alt+down to navigate between open sessions
+  useHotkeys("alt+up", () => {
+
+  })
+  useHotkeys("alt+down", () => {
+    
+  })
+ */
   return (
     <div className="OrganizerTree flex flex-1 flex-col gap-8">
       {groups.map((group) => (
         <div key={group.id} className="OrganizerGroup flex flex-1 flex-col gap-2">
           <div className="flex flex-row items-center">
-            <div className="flex flex-1 cursor-pointer items-center text-zinc-500 text-xs font-bold ml-1" data-id={group.id}>
+            <div
+              className="flex flex-1 cursor-pointer items-center text-zinc-500 text-xs font-bold ml-1"
+              data-id={group.id}
+            >
               <EasyEdit
                 type="text"
                 editMode={field_edit_id === group.id}
@@ -295,7 +361,10 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                 </div>
                 <div className={`flex cursor-pointer ${field_edit_id === folder.id ? "hidden" : ""}`}>
                   <div className="flex cursor-pointer flex-row gap-2 items-center justify-center mr-1">
-                    <div className="tooltip tooltip-bottom flex items-center justify-center" data-tip="Modify folder...">
+                    <div
+                      className="tooltip tooltip-bottom flex items-center justify-center"
+                      data-tip="Modify folder..."
+                    >
                       <DropdownMenu.Root>
                         <DropdownMenu.Trigger asChild>
                           <button className="outline-none">
@@ -369,7 +438,9 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                   folder.sessions?.map((session) => (
                     <div
                       key={session.id}
-                      className={`OrganizerSession flex flex-1 flex-row pl-3 h-5 py-0 mb-0.5 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-900 hover:border-t-zinc-700/70 rounded ${session.id === session_id ? 'bg-zinc-900/30 border border-zinc-900  border-t-zinc-700/70' : ''}`}
+                      className={`OrganizerSession flex flex-1 flex-row pl-3 h-5 py-0 mb-0.5 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-900 hover:border-t-zinc-700/70 rounded ${
+                        session.id === session_id ? "bg-zinc-900/30 border border-zinc-900  border-t-zinc-700/70" : ""
+                      }`}
                       data-id={session.id}
                     >
                       <div className="flex items-center">

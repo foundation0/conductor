@@ -4,16 +4,6 @@ import { MessageRowT } from "@/components/workspace/sessions/chat"
 import { Switch, Match } from "react-solid-flow"
 import MessageIcon from "@/assets/icons/message.svg"
 
-function checkForLocalStorage() {
-  try {
-    localStorage.setItem("test", "test")
-    localStorage.removeItem("test")
-    return true
-  } catch (e) {
-    return false
-  }
-}
-
 let PROMPT_CACHE: { [key: string]: string } = {}
 
 export default function Input({
@@ -60,6 +50,10 @@ export default function Input({
   }, [gen_in_progress])
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.altKey) {
+      inputRef?.current?.blur()
+      return
+    }
     // if event is focus, return
     if (event.type === "focus") return
 

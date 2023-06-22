@@ -499,6 +499,20 @@ export default function Chat() {
                     {generateLLMModuleOptions({ user_state })}
                   </select>
                 </div>
+                <div className="flex mt-5 flex-col justify-center items-center gap-4">
+                  <div className="text-xs text-zinc-400">
+                    <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">N</kbd> new session
+                  </div>
+                  <div className="text-xs text-zinc-400">
+                    <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">R</kbd> rename session
+                  </div>
+                  <div className="text-xs text-zinc-400">
+                    <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">W</kbd> close session
+                  </div>
+                  <div className="text-xs text-zinc-400">
+                  <kbd className="kbd kbd-xs">Shift</kbd> + <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">D</kbd> delete session
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="flex justify-center items-center h-full flex-col gap-2">

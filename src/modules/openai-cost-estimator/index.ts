@@ -56,10 +56,8 @@ export async function main(input: InputT): Promise<OutputT> {
   const cacheKey = `openai-cost-estimator-${model}-${contents_hash}`
   const cached = await get(cacheKey)
   if (cached) {
-    console.log("using cached")
     return cached
   }
-  console.log("missed cached")
 
   const calcs = new GPTTokens({
     plus: false,
