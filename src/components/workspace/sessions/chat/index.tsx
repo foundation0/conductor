@@ -469,8 +469,8 @@ export default function Chat() {
               Active module: <select
                     className="flex border rounded-lg px-2 ml-2 py-1 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
                     defaultValue={
-                      workspace.defaults?.llm_module?.id
-                        ? `{"id": "${workspace.defaults?.llm_module?.id}", "variant": "${workspace.defaults?.llm_module?.variant}"}`
+                      session.settings.module.id
+                        ? `{"id": "${session.settings.module.id}", "variant": "${session.settings.module.variant}"}`
                         : "click to select"
                     }
                     onChange={(data) => {
