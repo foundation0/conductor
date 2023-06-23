@@ -465,8 +465,22 @@ export default function Chat() {
       <div className="flex flex-1">
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
           {messages && messages?.length > 0 ? (
-            <div className="flex flex-grow text-xs justify-center text-zinc-500 pb-4">
-              Active module: {session.settings.module.id} / {session.settings.module.variant}
+            <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4">
+              Active module: <select
+                    className="flex border rounded-lg px-2 ml-2 py-1 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
+                    defaultValue={
+                      workspace.defaults?.llm_module?.id
+                        ? `{"id": "${workspace.defaults?.llm_module?.id}", "variant": "${workspace.defaults?.llm_module?.variant}"}`
+                        : "click to select"
+                    }
+                    onChange={(data) => {
+                      handleModuleChange({
+                        value: data.target.value,
+                      })
+                    }}
+                  >
+                    {generateLLMModuleOptions({ user_state })}
+                  </select>
             </div>
           ) : null}
           <div className="Messages flex flex-1 flex-col" style={{ height }}>
