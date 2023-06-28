@@ -19,6 +19,12 @@ const API = {
   },
   async updateUser(user: z.infer<typeof PublicUserS>) {
     API.addUser(user)
+  },
+  async removeUser({ id }: { id: string }) {
+    const { UsersState } = await initLoaders()
+    const users = await API.getUsers()
+    delete users[id]
+    UsersState.set(users)
   }
 }
 

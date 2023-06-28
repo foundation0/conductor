@@ -1,8 +1,7 @@
-import { useLocation, useNavigate, Navigate, useLoaderData, Link } from "react-router-dom"
+import { useLocation, useNavigate, useLoaderData, Link } from "react-router-dom"
 import { useAuth } from "@/components/hooks/useAuth"
 import { fieldFocus } from "../libraries/fieldFocus"
 import { useEffect, useState } from "react"
-import { IoFingerPrintOutline } from "react-icons/io5"
 import { BiRightArrowAlt } from "react-icons/bi"
 import _ from "lodash"
 import { HiPlus } from "react-icons/hi"
@@ -10,9 +9,8 @@ import PromptIcon from "@/assets/prompt.svg"
 import { UsersT } from "@/data/loaders/users"
 import { PublicUserS } from "@/data/schemas/user"
 import { z } from "zod"
-import { client, server } from "@passwordless-id/webauthn"
-import { randomBytes } from "@/security/common"
-import { CredentialKey } from "@passwordless-id/webauthn/dist/esm/types"
+import { HiOutlineTrash } from "react-icons/hi"
+import UsersActions from "@/data/actions/users"
 
 export function LoginPage() {
   let { users_state } = useLoaderData() as { users_state: UsersT }
@@ -194,15 +192,27 @@ export function LoginPage() {
                       }}
                       className="flex flex-row bg-zinc-700/30 hover:bg-zinc-700/70 border border-zinc-900  border-t-zinc-700/70 rounded-md flex-1 p-3 cursor-pointer hover:text-zinc-200"
                     >
-                      <div className="flex w-8 h-8 rounded-full bg-zinc-900/30 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-zinc-500 font-semibold font-xs">
+                      <div className="flex w-8 h-8 rounded-full bg-zinc-900/30 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-zinc-500 font-bold font-xs">
                         {user.profile_photos?.length > 0 ? (
                           <img src={user.profile_photos[0]} className="h-full w-full" />
                         ) : (
-                          user.name.slice(0, 1)
+                          user.name.slice(0, 1).toUpperCase()
                         )}
                       </div>
                       <div className="flex items-center text-xs ml-2">{user.name}</div>
-                      <div className="flex flex-grow justify-end items-center">
+                      <div className="flex flex-grow justify-end items-center gap-3">
+                        <div className="w-4 h-4 tooltip tooltip-top" data-tip="Delete account from this device">
+                          <HiOutlineTrash
+                            className="w-4 h-4 text-zinc-500 hover:text-red-700 "
+                            onClick={() => {
+                              confirm("Are you sure you want to remove this account from this device?")
+                                ? UsersActions.removeUser({ id: user.id })
+                                : null
+                              navigate("/login")
+                              }
+                            }
+                          />
+                        </div>
                         <BiRightArrowAlt className="w-5 h-5" />
                       </div>
                     </div>

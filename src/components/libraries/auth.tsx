@@ -56,7 +56,7 @@ export async function createUser({
 }) {
   const buffer_key = buf2hex({ input: createHash({ str: username }) })
   const user_exists = await get({ key: buffer_key })
-  if (user_exists) return null
+  if (user_exists) return error({ message: "user already exists" })
   const master_key_buf = randomBytes(64)
   const master_key = buf2hex({ input: master_key_buf })
   const user_key = buf2hex({ input: createHash({ str: master_key + username }) })
@@ -64,7 +64,7 @@ export async function createUser({
   const key_pair = keyPair({ seed: master_key_buf })
 
   const buffer = await createBuffer({ username, password, reminder, user_key, master_password, key_pair })
-  if (!buffer) return null
+  if (!buffer) return error({ message: "invalid buffer" })
 
   const user: Partial<z.infer<typeof UserS>> = {
     ...generateUser({ public_key: buf2hex({ input: key_pair.public_key }) }),
