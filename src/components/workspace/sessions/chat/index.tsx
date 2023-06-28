@@ -21,6 +21,7 @@ import { WorkspaceS } from "@/data/schemas/workspace"
 import { error } from "@/components/libraries/logging"
 import { main as CostEstimator, InputT as CostEstimatorInputT } from "@/modules/openai-cost-estimator/"
 import { fieldFocus } from "@/components/libraries/fieldFocus"
+import PromptIcon from "@/assets/prompt.svg"
 
 const padding = 50
 
@@ -471,6 +472,7 @@ export default function Chat() {
     <div className="flex flex-1 flex-col pt-2 relative max-w-screen-lg" ref={eContainer}>
       <div className="flex flex-1">
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
+          
           {messages && messages?.length > 0 ? (
             <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4">
               Active module:{" "}
@@ -503,6 +505,7 @@ export default function Chat() {
               />
             ) : api_key ? (
               <div className="flex h-full flex-col justify-center items-center">
+                <img src={PromptIcon} className="w-52 h-52 mb-4 opacity-5" />
                 <div className="flex text-zinc-500 font-semibold text-sm pb-2">Select AI to chat with...</div>
                 <div className="flex">
                   <select

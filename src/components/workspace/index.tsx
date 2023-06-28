@@ -63,7 +63,7 @@ export default function Workspace() {
 
   return (
     <div className="flex flex-1">
-      <div id="Modes" className=" bg-zinc-800 border-r border-l border-zinc-700 overflow-x-hidden">
+      <div id="Modes" className=" bg-zinc-800 border-r border-l border-zinc-700 z-20">
         <div id="Workspace" className="flex flex-row bg-zinc-900 px-4 h-10">
           <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300">
             {_.find(user_state.workspaces, { id: workspace_id })?.name}
@@ -93,7 +93,7 @@ export default function Workspace() {
             </div>
           ))}
         </div>
-        <div className="px-2 w-60 min-w-min max-w-lg">
+        <div className="px-2 w-60 min-w-min max-w-lg z-10">
           <Switch fallback={""}>
             <Match when={active_sidebar_tab === "organizer"}>
               <Organizer app_state={app_state} user_state={user_state} />
