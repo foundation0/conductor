@@ -77,7 +77,9 @@ select {
     padding: 0.5rem;
     border: 1px solid var(--border-zinc-700);
   }
-
+  .easy-edit-button-wrapper {
+    height: auto;
+  }
   .easy-edit-component-wrapper {
 
     input {

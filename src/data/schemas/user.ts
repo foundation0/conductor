@@ -13,7 +13,6 @@ export const UserS = z.object({
     name: z.string().optional(),
     username: z.string().nonempty(),
     email: z.string().email().optional(),
-    avatar: z.string().optional(),
     profile_photos: z.array(z.string()).optional(),
   }),
   credentials: z
