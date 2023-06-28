@@ -4,18 +4,19 @@ import eventEmitter from "@/components/libraries/events"
 import { useLoaderData } from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import _, { set } from "lodash"
-import { AppState } from "@/data/loaders"
+import { initLoaders } from "@/data/loaders"
 
 const ToastNotification = () => {
   const [openn, setOpen] = useState(false)
   const [msg, setMsg] = useState<{ type: string; title?: string; message?: string } | null>(null)
 
   useEffect(() => {
-    const handleErrorEvent = async (lid: string) => {
-      const app_state = AppState.get()
-      const log = _.find(app_state.logs, { id: lid })
-      if (!log) return
-      setMsg({ type: log.type, title: "Error", message: log.message })
+    const handleErrorEvent = async (error: any) => {
+      // const { AppState } = await initLoaders()
+      // const app_state = AppState.get()
+      // const log = _.find(app_state.logs, { id: lid })
+      // if (!log) return
+      setMsg({ type: error.type, title: "Error", message: error.message })
       setOpen(true)
     }
 

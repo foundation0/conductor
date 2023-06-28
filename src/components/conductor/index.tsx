@@ -1,10 +1,7 @@
 import WorkspaceSelector from "@/components/workspace/selector"
-import { Outlet, useLoaderData } from "react-router-dom"
+import { Outlet } from "react-router-dom"
 import PromptIcon from "@/assets/prompt.svg"
 import { useLocation } from "react-router-dom"
-import ToastNotification from "../notifications/toast"
-import { AppStateT } from "@/data/loaders/app"
-import { useEffect, useState } from "react"
 import _ from "lodash"
 
 export default function Conductor() {
@@ -16,7 +13,7 @@ export default function Conductor() {
         <WorkspaceSelector />
       </div>
       <div id="WorkspaceView" className="flex flex-1">
-        {location.pathname !== '/conductor/' ? (
+        {location.pathname !== "/conductor/" ? (
           <Outlet />
         ) : (
           <div className="flex justify-center items-center w-full">
@@ -27,7 +24,6 @@ export default function Conductor() {
           </div>
         )}
       </div>
-      <ToastNotification />
     </main>
   )
 }

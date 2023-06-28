@@ -1,32 +1,35 @@
-import { TextMessageT, state as SState, SessionsT } from "@/data/loaders/sessions"
+import { TextMessageT, SessionsT } from "@/data/loaders/sessions"
 import _ from "lodash"
 import { SessionsS, TextMessageS } from "@/data/schemas/sessions"
 import { nanoid } from "nanoid"
-import { AppStateT, state as AState } from "@/data/loaders/app"
-import { SessionState, AppState, UserState } from "@/data/loaders"
+import { AppStateT } from "@/data/loaders/app"
+import { initLoaders } from "@/data/loaders"
 import AppStateActions from "@/data/actions/app"
 import UserActions from "@/data/actions/user"
-import { UserT } from "../loaders/user"
+import { UserT } from "@/data/loaders/user"
 
 const API = {
   updateSessions: async function (state: SessionsT) {
+    const { SessionState } = await initLoaders()
     const sessions: SessionsT = SessionState.get()
     const updated_state: SessionsT = { ...sessions, ...state }
     const parsed = SessionsS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
-    await SState.set(parsed.data)
+    await SessionState.set(parsed.data)
     return parsed.data
   },
 
   updateMessages: async function ({ session_id, messages }: { session_id: string; messages: TextMessageT[] }) {
+    const { SessionState } = await initLoaders()
     const sessions: SessionsT = SessionState.get()
     const s = _.cloneDeep(sessions)
     s.active[session_id].messages = messages
-    await SState.set(s)
+    await SessionState.set(s)
   },
 
   updateTempMessage: async function ({ session_id, message }: { session_id: string; message: TextMessageT }) {
     // find the session, if no session, abort
+    const { SessionState } = await initLoaders()
     const sessions: SessionsT = SessionState.get()
     const session = sessions.active[session_id]
     if (!session) throw new Error("Invalid session_id")
@@ -47,10 +50,11 @@ const API = {
     }
 
     // save the session
-    await SState.set(sessions, true)
+    await SessionState.set(sessions, true)
   },
 
   addMessage: async function ({ session_id, message }: { message: Partial<TextMessageT>; session_id: string }) {
+    const { SessionState, AppState, UserState } = await initLoaders()
     const state: SessionsT = SessionState.get()
     const app_state: AppStateT = AppState.get()
     const user_state: UserT = UserState.get()
@@ -99,8 +103,8 @@ const API = {
       })
     }
 
-    await SState.set(state)
-    await AState.set({ ...app_state, active_message_id: undefined })
+    await SessionState.set(state)
+    await AppState.set({ ...app_state, active_message_id: undefined })
     return vmessage.data
   },
   addSession: async ({
@@ -112,6 +116,7 @@ const API = {
     group_id?: string
     folder_id?: string
   }) => {
+    const { SessionState, UserState, AppState } = await initLoaders()
     const active_workspace = _.find(UserState.get().workspaces, { id: workspace_id })
     if (!active_workspace) throw new Error("Active workspace not found")
     const new_session = await UserActions.addSession({
@@ -160,14 +165,16 @@ const API = {
     folder_id: string
     session_id: string
   }) => {
+    const { SessionState, UserState, AppState } = await initLoaders()
+
     // delete session from app_state.open_sessions
-    const as = _.cloneDeep(AppState.get())
+    const as: AppStateT = _.cloneDeep(AppState.get())
     const new_open_sessions = as.open_sessions.filter((open_session) => open_session.session_id !== session_id)
     as.open_sessions = new_open_sessions
     await AppStateActions.updateAppState(as)
 
     // delete session from user_state.workspaces.groups.folders.sessions
-    let us = _.cloneDeep(UserState.get())
+    let us: UserT = _.cloneDeep(UserState.get())
     const updated_group = _.find(us.workspaces, { id: workspace_id })?.groups.map((group) => {
       if (group.id === group_id) {
         group.folders.map((folder) => {

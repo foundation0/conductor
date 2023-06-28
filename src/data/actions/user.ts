@@ -1,5 +1,5 @@
-import { UserT, state as UState } from "@/data/loaders/user"
-import { UserState, AppState, SessionState } from "@/data/loaders"
+import { UserT } from "@/data/loaders/user"
+import { initLoaders } from "@/data/loaders"
 import { z } from "zod"
 import { SessionS, WorkspaceS } from "@/data/schemas/workspace"
 import _ from "lodash"
@@ -13,17 +13,19 @@ import SessionsActions from "@/data/actions/sessions"
 
 const API = {
   updateUser: async function (state: Partial<UserT>) {
+    const { UserState } = await initLoaders()
     const s = UserState.get()
     const updated_state: UserT = { ...s, ...state }
     const parsed = UserS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
-    await UState.set(parsed.data)
+    await UserState.set(parsed.data)
     return parsed.data
   },
 
   addGroup: async ({ name, workspace_id }: { workspace_id: string; name?: string }) => {
+    const { UserState } = await initLoaders()
     // create new group in user_state
-    let us = _.cloneDeep(UserState.get())
+    let us: UserT = _.cloneDeep(UserState.get())
     const new_group = {
       _v: 1,
       id: nanoid(),
@@ -42,8 +44,10 @@ const API = {
     return API.updateUser(us)
   },
   deleteGroup: async ({ workspace_id, group_id }: { workspace_id: string; group_id: string }) => {
+    const { UserState, AppState, SessionState } = await initLoaders()
+
     // delete group's sessions from app_state.open_sessions
-    const as = _.cloneDeep(AppState.get())
+    const as: AppStateT = _.cloneDeep(AppState.get())
     const new_open_sessions = as.open_sessions.filter((open_session) => open_session.group_id !== group_id)
     as.open_sessions = new_open_sessions
     await AppStateActions.updateAppState(as)
@@ -60,7 +64,7 @@ const API = {
     await SessionsActions.updateSessions(new_sessions)
 
     // delete group from user_state
-    let us = _.cloneDeep(UserState.get())
+    let us: UserT = _.cloneDeep(UserState.get())
     const updated_groups = _.find(us.workspaces, { id: workspace_id })?.groups.filter((group) => group.id !== group_id)
     if (!updated_groups) return
     us.workspaces = _.map(us.workspaces, (workspace) => {
@@ -77,6 +81,7 @@ const API = {
     await AppStateActions.updateAppState(as)
   },
   addFolder: async ({ name, group_id, workspace_id }: { workspace_id: string; group_id: string; name?: string }) => {
+    const { UserState, AppState } = await initLoaders()
     // create new folder in user_state
     let us: UserT = _.cloneDeep(UserState.get())
     const new_folder = {
@@ -101,7 +106,7 @@ const API = {
     await API.updateUser(us)
 
     // create new folder in app_state
-    const as = _.cloneDeep(AppState.get())
+    const as: AppStateT = _.cloneDeep(AppState.get())
     as.open_folders = [
       ...as.open_folders,
       { _v: 1, folder_id: new_folder.id, group_id: group_id, workspace_id: workspace_id },
@@ -117,14 +122,15 @@ const API = {
     folder_id: string
     group_id: string
   }) => {
+    const { UserState, AppState, SessionState } = await initLoaders()
     // delete folder's sessions from app_state.open_sessions
-    const as = _.cloneDeep(AppState.get())
+    const as: AppStateT = _.cloneDeep(AppState.get())
     const new_open_sessions = as.open_sessions.filter((open_session) => open_session.folder_id !== folder_id)
     as.open_sessions = new_open_sessions
     await AppStateActions.updateAppState(as)
 
     // delete folder from user_state
-    let us = _.cloneDeep(UserState.get())
+    let us: UserT = _.cloneDeep(UserState.get())
     const updated_group = _.find(us.workspaces, { id: workspace_id })?.groups.map((group) => {
       if (group.id === group_id) {
         group.folders = group.folders.filter((folder) => folder.id !== folder_id)
@@ -179,6 +185,7 @@ const API = {
     group_id?: string
     folder_id?: string
   }) {
+    const { UserState } = await initLoaders()
     const state = UserState.get()
 
     // check group exists, if not, pick the first one
@@ -224,12 +231,13 @@ const API = {
           }
     )
 
-    await UState.set(updated_state)
+    await UserState.set(updated_state)
 
     return { session: new_session, group_id, folder_id }
   },
 
   addWorkspace: async function ({ name }: { name: string }) {
+    const { UserState, AppState } = await initLoaders()
     const user_state = UserState.get()
     const addWorkspaceToAppState = AppStateActions._addWorkspaceToAppState
 
@@ -276,7 +284,7 @@ const API = {
         },
       ],
     }
-    await UState.set({ ...user_state, workspaces: [...user_state.workspaces, new_workspace] })
+    await UserState.set({ ...user_state, workspaces: [...user_state.workspaces, new_workspace] })
 
     // add new workspace to app state
     await addWorkspaceToAppState({ workspace: new_workspace })
@@ -295,6 +303,7 @@ const API = {
     folder_id?: string
     session_id?: string
   }) {
+    const { UserState, AppState } = await initLoaders()
     const app_state: AppStateT = AppState.get()
     const user_state: UserT = UserState.get()
 
@@ -363,7 +372,7 @@ const API = {
         return workspace
       })
     }
-    await UState.set(us)
+    await UserState.set(us)
   },
 }
 

@@ -1,48 +1,59 @@
-import { store } from "../storage/localStorage"
+import { store } from "../storage/IDB"
 import { AppStateS } from "../schemas/app"
 import * as z from "zod"
 import { getId } from "@/security/common"
 import { nanoid } from "nanoid"
+import { getActiveUser } from "@/components/libraries/active_user"
+import _ from "lodash"
+import { error } from "@/components/libraries/logging"
 
 export type AppStateT = z.infer<typeof AppStateS>
-export const state = await store<AppStateT>({
-  name: "appstate",
-  initial: async (): Promise<AppStateT> => {
-    const initial_workspace_id = getId()
-    const initial_group_id = nanoid(10)
-    const initial_folder_id = nanoid(10)
-    const initial_session_id = getId()
+export const state = async () =>
+  await store<AppStateT>({
+    name: "appstate",
+    initial: async (): Promise<AppStateT | null> => {
+      const active_user = getActiveUser()
+      if (!active_user) return null
+      // TODO: get these from active_user
 
-    return {
-      _v: 1,
-      active_workspace_id: initial_workspace_id,
-      active_sessions: {
-        [initial_workspace_id]: {
-          // workspace_id
-          _v: 1,
-          workspace_id: initial_workspace_id,
-          group_id: initial_group_id,
-          session_id: initial_session_id,
-          folder_id: initial_folder_id,
+      const initial_workspace_id = active_user.workspaces[0].id
+      const initial_group_id = active_user.workspaces[0].groups[0].id
+      const initial_folder_id = active_user.workspaces[0].groups[0].folders[0].id
+      const initial_session_id = _.get(active_user, "workspaces[0].groups[0].folders[0].sessions[0]")?.id
+      if (!initial_session_id) {
+        error({ message: "No initial session id" })
+        return null
+      }
+      return {
+        _v: 1,
+        active_workspace_id: initial_workspace_id,
+        active_sessions: {
+          [initial_workspace_id]: {
+            // workspace_id
+            _v: 1,
+            workspace_id: initial_workspace_id,
+            group_id: initial_group_id,
+            session_id: initial_session_id,
+            folder_id: initial_folder_id,
+          },
         },
-      },
-      open_folders: [
-        {
-          _v: 1,
-          workspace_id: initial_workspace_id,
-          group_id: initial_group_id,
-          folder_id: initial_folder_id,
-        },
-      ],
-      open_sessions: [
-        {
-          _v: 1,
-          workspace_id: initial_workspace_id,
-          group_id: initial_group_id,
-          session_id: initial_session_id,
-        },
-      ],
-    }
-  },
-  ztype: AppStateS,
-})
+        open_folders: [
+          {
+            _v: 1,
+            workspace_id: initial_workspace_id,
+            group_id: initial_group_id,
+            folder_id: initial_folder_id,
+          },
+        ],
+        open_sessions: [
+          {
+            _v: 1,
+            workspace_id: initial_workspace_id,
+            group_id: initial_group_id,
+            session_id: initial_session_id,
+          },
+        ],
+      }
+    },
+    ztype: AppStateS,
+  })

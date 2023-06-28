@@ -3,15 +3,8 @@ import _ from "lodash"
 import { decrypt, encrypt } from "@/security/common"
 import { pack, unpack } from "msgpackr"
 import { DecryptS } from "@/data/schemas/security"
-function checkForLocalStorage() {
-  try {
-    localStorage.setItem("test", "test")
-    localStorage.removeItem("test")
-    return true
-  } catch (e) {
-    return false
-  }
-}
+import { get, set, createStore } from "idb-keyval"
+import { getActiveUser } from "@/components/libraries/active_user"
 
 export const store = async <TData>({
   name,
@@ -22,17 +15,26 @@ export const store = async <TData>({
   ztype,
 }: {
   name: string
-  username: string,
-  enc_key: string,
+  username?: string
+  enc_key?: string
   initial: Function
   _debug?: TData
   ztype: ZodTypeAny
-}): Promise<{ get: () => TData; set: (data: TData, no_storage?: boolean) => void }> => {
+}): Promise<{ get: () => TData; set: (data: TData, no_storage?: boolean) => void } | null> => {
   // if (_debug) return {_debug // for testing
-  if(!username || !enc_key) return { get: () => null as TData, set: () => null }
-  const store = checkForLocalStorage() ? localStorage.getItem(`${username}:${name}`) : null
-  let s: TData = store ? decrypt({ ...JSON.parse(store), key: enc_key }) : await initial()
-  // if (!store) localStorage.setItem(name, JSON.stringify(s))
+  if (!username || !enc_key) {
+    const active_user = getActiveUser()
+    if (!active_user) return null //{ get: () => null as TData, set: () => null }
+    username = active_user.meta.username
+    enc_key = active_user.master_password
+  }
+  // const DB = createStore(username, "prompt")
+  let key = `${username}:${name}`
+  let store = await get(key).catch((e) => {
+    console.log("error getting store")
+  })
+  let s: TData = store ? decrypt({ ...unpack(store), key: enc_key }) : await initial()
+  if (!store && s) set(key, pack(encrypt({ data: s, key: enc_key })))
   if (s) {
     const s_check = ztype.safeParse(s)
     if (!s_check.success) {
@@ -49,7 +51,8 @@ export const store = async <TData>({
         }
         s = vstate.data
         if (no_storage) return
-        if (checkForLocalStorage()) localStorage.setItem(`${username}:${name}`, JSON.stringify(encrypt({ data: vstate.data, key: enc_key })))
+        if (!enc_key) throw new Error("No encryption key")
+        set(key, pack(encrypt({ data: vstate.data, key: enc_key })))
         return true
       },
     }

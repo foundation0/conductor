@@ -93,3 +93,12 @@ select {
 .react-auto-scroll__scroll-container {
   overflow-x: hidden !important;
 }
+
+.kbd {
+  border-radius: 0.2rem !important;
+
+  &.kbd-xs {
+    font-size: 0.7rem !important;
+    padding: 0rem 0.4rem !important;
+  }
+}

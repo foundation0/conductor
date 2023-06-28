@@ -50,9 +50,6 @@ export default function WorkspaceSelector() {
                           ? "bg-zinc-800 border-t-zinc-700"
                           : "border-zinc-800 border hover:bg-zinc-800 hover:border-t-zinc-700 cursor-pointer"
                       }`}
-                      /* onClick={() => {
-                  AppStateActions.updateAppState({ active_workspace_id: workspace.id })
-                }} */
                     >
                       {workspace.icon ? (
                         <img src={workspace.icon} className="w-5 h-5 text-zinc-500" />

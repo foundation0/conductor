@@ -1,27 +1,13 @@
 import { createBrowserRouter, useNavigate } from "react-router-dom"
 import { ConductorR } from "@/components/conductor/routes"
 import ErrorPage from "./error"
-import { useEffect } from "react"
-import * as States from "@/data/loaders"
-
-async function initStores() {
-  // Initialize states
-  const a = await States.AppState.get()
-  await States.UserState.get()
-  await States.SessionState.get()
-}
+import { LoginR, OnboardingR } from "./components/user/routes"
 
 function RedirectToConductor() {
   let navigate = useNavigate()
 
-  // Use an effect to redirect as soon as the component is mounted.
-  useEffect(() => {
-    initStores().then(() => {
-      navigate("/conductor/")
-    })
-  }, []) // Empty dependency array to only run once.
+  navigate("/conductor/")
 
-  // You can return null, or some sort of "Redirecting..." message
   return null
 }
 
@@ -33,6 +19,8 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   ConductorR,
+  LoginR,
+  OnboardingR,
 ])
 
 export default router

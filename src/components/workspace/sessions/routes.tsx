@@ -1,9 +1,10 @@
 import { ActionFunctionArgs, redirect } from "react-router-dom"
 import Sessions from "."
-import { AppState, UserState, SessionState, ClipboardState } from "@/data/loaders"
+import { initLoaders } from "@/data/loaders"
 import SessionActions from "@/data/actions/sessions"
 
 const loader = async () => {
+  const { AppState, UserState, SessionState, ClipboardState } = await initLoaders()
   const app_state = await AppState.get()
   const user_state = await UserState.get()
   const sessions_state = await SessionState.get()

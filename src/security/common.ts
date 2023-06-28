@@ -8,38 +8,13 @@ import { scrypt } from "@noble/hashes/scrypt"
 import { sha3_256 } from "@noble/hashes/sha3"
 import { getPublicKey, verify, signAsync } from "@noble/secp256k1"
 import { pack, unpack } from "msgpackr"
+import { KeyPairS, SecurePasswordS, VerifyPasswordS, EncryptS, DecryptS } from "@/data/schemas/security"
+import { error } from "@/components/libraries/logging"
 import sodium from "sodium-javascript"
 type Hex = Uint8Array | string
 ;(async () => {
   if (typeof sodium["init"] === "function") await sodium.init()
 })()
-
-const TKeyPair = z.object({
-  public_key: z.instanceof(Uint8Array),
-  secret_key: z.instanceof(Uint8Array),
-})
-
-const TSecurePassword = z.object({
-  password: z.string(),
-  salt: z.string(),
-})
-
-const TVerifyPassword = z.object({
-  hash: z.instanceof(Uint8Array),
-  password: z.string(),
-  salt: z.string(),
-})
-
-const TEncrypt = z.object({
-  key: z.string(),
-  data: z.unknown(),
-})
-
-const TDecrypt = z.object({
-  key: z.string(),
-  cipher: z.instanceof(Uint8Array),
-  nonce: z.string(),
-})
 
 export function buf2hex({ input, add0x = false }: { input: Uint8Array | Buffer; add0x?: boolean }): string {
   const str = b4a.toString(input, "hex")
@@ -59,7 +34,7 @@ export function getId(): string {
   return buf2hex({ input: keyPair().public_key, add0x: true })
 }
 
-export function keyPair({ seed }: { seed?: Uint8Array } = {}): z.infer<typeof TKeyPair> {
+export function keyPair({ seed }: { seed?: Uint8Array } = {}): z.infer<typeof KeyPairS> {
   if (!seed) {
     seed = b4a.alloc(64)
     sodium.randombytes_buf(seed)
@@ -71,16 +46,16 @@ export function keyPair({ seed }: { seed?: Uint8Array } = {}): z.infer<typeof TK
   }
 }
 
-export function securePassword({ password, salt }: z.infer<typeof TSecurePassword>): Uint8Array {
+export function securePassword({ password, salt }: z.infer<typeof SecurePasswordS>): Uint8Array {
   return scrypt(password, salt, { N: 2 ** 16, r: 8, p: 1, dkLen: 32 })
 }
 
-export function verifyPassword({ hash, password, salt }: z.infer<typeof TVerifyPassword>): boolean {
+export function verifyPassword({ hash, password, salt }: z.infer<typeof VerifyPasswordS>): boolean {
   const hashi = securePassword({ password, salt })
   return b4a.equals(hashi, hash)
 }
 
-export function encrypt({ data, key }: z.infer<typeof TEncrypt>): { cipher: Uint8Array; nonce: string } {
+export function encrypt({ data, key }: z.infer<typeof EncryptS>): { cipher: Uint8Array; nonce: string } {
   const d = pack(data)
   const h = createHash({ str: key })
   const secret = h.slice(0, 32)
@@ -94,18 +69,24 @@ export function encrypt({ data, key }: z.infer<typeof TEncrypt>): { cipher: Uint
   return { cipher, nonce: buf2hex({ input: nonce }) }
 }
 
-export function decrypt({ key, cipher, nonce }: z.infer<typeof TDecrypt>): any {
-  const decrypted_data = b4a.alloc(cipher.length - sodium.crypto_secretbox_MACBYTES)
-  const secret = createHash({ str: key }).slice(0, 32)
-  sodium.crypto_secretbox_open_easy(decrypted_data, cipher, b4a.from(nonce, "hex"), secret)
-  return unpack(decrypted_data)
+export function decrypt({ key, cipher, nonce }: z.infer<typeof DecryptS>): any {
+  try {
+    const decrypted_data = b4a.alloc(cipher.length - sodium.crypto_secretbox_MACBYTES)
+    const secret = createHash({ str: key }).slice(0, 32)
+    sodium.crypto_secretbox_open_easy(decrypted_data, cipher, b4a.from(nonce, "hex"), secret)
+    const unpacked = unpack(decrypted_data)
+    return unpacked
+  } catch (err: any) {
+    error({ message: err.message, data: err })
+    return false
+  }
 }
 
 export function createHash({ str }: { str: Uint8Array | string }): Uint8Array {
   return blake3(b4a.isBuffer(str) ? str : b4a.from(str))
 }
 
-export function validateKeyPair(keyPair: z.infer<typeof TKeyPair>): boolean {
+export function validateKeyPair(keyPair: z.infer<typeof KeyPairS>): boolean {
   const public_key = getPublicKey(keyPair.secret_key, true)
   const pub = keyPair.public_key
   return buf2hex({ input: pub }) === buf2hex({ input: public_key })

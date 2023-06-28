@@ -1,11 +1,14 @@
 import Conductor from "@/components/conductor/"
 import { WorkspaceIdR, WorkspaceR } from "../workspace/routes"
-import { AppState, UserState } from "@/data/loaders"
+import { initLoaders } from "@/data/loaders"
 import Settings from "@/components/conductor/settings"
+import { LoginR, UserIdR } from "@/components/user/routes"
+import { RequireAuth } from "../libraries/auth"
 
 const loader = async () => {
-  const app_state = await AppState.get()
-  const user_state = await UserState.get()
+  const { AppState, UserState } = await initLoaders()
+  const user_state = UserState ? await UserState.get() : null
+  const app_state = AppState ? await AppState.get() : null
   return { app_state, user_state }
 }
 
@@ -16,8 +19,12 @@ export const SettingsR = {
 }
 
 export const ConductorR = {
-  path: "/conductor",
-  element: <Conductor />,
+  path: "/conductor/",
+  element: (
+    <RequireAuth>
+      <Conductor />
+    </RequireAuth>
+  ),
   loader,
-  children: [WorkspaceR, WorkspaceIdR, SettingsR],
+  children: [WorkspaceR, WorkspaceIdR, SettingsR, UserIdR],
 }

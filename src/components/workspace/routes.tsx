@@ -1,13 +1,15 @@
 import Workspace from "."
-import { AppState, UserState } from "@/data/loaders"
+import { initLoaders } from "@/data/loaders"
 import { ActionFunctionArgs, redirect } from "react-router-dom"
 import UserActions from "@/data/actions/user"
 import WorkspaceCreate from "@/components/workspace/create"
 import { SessionIdR, SessionR } from "@/components/workspace/sessions/routes"
 import WorkspaceSettings from "@/components/workspace/settings"
 import _ from "lodash"
-import { SessionS } from "@/data/schemas/workspace"
+import { SessionS, WorkspaceS } from "@/data/schemas/workspace"
 import { z } from "zod"
+import { AppStateT } from "@/data/loaders/app"
+import { UserT } from "@/data/loaders/user"
 
 export const WorkspaceCreateR = {
   path: "create",
@@ -92,16 +94,20 @@ export const WorkspaceR = {
         return { ok: false }
 
       case "delete":
+        const { AppState, UserState } = await initLoaders()
         // get all workspace's sessions
         const workspace_id = formData.get("workspace_id")
         if (typeof workspace_id !== "string") return { ok: false }
-        const workspace = UserState.get().workspaces.find((w) => w.id === workspace_id)
+        const user: UserT = UserState.get()
+        const workspace = user.workspaces.find((w) => w.id === workspace_id)
         if (!workspace) return { ok: false }
-        const workspace_sessions = workspace.groups.flatMap((g) => g.folders.flatMap((f) => f.sessions)) as z.infer<typeof SessionS>[]
+        const workspace_sessions = workspace.groups.flatMap((g) => g.folders.flatMap((f) => f.sessions)) as z.infer<
+          typeof SessionS
+        >[]
 
         // delete all workspace's sessions from app state's open sessions
         if (workspace_sessions.length > 0) {
-          const app_state = AppState.get()
+          const app_state: AppStateT = AppState.get()
           const open_sessions = app_state.open_sessions
           const open_sessions_ids = open_sessions.map((s) => s.session_id)
           const open_sessions_to_delete = _.intersection(
@@ -126,7 +132,7 @@ export const WorkspaceR = {
           })
         }
         // delete all workspace from user state
-        const user_state = UserState.get()
+        const user_state: UserT = UserState.get()
         const updated_workspaces = user_state.workspaces.filter((w) => w.id !== workspace_id)
         await UserState.set({
           ...user_state,
@@ -138,7 +144,9 @@ export const WorkspaceR = {
 
         if (next_workspace) {
           // find its first session
-          const next_workspace_first_session = next_workspace.groups.flatMap((g) => g.folders.flatMap((f) => f.sessions))[0]
+          const next_workspace_first_session = next_workspace.groups.flatMap((g) =>
+            g.folders.flatMap((f) => f.sessions)
+          )[0]
           return redirect(`/conductor/${next_workspace.id}/${next_workspace_first_session?.id || ""}`)
         } else {
           return redirect("/conductor/create")
@@ -151,6 +159,7 @@ export const WorkspaceR = {
 
 export const WorkspaceSettingsR = {
   loader: async function () {
+    const { UserState } = await initLoaders()
     const data = {
       user_state: UserState.get(),
     }
@@ -164,6 +173,7 @@ export const WorkspaceIdR = {
   path: ":workspace_id",
   element: <Workspace />,
   loader: async function () {
+    const { AppState, UserState } = await initLoaders()
     const data = {
       app_state: AppState.get(),
       user_state: UserState.get(),

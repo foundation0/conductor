@@ -8,7 +8,7 @@ import { nanoid } from "nanoid"
 import { buildMessageTree } from "@/components/libraries/computeMessageChain"
 import { useLoaderData, useNavigate, useParams } from "react-router-dom"
 import SessionsActions from "@/data/actions/sessions"
-import { SessionState } from "@/data/loaders"
+import { initLoaders } from "@/data/loaders"
 import useClipboardApi from "use-clipboard-api"
 import { Module } from "@/modules/"
 import { UserT } from "@/data/loaders/user"
@@ -20,6 +20,7 @@ import generateLLMModuleOptions from "@/components/libraries/generateLLMModuleOp
 import { WorkspaceS } from "@/data/schemas/workspace"
 import { error } from "@/components/libraries/logging"
 import { main as CostEstimator, InputT as CostEstimatorInputT } from "@/modules/openai-cost-estimator/"
+import { fieldFocus } from "@/components/libraries/fieldFocus"
 
 const padding = 50
 
@@ -31,7 +32,7 @@ export default function Chat() {
   const workspace_id = useParams().workspace_id as string
   const session_id = useParams().session_id as string
   const [workspace, setWorkspace] = useState<z.infer<typeof WorkspaceS>>(
-    user_state.workspaces.find((w) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
+    user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
   )
   const [session, setSession] = useState(sessions_state.active[session_id])
   const [messages, setMessages] = useState<MessageRowT[] | undefined>([])
@@ -284,6 +285,7 @@ export default function Chat() {
 
   // Update local session state when sessions[session_id] changes
   const updateSessions = async () => {
+    const { SessionState } = await initLoaders()
     const s = await SessionState.get()
     setSession(s.active[session_id])
   }
@@ -456,31 +458,37 @@ export default function Chat() {
     await SessionsActions.updateSessions(new_sessions)
 
     navigate(`/conductor/${workspace_id}/${session_id}`)
+
+    // set focus to #input
+    setTimeout(() => {
+      fieldFocus({ selector: "#input" })
+    }, 200)
   }
 
   if (!session || !module) return null
   // style={{'marginBottom': '80px'}}
   return (
-    <div className="flex flex-1 flex-col pt-2 relative" ref={eContainer}>
+    <div className="flex flex-1 flex-col pt-2 relative max-w-screen-lg" ref={eContainer}>
       <div className="flex flex-1">
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
           {messages && messages?.length > 0 ? (
             <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4">
-              Active module: <select
-                    className="flex border rounded-lg px-2 ml-2 py-1 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
-                    defaultValue={
-                      session.settings.module.id
-                        ? `{"id": "${session.settings.module.id}", "variant": "${session.settings.module.variant}"}`
-                        : "click to select"
-                    }
-                    onChange={(data) => {
-                      handleModuleChange({
-                        value: data.target.value,
-                      })
-                    }}
-                  >
-                    {generateLLMModuleOptions({ user_state })}
-                  </select>
+              Active module:{" "}
+              <select
+                className="flex border rounded-lg px-2 ml-2 py-1 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
+                defaultValue={
+                  session.settings.module.id
+                    ? `{"id": "${session.settings.module.id}", "variant": "${session.settings.module.variant}"}`
+                    : "click to select"
+                }
+                onChange={(data) => {
+                  handleModuleChange({
+                    value: data.target.value,
+                  })
+                }}
+              >
+                {generateLLMModuleOptions({ user_state })}
+              </select>
             </div>
           ) : null}
           <div className="Messages flex flex-1 flex-col" style={{ height }}>
@@ -524,7 +532,8 @@ export default function Chat() {
                     <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">W</kbd> close session
                   </div>
                   <div className="text-xs text-zinc-400">
-                  <kbd className="kbd kbd-xs">Shift</kbd> + <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">D</kbd> delete session
+                    <kbd className="kbd kbd-xs">Shift</kbd> + <kbd className="kbd kbd-xs">Alt</kbd> +{" "}
+                    <kbd className="kbd kbd-xs">D</kbd> delete session
                   </div>
                 </div>
               </div>

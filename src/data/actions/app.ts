@@ -1,15 +1,16 @@
-import { AppStateT, state as AState } from "@/data/loaders/app"
+import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import { ActiveSessionS, AppStateS, OpenSessionS } from "@/data/schemas/app"
 import { FolderS, GroupS, WorkspaceS } from "@/data/schemas/workspace"
 import { z } from "zod"
 import { nanoid } from "nanoid"
 import _ from "lodash"
-import { AppState, UserState } from "@/data/loaders"
+import { initLoaders } from "@/data/loaders"
 import UserActions from "@/data/actions/user"
 import { LogItemS } from "@/data/schemas/app"
 
 async function getActiveWorkspace() {
+  const { AppState, UserState } = await initLoaders()
   const app_state: AppStateT = AppState.get()
   const user_state: UserT = UserState.get()
   return app_state.active_workspace_id
@@ -19,15 +20,18 @@ async function getActiveWorkspace() {
 
 const API = {
   updateAppState: async function (new_state: Partial<AppStateT>) {
+    const { AppState } = await initLoaders()
     const state: AppStateT = AppState.get()
     const updated_state = { ...state, ...new_state }
     if (!AppStateS.safeParse(updated_state).success) throw new Error("Invalid state")
-    await AState.set(updated_state)
+    await AppState.set(updated_state)
     return true
   },
   _addWorkspaceToAppState: async function ({ workspace }: { workspace: z.infer<typeof WorkspaceS> }) {
+    const { AppState } = await initLoaders()
+
     const app_state: AppStateT = AppState.get()
-    await AState.set({
+    await AppState.set({
       ...app_state,
       active_workspace_id: workspace.id,
       active_sessions: {
@@ -53,6 +57,8 @@ const API = {
     })
   },
   removeOpenSession: async function ({ session_id }: { session_id: string }) {
+    const { AppState } = await initLoaders()
+
     const app_state: AppStateT = AppState.get()
     const active_workspace = await getActiveWorkspace()
     const open_sessions_for_workspace = app_state.open_sessions.filter(
@@ -85,11 +91,13 @@ const API = {
     }
     app_state.active_sessions[active_workspace.id] = open_sessions_for_workspace[new_active_tab]
 
-    await AState.set(app_state)
+    await AppState.set(app_state)
 
     return open_sessions_for_workspace[new_active_tab]
   },
   changeActiveSession: async function ({ session_id }: { session_id: string }) {
+    const { AppState } = await initLoaders()
+
     const app_state: AppStateT = AppState.get()
 
     const active_workspace = await getActiveWorkspace()
@@ -133,7 +141,7 @@ const API = {
       new_open_sessions.push(active_session)
     }
 
-    await AState.set({
+    await AppState.set({
       ...app_state,
       active_sessions: {
         ...app_state.active_sessions,
@@ -154,8 +162,10 @@ const API = {
       data,
     })
     if (!li.success) return console.error("Invalid log item")
+    const { AppState } = await initLoaders()
+
     const app_state: AppStateT = AppState.get()
-    await AState.set({
+    await AppState.set({
       ...app_state,
       logs: [...(app_state.logs || []), li.data],
     })
