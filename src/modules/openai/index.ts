@@ -23,13 +23,27 @@ export const specs: z.infer<typeof ModuleS> = {
     variants: [
       {
         id: "gpt-4",
-        context_len: 4096,
-        cost: 0.02,
+        context_len: 8192,
+        cost_input: 0.03,
+        cost_output: 0.06,
       },
       {
         id: "gpt-3.5-turbo",
         context_len: 4096,
-        cost: 0.002,
+        cost_input: 0.0015,
+        cost_output: 0.002,
+      },
+      {
+        id: "gpt-4-32k",
+        context_len: 32768,
+        cost_input: 0.06,
+        cost_output: 0.12,
+      },
+      {
+        id: "gpt-3.5-turbo-16k",
+        context_len: 16384,
+        cost_input: 0.003,
+        cost_output: 0.004,
       },
     ],
     icon: Icon,
@@ -42,7 +56,7 @@ export const specs: z.infer<typeof ModuleS> = {
 }
 
 const InputS = z.object({
-  model: z.enum(["gpt-4", "gpt-3.5-turbo"]).default("gpt-3.5-turbo"),
+  model: z.string().default("gpt-3.5-turbo"),
   api_key: z.string().nonempty(),
   prompt: z.object({
     instructions: z.string().optional(),
@@ -85,7 +99,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
     HumanMessagePromptTemplate.fromTemplate("{input}"),
   ])
 
-  const memory = new BufferMemory({ inputKey: 'input', returnMessages: true, memoryKey: "memory" })
+  const memory = new BufferMemory({ inputKey: "input", returnMessages: true, memoryKey: "memory" })
 
   if (history && history.length > 1) {
     for (let i = 0; i < history.length; i += 2) {
@@ -132,7 +146,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
         code: "catch-openai",
         message: error?.message || "Unknown error",
         status: error?.status || 500,
-        data: error
+        data: error,
       }
       onError(err)
     }

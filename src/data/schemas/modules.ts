@@ -1,5 +1,13 @@
 import { z } from "zod"
 
+export const LLMVariantS = z.object({
+  id: z.string(),
+  context_len: z.number().optional(),
+  cost_input: z.number().optional(),
+  cost_output: z.number().optional(),
+  cost: z.number().optional().describe('deprecated'), // deprecated
+})
+
 export const ModuleS = z.object({
   _v: z.number().default(1),
   id: z.string(),
@@ -14,11 +22,7 @@ export const ModuleS = z.object({
     icon: z.string().optional(),
     variants: z
       .array(
-        z.object({
-          id: z.string(),
-          context_len: z.number().optional(),
-          cost: z.number().optional(),
-        })
+        LLMVariantS
       )
       .optional(),
   }),
@@ -26,6 +30,8 @@ export const ModuleS = z.object({
   streaming: z.boolean().catch(() => false),
   cost: z.number().optional(),
 })
+
+
 
 const ModuleHooksS = z.object({
   before: z.array(z.function()).optional(),

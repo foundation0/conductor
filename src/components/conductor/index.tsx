@@ -8,7 +8,7 @@ export default function Conductor() {
   const location = useLocation()
 
   return (
-    <main className={`flex flex-row flex-1 m-0 p-0 dark h-full`}>
+    <main className={`flex flex-row flex-1 m-0 p-0 dark h-full bg-zinc-900`}>
       <div id="WorkspaceSelector" className="flex flex-shrink bg-zinc-900">
         <WorkspaceSelector />
       </div>

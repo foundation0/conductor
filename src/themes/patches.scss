@@ -15,6 +15,27 @@ select {
   box-shadow: none !important;
 }
 
+dialog {
+  background: transparent !important;
+
+  &[open] {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: all;
+    background: transparent !important;
+    box-shadow: none !important;
+
+    &::backdrop {
+      backdrop-filter: blur(1px);
+    }
+
+    .modal {
+      box-shadow: none !important;
+
+    }
+  }
+}
+
 /* remove the border from tabs */
 .tab {
   &.tab-active:not(.tab-disabled):not([disabled]) {
@@ -73,21 +94,38 @@ select {
   .easy-edit-wrapper {
     /* expand to full width and set text align to right */
     width: 100%;
-    text-align: right;
-    padding: 0.5rem;
+    /* text-align: right; */
+    /* padding: 0.5rem; */
     border: 1px solid var(--border-zinc-700);
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+    overflow: hidden;
   }
+
   .easy-edit-button-wrapper {
     height: auto;
   }
+
+  .easy-edit-component-wrapper {
+
+    input {
+      /* make the input field full width */
+      width: 100%;
+      /*text-align: right;*/
+      /* padding: 0.5rem; */
+      background-color: $bg-zinc-700;
+    }
+  }
+}
+
+.ModuleSetting {
   .easy-edit-component-wrapper {
 
     input {
       /* make the input field full width */
       width: 100%;
       text-align: right;
-      padding: 0.5rem;
-      background-color: $bg-zinc-700;
+      padding-right: 0.5rem;
     }
   }
 }

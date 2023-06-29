@@ -66,8 +66,8 @@ export default function Settings() {
 
   return (
     <div className="Settings flex flex-col flex-grow items-center m-10">
-      <div className="flex flex-col w-full justify-start items-start">
-        <div className="text-lg text-zinc-400 shadow font-semibold">{workspace.name} settings</div>
+      <div className="flex flex-col w-full justify-start items-start max-w-2xl">
+        <div className="text-xl text-zinc-400 shadow font-semibold">{workspace.name} settings</div>
         <hr className="w-full border-zinc-700 my-4" />
 
         <div className=" text-zinc-400 shadow font-semibold text-lg mb-3">Details</div>
@@ -127,7 +127,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className=" text-zinc-400 shadow font-semibold text-lg mb-3 mt-8">Destructive actions</div>
+        <div className=" text-zinc-400 shadow font-semibold text-lg mb-3 mt-8">Manage</div>
         <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-delete-workspace`}>
           <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
             Delete workspace (can't be undone)
@@ -135,10 +135,11 @@ export default function Settings() {
           <div className="flex flex-grow text-end text-sm justify-end">
             <button
               className={`bg-red-800 hover:bg-red-700 text-zinc-50 rounded-lg block px-3 py-2 text-xs font-semibold cursor-pointer ${
-                user_state.workspaces.length === 1 ? "disabled" : ""
+                user_state.workspaces.length === 1 ? "disabled tooltip tooltip-top" : ""
               }`}
+              data-tip="Can't delete only workspace"
               disabled={user_state.workspaces.length === 1}
-              title={user_state.workspaces.length === 1 ? "Can't delete last workspace" : ""}
+              // title={user_state.workspaces.length === 1 ? "Can't delete only workspace" : ""}
               onClick={() => {
                 if (user_state.workspaces.length === 1) return null
                 if (!confirm(`Are you sure you want to delete ${workspace.name}? This can't be undone.`)) return null
