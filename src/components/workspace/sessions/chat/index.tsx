@@ -142,7 +142,8 @@ export default function Chat() {
 
     // compute instructions if any
     if (prompt?.instructions) {
-      const costs = await CostEstimator({ model, messages: [{ role: "system", content: prompt.instructions }] })
+      const costs = await CostEstimator({ model, messages: [{ role: "system", content: prompt.instructions }], costs: { input: variant.cost_input || 0, output: variant.cost_output || 0 } })
+      if(!costs) return error({ message: "costs not found", data: { model } })
       token_count += costs.tokens
       usd_cost += costs.usd
     }
@@ -155,8 +156,8 @@ export default function Chat() {
         role: m.type === "human" ? "user" : "assistant",
         content: m.text,
       }
-      const costs = await CostEstimator({ model, messages: [tmp_m] })
-
+      const costs = await CostEstimator({ model, messages: [tmp_m], costs: { input: variant.cost_input || 0, output: variant.cost_output || 0 } })
+      if(!costs) return error({ message: "error in computing costs", data: { model } })
       // when token count goes over selected model's token limit, stop
       if (token_count + costs.tokens > context_len) break
       token_count += costs.tokens
@@ -273,6 +274,12 @@ export default function Chat() {
               parent_id: m.id,
             },
           })
+          let tmp_m: { role: "system" | "user" | "assistant"; content: string; } = { role: "assistant", content: response || stream_response || "" }
+          const model = user_state.modules.installed.find((m) => m.id === session.settings.module.id)
+          const variant = _.find(model?.meta.variants, { id: session.settings.module.variant })
+          const costs = await CostEstimator({ model: session.settings.module.variant, response: response || stream_response || "", costs: { input: variant?.cost_input || 0, output: variant?.cost_output || 0 } })
+          if(!costs) return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
+          console.log(`Output tokens: ${costs.tokens}, USD: $${costs.usd}`)
           setBranchParentId(false)
           setMsgUpdateTs(new Date().getTime())
         } else if (!has_error && !response && !stream_response) {

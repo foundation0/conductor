@@ -1,8 +1,9 @@
 import { ModuleS } from "@/data/schemas/modules"
 import { z } from "zod"
-import { GPTTokens } from "gpt-tokens"
+import { GPTTokens } from "./calculator"
 import { set, get } from "@/data/actions/cache"
 import { buf2hex, createHash } from "@/security/common"
+import { error } from "@/components/libraries/logging"
 
 export const specs: z.infer<typeof ModuleS> = {
   _v: 1,
@@ -16,21 +17,7 @@ export const specs: z.infer<typeof ModuleS> = {
 }
 
 const InputS = z.object({
-  model: z
-    .enum([
-      "gpt-3.5-turbo",
-      "gpt-3.5-turbo-0301",
-      "gpt-3.5-turbo-0613",
-      "gpt-3.5-turbo-16k",
-      "gpt-3.5-turbo-16k-0613",
-      "gpt-4",
-      "gpt-4-0314",
-      "gpt-4-0613",
-      "gpt-4-32k",
-      "gpt-4-32k-0314",
-      "gpt-4-32k-0613",
-    ])
-    .default("gpt-3.5-turbo"),
+  model: z.string().default("gpt-3.5-turbo"),
   messages: z
     .array(
       z.object({
@@ -38,7 +25,12 @@ const InputS = z.object({
         content: z.string(),
       })
     )
-    .nonempty(),
+    .optional(),
+  response: z.string().optional(),
+  costs: z.object({
+    input: z.number(),
+    output: z.number(),
+  }),
 })
 
 const OutputS = z.object({
@@ -49,10 +41,14 @@ const OutputS = z.object({
 export type InputT = z.infer<typeof InputS>
 export type OutputT = z.infer<typeof OutputS>
 
-export async function main(input: InputT): Promise<OutputT> {
-  const { model, messages } = InputS.parse(input)
+export async function main(input: InputT): Promise<OutputT | void> {
+  const { model, messages, response, costs } = InputS.parse(input)
 
-  const contents_hash = buf2hex({ input: createHash({ str: JSON.stringify(messages) }) })
+  if(!messages && !response) {
+    return error({ message: "Either messages or response must be provided" })
+  }
+
+  const contents_hash = buf2hex({ input: createHash({ str: JSON.stringify(messages || response) }) })
   const cacheKey = `openai-cost-estimator-${model}-${contents_hash}`
   const cached = await get(cacheKey)
   if (cached) {
@@ -62,7 +58,9 @@ export async function main(input: InputT): Promise<OutputT> {
   const calcs = new GPTTokens({
     plus: false,
     model,
-    messages,
+    messages: messages || [{ role: "user", content: response || "" }],
+    costs,
+    io: messages ? 'input' : 'output'
   })
   const { usedTokens, usedUSD } = calcs
   set({ key: cacheKey, value: { tokens: usedTokens, usd: usedUSD } })
