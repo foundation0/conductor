@@ -1,7 +1,7 @@
 import { UserT } from "@/data/loaders/user"
 import _ from "lodash"
 
-export default function generateLLMModuleOptions({ user_state }: { user_state: UserT }) {
+export default function generateLLMModuleOptions({ user_state, selected }: { user_state: UserT, selected?: string }) {
   const objects = user_state.modules.installed.filter((mod) => mod.meta.type === "LLM")
   // expand modules into array of objects based on variants
   let result = _.reduce(
@@ -33,6 +33,7 @@ export default function generateLLMModuleOptions({ user_state }: { user_state: U
         disabled={!mod.has_api_key}
         key={`{"id": "${mod.id}", "variant": "${mod.variant}"}`}
         value={`{"id": "${mod.id}", "variant": "${mod.variant}"}`}
+        /* selected={selected === `{"id": "${mod.id}", "variant": "${mod.variant}"}`} */
       >
         {`${mod.id} / ${mod.variant}`}
         {!mod.has_api_key ? " (no api key)" : ""}

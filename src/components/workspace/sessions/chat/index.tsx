@@ -61,6 +61,8 @@ export default function Chat() {
 
   const [msgs_in_mem, setMsgsInMem] = useState<string[]>([])
 
+  const [active_module, setActiveModule] = useState<any>(null)
+
   // keep track of input height
   useEffect(() => {
     const e_input = eInput.current
@@ -81,6 +83,11 @@ export default function Chat() {
     setContainerHeight(e_container.offsetHeight)
     container_observer.observe(e_container)
   }, [eInput?.current?.offsetHeight])
+
+  /*   // update session when session_id changes
+  useEffect(() => {
+    updateSessions()
+  }, [session_id]) */
 
   // set module
   useEffect(() => {
@@ -292,7 +299,7 @@ export default function Chat() {
   }
   useEffect(() => {
     updateSessions()
-  }, [JSON.stringify([sessions_state.active[session_id], msg_update_ts])])
+  }, [session_id, JSON.stringify([sessions_state.active[session_id], msg_update_ts])])
 
   // Build message tree
   const computeActivePath = (messages: TextMessageT[]): Record<string, string> => {
@@ -467,19 +474,18 @@ export default function Chat() {
   }
 
   if (!session || !module) return null
-  // style={{'marginBottom': '80px'}}
+  
   return (
     <div className="flex flex-1 flex-col pt-2 relative max-w-screen-lg" ref={eContainer}>
       <div className="flex flex-1">
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
-          
           {messages && messages?.length > 0 ? (
             <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4">
-              Active module:{" "}
+              Active module:
               <select
                 className="flex border rounded-lg px-2 ml-2 py-1 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
-                defaultValue={
-                  session.settings.module.id
+                value={
+                  session.settings.module.variant
                     ? `{"id": "${session.settings.module.id}", "variant": "${session.settings.module.variant}"}`
                     : "click to select"
                 }
@@ -489,7 +495,10 @@ export default function Chat() {
                   })
                 }}
               >
-                {generateLLMModuleOptions({ user_state })}
+                {generateLLMModuleOptions({
+                  user_state,
+                  selected: `{"id": "${session.settings.module.id}", "variant": "${session.settings.module.variant}"}`,
+                })}
               </select>
             </div>
           ) : null}
