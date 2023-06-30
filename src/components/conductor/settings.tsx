@@ -48,7 +48,7 @@ export default function Settings() {
     await UserActions.updateUser(new_user_state)
 
     // pass profile updates to local users list
-    if (field_name[0] === "meta" && ['name'].indexOf(field_name[1]) !== -1) {
+    if (field_name[0] === "meta" && ["name"].indexOf(field_name[1]) !== -1) {
       const public_user = await UsersActions.getUser({ id: user_state.id })
       const updated_public_user = { ...public_user, [field_name[1]]: field_value }
       await UsersActions.updateUser(updated_public_user)
@@ -148,7 +148,7 @@ export default function Settings() {
               <div key={module.id} className="w-1/2 bg-zinc-800 rounded-xl p-5 border-t border-t-zinc-600/50">
                 <div className="flex w-full mb-2 pb-2 border-b border-b-zinc-700">
                   <div className="flex items-center text-zinc-400 font-semibold">{module.meta.vendor.name}</div>
-                  
+
                   <div className="flex flex-1 items-center justify-end">
                     <MdSettingsSuggest
                       className="w-4 h-4 text-zinc-400 hover:text-zinc-300 cursor-pointer"
@@ -159,7 +159,9 @@ export default function Settings() {
                     />
                   </div>
                 </div>
-                <div className="flex items-center text-zinc-400 font-semibold text-xs mb-3">{module.meta.description || "No description"}</div>
+                <div className="flex items-center text-zinc-400 font-semibold text-xs mb-3">
+                  {module.meta.description || "No description"}
+                </div>
                 <div className="flex flex-col w-full gap-1" data-id={`${module.id}-apikey`}>
                   <div className="flex flex-grow items-center text-sm font-bold text-zinc-400">
                     {module.vendor} {module.name} API key

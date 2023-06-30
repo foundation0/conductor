@@ -5,7 +5,7 @@ export const LLMVariantS = z.object({
   context_len: z.number().optional(),
   cost_input: z.number().optional(),
   cost_output: z.number().optional(),
-  cost: z.number().optional().describe('deprecated'), // deprecated
+  cost: z.number().optional().describe("deprecated"), // deprecated
 })
 
 export const ModuleS = z.object({
@@ -20,18 +20,12 @@ export const ModuleS = z.object({
     }),
     description: z.string().optional(),
     icon: z.string().optional(),
-    variants: z
-      .array(
-        LLMVariantS
-      )
-      .optional(),
+    variants: z.array(LLMVariantS).optional(),
   }),
   settings: z.record(z.any()).optional(),
   streaming: z.boolean().catch(() => false),
   cost: z.number().optional(),
 })
-
-
 
 const ModuleHooksS = z.object({
   before: z.array(z.function()).optional(),
