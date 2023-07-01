@@ -31,7 +31,8 @@ export const ChatS = z.object({
       variant: z.string(),
     }),
   }),
-  messages: z.array(TextMessageS),
+  // deprecated
+  messages: z.array(TextMessageS).optional().describe("deprecated"),
 })
 
 export const SessionsS = z.object({

@@ -20,44 +20,44 @@ const API = {
   },
 
   updateMessages: async function ({ session_id, messages }: { session_id: string; messages: TextMessageT[] }) {
-    const { SessionState } = await initLoaders()
-    const sessions: SessionsT = SessionState.get()
-    const s = _.cloneDeep(sessions)
-    s.active[session_id].messages = messages
-    await SessionState.set(s)
+    const { MessagesState } = await initLoaders()
+    const messages_state = await MessagesState({ session_id })
+    await messages_state.set(messages)
   },
 
   updateTempMessage: async function ({ session_id, message }: { session_id: string; message: TextMessageT }) {
     // find the session, if no session, abort
-    const { SessionState } = await initLoaders()
-    const sessions: SessionsT = SessionState.get()
-    const session = sessions.active[session_id]
-    if (!session) throw new Error("Invalid session_id")
+    const { MessagesState } = await initLoaders()
+    let messages_state = await MessagesState({ session_id })
+    let messages: TextMessageT[] = messages_state.get()
 
     // check if there's a message with id temp, if so, update it
-    const temp = session.messages.find((m) => m.id === "temp")
+    const temp = messages.find((m) => m.id === "temp")
     if (temp) {
       temp.text += message.text
       // replace the temp message with the updated one
-      session.messages = session.messages.map((m) => (m.id === "temp" ? temp : m))
+      messages = messages.map((m) => (m.id === "temp" ? temp : m))
     }
 
     // if there's no temp message, create one
     else {
       const vmessage = TextMessageS.safeParse(message)
       if (!vmessage.success) throw new Error("Invalid message")
-      session.messages.push({ ...vmessage.data, id: "temp" })
+      messages.push({ ...vmessage.data, id: "temp" })
     }
 
     // save the session
-    await SessionState.set(sessions, true)
+    // await SessionState.set(sessions, true)
+    await messages_state.set(messages)
   },
 
   addMessage: async function ({ session_id, message }: { message: Partial<TextMessageT>; session_id: string }) {
-    const { SessionState, AppState, UserState } = await initLoaders()
+    const { SessionState, AppState, UserState, MessagesState } = await initLoaders()
     const state: SessionsT = SessionState.get()
     const app_state: AppStateT = AppState.get()
     const user_state: UserT = UserState.get()
+    const messages_state = await MessagesState({ session_id })
+    const messages: TextMessageT[] = messages_state.get()
 
     const active_workspace = _.find(user_state.workspaces, { id: app_state.active_workspace_id })
     if (!active_workspace) throw new Error("Active workspace not found")
@@ -68,7 +68,6 @@ const API = {
         id: session_id,
         type: "chat",
         created_at: new Date(),
-        messages: [],
         settings: {
           module: active_workspace.defaults.llm_module || {
             id: "openai",
@@ -78,33 +77,40 @@ const API = {
       }
     }
 
-    // if (!message.parent_id && state.active[session_id].messages.length > 0)
-    //   message.parent_id = _.last(state.active[session_id].messages)?.id
-    // else
-    if (message.parent_id === "first" && state.active[session_id].messages.length > 0) {
+    if (message.parent_id === "first" && messages.length > 0) {
       throw new Error("multiple first messages")
-    } else if (message.parent_id && message.parent_id !== "first" && state.active[session_id].messages.length > 0) {
-      const parent = state.active[session_id].messages.find((m) => m.id === message.parent_id)
+    } else if (message.parent_id && message.parent_id !== "first" && messages.length > 0) {
+      const parent = messages.find((m) => m.id === message.parent_id)
       if (!parent) throw new Error("Invalid parent_id")
     }
 
-    const m = { ...message, id: nanoid(), version: "1.0" } as TextMessageT
+    const m = { id: nanoid(), version: "1.0", ...message } as TextMessageT
     const vmessage = TextMessageS.safeParse(m)
     if (!vmessage.success) throw new Error("Invalid message")
-    state.active[session_id].messages.push(vmessage.data)
 
-    // remove any message with temp id
-    state.active[session_id].messages = state.active[session_id].messages.filter((m) => m.id !== "temp")
+    // add message if not duplicate id
+    let updated_messages = []
+    if (!messages.find((m) => m.id === vmessage.data.id)) {
+      updated_messages = _.uniqBy([...messages, vmessage.data], "id")
 
-    // if vmessage.data.active is true, set all other messages with same parent_id to false
-    if (vmessage.data.active) {
-      state.active[session_id].messages.forEach((m) => {
-        if (m.parent_id === vmessage.data.parent_id && m.id !== vmessage.data.id) m.active = false
-      })
+      // if vmessage.data.active is true, set all other messages with same parent_id to false
+      if (vmessage.data.active) {
+        updated_messages.forEach((m) => {
+          if (m.parent_id === vmessage.data.parent_id && m.id !== vmessage.data.id) m.active = false
+        })
+      }
+    } else {
+      // update message
+      updated_messages = messages.map((m) => (m.id === vmessage.data.id ? vmessage.data : m))
     }
 
+    // remove any message with temp id
+    updated_messages = updated_messages.filter((m) => m.id !== "temp")
+
+    await messages_state.set(updated_messages)
     await SessionState.set(state)
     await AppState.set({ ...app_state, active_message_id: undefined })
+
     return vmessage.data
   },
   addSession: async ({

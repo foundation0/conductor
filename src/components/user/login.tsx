@@ -19,7 +19,7 @@ export function LoginPage() {
   let auth = useAuth()
 
   let [users, setUsers] = useState<any[]>(
-    _(Object.keys(users_state))
+    _(Object.keys(users_state || {}))
       .map((k) => users_state[k])
       .orderBy("last_login", "asc")
       .reverse()
@@ -30,7 +30,7 @@ export function LoginPage() {
 
   useEffect(() => {
     setUsers(
-      _(Object.keys(users_state))
+      _(Object.keys(users_state || {}))
         .map((k) => users_state[k])
         .orderBy("last_login", "asc")
         .reverse()

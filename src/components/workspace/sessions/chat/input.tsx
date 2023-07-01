@@ -73,7 +73,7 @@ export default function Input({
     const contentHeight = textarea.scrollHeight - padding - border
     const area_rows = Math.floor(contentHeight / lineHeight)
 
-    if(rows != area_rows) {
+    if (rows != area_rows) {
       setRows(area_rows)
     } else if (textarea.value.split("\n").length !== rows) setRows(textarea.value.split("\n").length)
   }
@@ -91,19 +91,27 @@ export default function Input({
   return (
     <div className="flex flex-1 justify-center items-center">
       <form
-        className={(!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch) ? "" : `w-full`}
+        className={!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch ? "" : `w-full`}
         onSubmit={async (e) => {
           e.preventDefault()
           // if (message === "") return
           sendMessage()
         }}
       >
-        <div className={`flex flex-row backdrop-blur bg-zinc-700/30 bg-opacity-80 border border-zinc-900 border-t-zinc-700 rounded-lg items-center ${(!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch) ? "hover:bg-zinc-700/50 hover:border-t-zinc-600" : ''}`}>
+        <div
+          className={`flex flex-row backdrop-blur bg-zinc-700/30 bg-opacity-80 border border-zinc-900 border-t-zinc-700 rounded-lg items-center ${
+            !gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch
+              ? "hover:bg-zinc-700/50 hover:border-t-zinc-600"
+              : ""
+          }`}
+        >
           <textarea
             ref={inputRef}
             rows={rows}
             id="input"
-            className={`flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ${(!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch) ? "hidden" : ''}`}
+            className={`flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ${
+              !gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch ? "hidden" : ""
+            }`}
             placeholder={
               disabled ||
               gen_in_progress ||
@@ -148,11 +156,11 @@ export default function Input({
             </Match>
             <Match when={!gen_in_progress && (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)}>
               <button type="submit" className={button_class}>
-              <img src={MessageIcon} className="w-6 h-6" />
+                <img src={MessageIcon} className="w-6 h-6" />
               </button>
             </Match>
             <Match when={!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch}>
-              <button type="submit" className={button_class + ' text-xs'}>
+              <button type="submit" className={button_class + " text-xs"}>
                 Resend message
               </button>
             </Match>

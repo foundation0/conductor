@@ -1,8 +1,8 @@
 import Input from "@/components/workspace/sessions/chat/input"
 import { ChatT, SessionsT, TextMessageT } from "@/data/loaders/sessions"
-import _ from "lodash"
+import _, { set } from "lodash"
 import AutoScroll from "@brianmcallister/react-auto-scroll"
-import { useEffect, useRef, useState } from "react"
+import { ReactNode, SetStateAction, useEffect, useRef, useState } from "react"
 import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import { nanoid } from "nanoid"
 import { buildMessageTree } from "@/components/libraries/computeMessageChain"
@@ -19,49 +19,76 @@ import { Link } from "react-router-dom"
 import generateLLMModuleOptions from "@/components/libraries/generateLLMModuleOptions"
 import { WorkspaceS } from "@/data/schemas/workspace"
 import { error } from "@/components/libraries/logging"
-import { main as CostEstimator, InputT as CostEstimatorInputT } from "@/modules/openai-cost-estimator/"
 import { fieldFocus } from "@/components/libraries/fieldFocus"
+import { addMessage } from "./addMessage"
 import PromptIcon from "@/assets/prompt.svg"
-
 const padding = 50
 
 export type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 
 export default function Chat() {
-  const { sessions_state, user_state } = useLoaderData() as { sessions_state: SessionsT; user_state: UserT }
-  const [msg_update_ts, setMsgUpdateTs] = useState<number>(0)
+  const { sessions_state, user_state, MessagesState } = useLoaderData() as {
+    sessions_state: SessionsT
+    user_state: UserT
+    MessagesState: Function
+  }
+  // setup stores
   const workspace_id = useParams().workspace_id as string
   const session_id = useParams().session_id as string
   const [workspace, setWorkspace] = useState<z.infer<typeof WorkspaceS>>(
     user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
   )
+
+  // setup session
   const [session, setSession] = useState(sessions_state.active[session_id])
-  const [messages, setMessages] = useState<MessageRowT[] | undefined>([])
+
+  // setup messages and generation related states
+  const [messages_state, setMessagesStates] = useState<any>()
+  const [raw_messages, setRawMessages] = useState<TextMessageT[] | undefined>(messages_state?.get())
+  const [processed_messages, setProcessedMessages] = useState<MessageRowT[] | undefined>([])
+  const [Convotree, setConvotree] = useState<JSX.Element>(<></>)
   const [branch_parent_id, setBranchParentId] = useState<boolean | string>(false)
+  const [branch_msg_id, setBranchMsgId] = useState<string>("")
   const [gen_in_progress, setGenInProgress] = useState<boolean>(false)
-  const [value, copy] = useClipboardApi()
+  const [genController, setGenController] = useState<any>(undefined)
+  const [msgs_in_mem, setMsgsInMem] = useState<string[]>([])
+  const [msg_update_ts, setMsgUpdateTs] = useState<number>(0)
+
+  // setup participants
   const [participants, setParticipants] = useState<{ [key: string]: React.ReactElement }>({
     user: <FaUser />,
     AI: <FaUser />,
   })
 
+  // setup various layout related states
   const eInput = useRef<HTMLDivElement | null>(null)
   const eContainer = useRef<HTMLDivElement | null>(null)
   const [input_height, setInputHeight] = useState<number>(eInput?.current?.offsetHeight || 0)
   const [container_height, setContainerHeight] = useState<number>(
     eContainer?.current?.offsetHeight ? eContainer?.current?.offsetHeight - 80 : 0
   )
-  const [genController, setGenController] = useState<any>(undefined)
+  const [height, setHeight] = useState(
+    window.innerHeight -
+      ((document.getElementById("Tabs")?.clientHeight || 55) + (document.getElementById("Input")?.clientHeight || 55)) -
+      padding +
+      "px"
+  )
+
+  // setup active module states
+  const [api_key, setApiKey] = useState<string>("")
+  const [module, setModule] = useState<{ specs: z.infer<typeof ModuleS>; main: Function } | undefined>(undefined)
 
   const navigate = useNavigate()
 
-  const [api_key, setApiKey] = useState<string>("")
-
-  const [module, setModule] = useState<{ specs: z.infer<typeof ModuleS>; main: Function } | undefined>(undefined)
-
-  const [msgs_in_mem, setMsgsInMem] = useState<string[]>([])
-
-  const [active_module, setActiveModule] = useState<any>(null)
+  // Handle copy/paste
+  const [value, copy] = useClipboardApi()
+  useEffect(() => {
+    if (value)
+      setTimeout(() => {
+        copy("")
+        window?.getSelection()?.empty()
+      }, 1000)
+  }, [value])
 
   // keep track of input height
   useEffect(() => {
@@ -84,17 +111,33 @@ export default function Chat() {
     container_observer.observe(e_container)
   }, [eInput?.current?.offsetHeight])
 
-  /*   // update session when session_id changes
-  useEffect(() => {
-    updateSessions()
-  }, [session_id]) */
-
   // set module
   useEffect(() => {
     const module = Module(session?.settings.module.id)
     if (!module) return
     setModule(module)
   }, [session?.settings.module])
+
+  // change session's active module
+  const handleModuleChange = async ({ value }: { value: string }) => {
+    const new_llm_module = JSON.parse(value)
+
+    // update session default module
+    const new_session = _.cloneDeep(session)
+    new_session.settings.module = new_llm_module
+
+    // update session in sessions
+    const new_sessions = _.cloneDeep(sessions_state)
+    new_sessions.active[session_id] = new_session
+    await SessionsActions.updateSessions(new_sessions)
+
+    navigate(`/conductor/${workspace_id}/${session_id}`)
+
+    // set focus to #input
+    setTimeout(() => {
+      fieldFocus({ selector: "#input" })
+    }, 200)
+  }
 
   // set api key
   useEffect(() => {
@@ -104,15 +147,16 @@ export default function Chat() {
     setApiKey(api_key)
   }, [JSON.stringify([user_state.modules.installed, module])])
 
-  // Update participants
+  // when processed messages are updated
   useEffect(() => {
+    // Update participants
     const p: { [key: string]: React.ReactElement } = {
       user: <FaUser />,
       AI: <FaUser />,
     }
-    if (!messages) return
+    if (!processed_messages) return
     if (!module) return
-    messages.forEach((ms) => {
+    processed_messages.forEach((ms) => {
       const m = ms[1]
       if (m.source && !p[m.source] && module.specs.meta.vendor?.name === m.source) {
         p[m.source] = module.specs.meta.icon ? (
@@ -123,190 +167,30 @@ export default function Chat() {
       }
     })
     setParticipants(p)
-  }, [JSON.stringify(messages)])
-
-  async function compileSlidingWindowMemory({ model, prompt, messages }: any) {
-    // get module variant's token count
-    const variant = _.find(module?.specs.meta.variants, { id: model })
-    if (!variant) return error({ message: "variant not found", data: { model } })
-    const context_len = variant.context_len
-    if (!context_len) return error({ message: "context_len not found", data: { model } })
-
-    // reverse messages
-    const history = _.reverse(messages)
-
-    // for each message, calculate token count and USD cost
-    const msgs: { role: "system" | "user" | "assistant"; content: string }[] = []
-    let token_count = 0
-    let usd_cost = 0
-
-    // compute instructions if any
-    if (prompt?.instructions) {
-      const costs = await CostEstimator({ model, messages: [{ role: "system", content: prompt.instructions }], costs: { input: variant.cost_input || 0, output: variant.cost_output || 0 } })
-      if(!costs) return error({ message: "costs not found", data: { model } })
-      token_count += costs.tokens
-      usd_cost += costs.usd
-    }
-    if (token_count > context_len) return error({ message: "instructions too long", data: { model } })
-
-    const included_ids: string[] = []
-    for (let i = 0; i < history.length; i++) {
-      const m = history[i]
-      let tmp_m: { role: "system" | "user" | "assistant"; content: string } = {
-        role: m.type === "human" ? "user" : "assistant",
-        content: m.text,
-      }
-      const costs = await CostEstimator({ model, messages: [tmp_m], costs: { input: variant.cost_input || 0, output: variant.cost_output || 0 } })
-      if(!costs) return error({ message: "error in computing costs", data: { model } })
-      // when token count goes over selected model's token limit, stop
-      if (token_count + costs.tokens > context_len) break
-      token_count += costs.tokens
-      usd_cost += costs.usd
-      msgs.push(m)
-      included_ids.push(m.id)
-    }
-
-    // if the latest message is type ai, remove it
-    if (history[history.length - 1]?.type === "ai") msgs.pop()
-    setMsgsInMem(included_ids)
-    return { history: msgs.reverse(), included_ids, token_count, usd_cost }
-  }
-
-  async function addMessage({ message }: { message: string }) {
-    if (!api_key) return
-    if (!module) throw new Error("No module")
-    // if no activePath, use first as parent id
-    let parent_id = "first"
-    // if activePath exists, set parent id as the last message id in the chain
-    if (messages && messages.length > 0) parent_id = messages[messages.length - 1][1].id
-    // unless branch parent id is set, then message should use that
-    if (branch_parent_id) parent_id = branch_parent_id as string
-
-    // sanity check, get parent message
-    let resend = false
-    if (parent_id !== "first") {
-      const parent_msg = session?.messages?.find((msg) => msg.id === parent_id)
-      if (parent_msg?.type === "human") {
-        console.log("resending")
-        resend = true
-      } else if (!parent_msg && session?.messages?.length > 0) {
-        console.log("no parent")
-        return
-      }
-    }
-
-    if (message || resend) {
-      let m: TextMessageT | undefined = undefined
-      setGenInProgress(true)
-      if (resend) m = _.last(messages)?.[1]
-      else
-        m = await SessionsActions.addMessage({
-          session_id,
-          message: {
-            type: "human",
-            hash: "123",
-            text: message,
-            source: "user",
-            active: true,
-            parent_id,
-          },
-        })
-      setMsgUpdateTs(new Date().getTime())
-      if (m) {
-        let stream_response = ""
-        function onData({ data }: { data: any }) {
-          if (data) {
-            stream_response += data
-            SessionsActions.updateTempMessage({
-              session_id,
-              message: {
-                _v: 1,
-                id: "temp",
-                version: "1.0",
-                type: "ai",
-                hash: "123",
-                text: data,
-                source: module?.specs?.meta?.vendor?.name || module?.specs.meta.name || "unknown",
-                parent_id: m?.id || "",
-              },
-            })
-            setMsgUpdateTs(new Date().getTime())
-          }
-        }
-        let has_error = false
-        const prompt = {
-          instructions: "you are a helpful assistant",
-          user: m.text,
-        }
-        const memory = await compileSlidingWindowMemory({
-          model: session?.settings.module.variant,
-          prompt,
-          messages: _.map(messages, (m) => m[1]),
-        })
-        console.info(`Message tokens: ${memory?.token_count}, USD: $${memory?.usd_cost}`)
-        const response = await module?.main(
-          {
-            model: session?.settings.module.variant,
-            api_key,
-            prompt,
-            history: memory?.history || [],
-          },
-          {
-            setGenController,
-            onData,
-            onClose: () => {},
-            onError: (data: any) => {
-              has_error = true
-              error({ message: data.message || data.code, data })
-            },
-          }
-        )
-        setGenInProgress(false)
-
-        if (response || stream_response) {
-          const aim: TextMessageT = await SessionsActions.addMessage({
-            session_id,
-            message: {
-              type: "ai",
-              hash: "123",
-              text: response || stream_response,
-              source: module?.specs?.meta?.vendor?.name || module?.specs.meta.name || "unknown",
-              parent_id: m.id,
-            },
-          })
-          let tmp_m: { role: "system" | "user" | "assistant"; content: string; } = { role: "assistant", content: response || stream_response || "" }
-          const model = user_state.modules.installed.find((m) => m.id === session.settings.module.id)
-          const variant = _.find(model?.meta.variants, { id: session.settings.module.variant })
-          const costs = await CostEstimator({ model: session.settings.module.variant, response: response || stream_response || "", costs: { input: variant?.cost_input || 0, output: variant?.cost_output || 0 } })
-          if(!costs) return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
-          console.log(`Output tokens: ${costs.tokens}, USD: $${costs.usd}`)
-          setBranchParentId(false)
-          setMsgUpdateTs(new Date().getTime())
-        } else if (!has_error && !response && !stream_response) {
-          error({ message: "no response from the module", data: { module_id: module.specs.id } })
-        }
-      }
-    }
-  }
-
-  // Handle copy/paste
-  useEffect(() => {
-    if (value)
-      setTimeout(() => {
-        copy("")
-        window?.getSelection()?.empty()
-      }, 1000)
-  }, [value])
+  }, [JSON.stringify(processed_messages)])
 
   // Update local session state when sessions[session_id] changes
-  const updateSessions = async () => {
+  const updateSession = async () => {
     const { SessionState } = await initLoaders()
     const s = await SessionState.get()
+    const ss = await MessagesState({ session_id })
+    const msgs: TextMessageT[] = ss?.get()
     setSession(s.active[session_id])
+    setRawMessages(_.uniqBy(msgs || [], "id"))
+    setMessagesStates(ss)
+    // setMsgUpdateTs(new Date().getTime())
   }
+
   useEffect(() => {
-    updateSessions()
-  }, [session_id, JSON.stringify([sessions_state.active[session_id], msg_update_ts])])
+    updateSession()
+  }, [JSON.stringify([session_id, sessions_state.active[session_id], gen_in_progress, branch_parent_id])])
+
+  // update raw messages when msg_update_ts changes
+  useEffect(() => {
+    if (!messages_state) return
+    const msgs: TextMessageT[] = messages_state?.get()
+    setRawMessages(_.uniqBy(msgs || [], "id"))
+  }, [msg_update_ts])
 
   // Build message tree
   const computeActivePath = (messages: TextMessageT[]): Record<string, string> => {
@@ -314,7 +198,9 @@ export default function Chat() {
 
     // find message with parent_id = "first"
     const first_msg = _.find(messages, { parent_id: "first" })
-    if (!first_msg) return activePath
+    if (!first_msg) {
+      return activePath
+    }
     activePath["first"] = first_msg.id
 
     // find the next message in the chain using first_msg.id and add it to activePath
@@ -337,15 +223,19 @@ export default function Chat() {
 
     return activePath
   }
+
+  // update processed messages
+  async function updateMessages() {
+    const active_path = computeActivePath(raw_messages || [])
+    if (!active_path) return
+    let rows = buildMessageTree({ messages: raw_messages || [], first_id: "first", activePath: active_path })
+    setProcessedMessages(rows)
+  }
+
+  // update active path when raw_messages changes
   useEffect(() => {
-    // recursively find all active messages starting from the msg with parent_id = "first"
-    const activePath = computeActivePath(session?.messages || [])
-
-    let rows = buildMessageTree({ messages: session?.messages || [], first_id: "first", activePath })
-    setMessages(rows)
-
-    // console.log("update messages", session_id, rows, session?.messages, activePath)
-  }, [JSON.stringify(session)])
+    updateMessages()
+  }, [JSON.stringify([raw_messages])])
 
   /*  
  // compute sliding window memory when messages change
@@ -355,14 +245,6 @@ export default function Chat() {
     if (!messages) return
     compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: messages.map((m) => m[1]) })
   }, [JSON.stringify([module, session?.settings.module.variant, session_id, branch_parent_id])]) */
-
-  // Declare a state variable for dimensions
-  const [height, setHeight] = useState(
-    window.innerHeight -
-      ((document.getElementById("Tabs")?.clientHeight || 55) + (document.getElementById("Input")?.clientHeight || 55)) -
-      padding +
-      "px"
-  )
 
   // Function to handle the window resize event
   const handleResize = () => {
@@ -384,32 +266,32 @@ export default function Chat() {
     }
   }, [])
 
-  const onBranchClick = async (msg_id: string) => {
-    let c: ChatT = _.cloneDeep(session)
-
+  // switch active branch
+  const onBranchClick = async (msg_id: string, no_update?: boolean, msgs?: TextMessageT[]) => {
+    const messages = msgs || raw_messages
     // follow activePath from active_path_branch_id to the end and mark all human messages as inactive
     function markBranchInactive(msg_id: string) {
       // find active sibling from the branch
-      const msg = _.find(c.messages, { id: msg_id })
+      const msg = _.find(messages, { id: msg_id })
       if (msg?.type === "human") {
         // get all siblings
-        const siblings = _.filter(c.messages, { parent_id: msg?.parent_id })
-        // mark all siblings as inactive in c.messages
+        const siblings = _.filter(messages, { parent_id: msg?.parent_id })
+        // mark all siblings as inactive in messages
         siblings.forEach((sibling) => {
           sibling.active = false
-          const i = _.findIndex(c.messages, { id: sibling.id })
-          c.messages[i] = sibling
+          const i = _.findIndex(messages, { id: sibling.id })
+          if (messages && i) messages[i] = sibling
         })
         // find all children of the siblings
-        const children = _.filter(c.messages, (m) => _.includes(_.map(siblings, "id"), m.parent_id))
-        // mark all children as inactive in c.messages
+        const children = _.filter(messages, (m) => _.includes(_.map(siblings, "id"), m.parent_id))
+        // mark all children as inactive in messages
         children.forEach((child) => {
           markBranchInactive(child.id)
         })
       } else {
         // find all children of the message
-        const children = _.filter(c.messages, (m) => m.parent_id === msg_id)
-        // mark all children as inactive in c.messages
+        const children = _.filter(messages, (m) => m.parent_id === msg_id)
+        // mark all children as inactive in messages
         children.forEach((child) => {
           markBranchInactive(child.id)
         })
@@ -418,8 +300,8 @@ export default function Chat() {
     markBranchInactive(msg_id)
 
     // mark other messages with same parent_id as not active and the clicked one as active
-    c.messages = _.map(c.messages, (message) => {
-      if (message.parent_id === c.messages.find((msg) => msg.id === msg_id)?.parent_id) {
+    const updated_messages = _.map(messages, (message) => {
+      if (message.parent_id === messages?.find((msg) => msg.id === msg_id)?.parent_id) {
         message.active = false
       }
       if (message.id === msg_id) {
@@ -427,66 +309,105 @@ export default function Chat() {
       }
       return message
     })
-    await SessionsActions.updateMessages({ session_id, messages: c.messages })
-    /* compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: c.messages }) */
-    setBranchParentId(false)
-    setMsgUpdateTs(new Date().getTime())
+    /* compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: messages }) */
+    // setBranchParentId(false)
+    if (no_update) return updated_messages
+
+    setRawMessages(updated_messages)
+    await SessionsActions.updateMessages({ session_id, messages: updated_messages })
+    // setMsgUpdateTs(new Date().getTime())
   }
 
+  // create new branch
   const onNewBranchClick = async (parent_id: string) => {
-    const newParentMessage: TextMessageT = {
+    // mark other messages with same parent_id as not active
+    let updated_raw_messages = _.cloneDeep(raw_messages || [])
+    const new_branch_msg: TextMessageT = {
       _v: 1,
-      id: nanoid(),
+      id: nanoid(10),
       version: "1.0",
       type: "human",
-      text: "type your new message...",
+      text: "type new message below...",
       source: "example",
       parent_id,
       signature: "",
       hash: "1337",
       active: true,
     }
-    let c: ChatT = _.cloneDeep(session)
-    // mark other messages with same parent_id as not active
-    c.messages = _.map(c.messages, (message) => {
+
+    updated_raw_messages = _.map(updated_raw_messages, (message) => {
       if (message.parent_id === parent_id) {
         message.active = false
       }
       return message
     })
-    c.messages.push(newParentMessage)
-    /*     compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: c.messages }) */
-    setSession(c)
+    updated_raw_messages.push(new_branch_msg)
+    setBranchMsgId(new_branch_msg.id)
     setBranchParentId(parent_id)
-  }
 
-  const handleModuleChange = async ({ value }: { value: string }) => {
-    const new_llm_module = JSON.parse(value)
-
-    // update session default module
-    const new_session = _.cloneDeep(session)
-    new_session.settings.module = new_llm_module
-
-    // update session in sessions
-    const new_sessions = _.cloneDeep(sessions_state)
-    new_sessions.active[session_id] = new_session
-    await SessionsActions.updateSessions(new_sessions)
-
-    navigate(`/conductor/${workspace_id}/${session_id}`)
-
-    // set focus to #input
+    // hacky settimeout because yay react...
     setTimeout(() => {
-      fieldFocus({ selector: "#input" })
+      setRawMessages(updated_raw_messages)
     }, 200)
   }
 
+  async function appendOrUpdateProcessedMessage({ message }: { message: TextMessageT }) {
+    const ms = await MessagesState({ session_id })
+    const raw_messages: TextMessageT[] = ms?.get()
+    const activePath = computeActivePath(raw_messages || [])
+
+    let processed_messages = buildMessageTree({ messages: raw_messages || [], first_id: "first", activePath })
+    // find the message in processed_messages
+    const msg_index = _.findIndex(processed_messages, (msg) => msg[1].id === message.id)
+    let new_processed_messages = _.cloneDeep(processed_messages || [])
+    if (msg_index === -1) {
+      // if message is not found, append it to the end
+      new_processed_messages?.push([[], message, []])
+      // setProcessedMessages(new_processed_messages)
+    } else {
+      // if message is found, update it
+      new_processed_messages[msg_index][1] = message
+      // setProcessedMessages(new_processed_messages)
+    }
+    setProcessedMessages(new_processed_messages)
+    // setProcessedMessages(rows)
+  }
+
+  function addRawMessage({ message }: { message: TextMessageT }) {
+    setRawMessages([...(raw_messages || []), message])
+  }
+  async function send({ message }: { message: string }) {
+    addMessage({
+      session,
+      session_id,
+      api_key,
+      module,
+      processed_messages: processed_messages || [],
+      branch_parent_id,
+      message,
+      message_id: branch_msg_id || "",
+      raw_messages: raw_messages || [],
+      user_state,
+      callbacks: {
+        setGenInProgress,
+        setMsgUpdateTs,
+        setMsgsInMem,
+        setGenController,
+        setBranchParentId,
+        appendOrUpdateProcessedMessage,
+        addRawMessage,
+      },
+    })
+    if (branch_msg_id) setBranchMsgId("")
+    // setMsgUpdateTs(new Date().getTime())
+  }
+
   if (!session || !module) return null
-  
   return (
     <div className="flex flex-1 flex-col pt-2 relative max-w-screen-lg" ref={eContainer}>
       <div className="flex flex-1">
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
-          {messages && messages?.length > 0 ? (
+          {processed_messages && processed_messages?.length > 0 ? (
             <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4">
               Active module:
               <select
@@ -510,9 +431,9 @@ export default function Chat() {
             </div>
           ) : null}
           <div className="Messages flex flex-1 flex-col" style={{ height }}>
-            {messages && messages?.length > 0 ? (
+            {processed_messages && processed_messages?.length > 0 ? (
               <ConversationTree
-                rows={messages}
+                rows={processed_messages}
                 onNewBranchClick={onNewBranchClick}
                 onBranchClick={onBranchClick}
                 participants={participants}
@@ -577,9 +498,9 @@ export default function Chat() {
         className={`absolute bottom-0 left-0 right-0 my-4 px-4 ${!api_key ? "opacity-25" : ""}`}
       >
         <Input
-          send={addMessage}
+          send={send}
           session_id={session_id}
-          messages={messages}
+          messages={processed_messages}
           gen_in_progress={gen_in_progress}
           is_new_branch={branch_parent_id}
           disabled={!api_key}

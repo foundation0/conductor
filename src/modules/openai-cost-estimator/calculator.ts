@@ -1,4 +1,10 @@
-import { encoding_for_model, get_encoding, Tiktoken, TiktokenModel } from "@dqbd/tiktoken"
+// import { encoding_for_model, get_encoding, Tiktoken, TiktokenModel } from "@dqbd/tiktoken"
+import {
+  encodingForModel as encoding_for_model,
+  getEncoding as get_encoding,
+  Tiktoken,
+  TiktokenModel,
+} from "js-tiktoken"
 import Decimal from "decimal.js"
 
 /**
@@ -150,26 +156,10 @@ export class GPTTokens {
     let token_model = model
 
     // fix model name for newer ones
-    if (
-      [
-        "gpt-3.5-turbo",
-        "gpt-3.5-turbo-0613",
-        "gpt-3.5-turbo-16k",
-        "gpt-3.5-turbo-16k-0613",
-      ].includes(model)
-    ) {
+    if (["gpt-3.5-turbo", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-16k", "gpt-3.5-turbo-16k-0613"].includes(model)) {
       token_model = "gpt-3.5-turbo"
     }
-    if (
-      [
-        "gpt-4",
-        "gpt-4-0314",
-        "gpt-4-0613",
-        "gpt-4-32k",
-        "gpt-4-32k-0314",
-        "gpt-4-32k-0613",
-      ].includes(model)
-    ) {
+    if (["gpt-4", "gpt-4-0314", "gpt-4-0613", "gpt-4-32k", "gpt-4-32k-0314", "gpt-4-32k-0613"].includes(model)) {
       token_model = "gpt-4"
     }
 

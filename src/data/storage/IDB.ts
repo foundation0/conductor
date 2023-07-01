@@ -6,6 +6,17 @@ import { DecryptS } from "@/data/schemas/security"
 import { get, set, createStore } from "idb-keyval"
 import { getActiveUser } from "@/components/libraries/active_user"
 
+export const mergeState = <T>(state: T, updated_state: T): T => {
+  if (Array.isArray(state) && Array.isArray(updated_state)) {
+     return _.unionBy(state, updated_state, 'id') as any;
+   } else if (_.isObject(state) && _.isObject(updated_state)) {
+     return { ...state, ...updated_state } as T;
+   }
+   throw new Error('Invalid state or updated_state');
+}
+
+const CACHE = new Map<string, any>()
+
 export const store = async <TData>({
   name,
   username,
@@ -34,22 +45,26 @@ export const store = async <TData>({
     console.log("error getting store")
   })
   let s: TData = store ? decrypt({ ...unpack(store), key: enc_key }) : await initial()
-  if (!store && s) set(key, pack(encrypt({ data: s, key: enc_key })))
   if (s) {
     const s_check = ztype.safeParse(s)
     if (!s_check.success) {
       console.error(s_check.error)
       throw new Error("Store data does not match schema")
     }
+    if (!store) {
+      set(key, pack(encrypt({ data: s, key: enc_key })))
+      CACHE.set(name, s)
+    }
     return {
       get: (): TData => s,
       set: async (data: TData, no_storage?: boolean) => {
-        const updated_state = { ...s, ...data }
+        const updated_state = mergeState(s, data)
         const vstate = ztype.safeParse(updated_state)
         if (!vstate.success) {
           throw new Error("Store data does not match schema")
         }
         s = vstate.data
+        // CACHE.set(name, s)
         if (no_storage) return
         if (!enc_key) throw new Error("No encryption key")
         set(key, pack(encrypt({ data: vstate.data, key: enc_key })))

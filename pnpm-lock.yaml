@@ -68,6 +68,9 @@ dependencies:
   idb-keyval:
     specifier: ^6.2.1
     version: 6.2.1
+  js-tiktoken:
+    specifier: ^1.0.7
+    version: 1.0.7
   langchain:
     specifier: ^0.0.75
     version: 0.0.75

@@ -3,6 +3,7 @@ import { state as UserState } from "@/data/loaders/user"
 import { state as SessionState } from "@/data/loaders/sessions"
 import { state as ClipboardState } from "@/data/loaders/clipboard"
 import { state as UsersState } from "@/data/loaders/users"
+import { state as MessagesState } from "@/data/loaders/messages"
 import { getActiveUser } from "@/components/libraries/active_user"
 
 const noopAPI = { get: () => null, set: () => null }
@@ -23,6 +24,7 @@ async function initLoaders() {
       UserState: noopAPI,
       SessionState: noopAPI,
       ClipboardState: noopAPI,
+      MessagesState: noopAPI,
       UsersState: users_state
     }
   } else {
@@ -37,6 +39,9 @@ async function initLoaders() {
       AppState: app_state,
       UserState: user,
       SessionState: session_state,
+      MessagesState: async ({ session_id }: { session_id: string }) => {
+        return await MessagesState({ session_id })
+      },
       ClipboardState: clipboard_state,
       UsersState: users_state
     }

@@ -11,7 +11,10 @@ export const buildMessageTree = ({
   first_id: string
   activePath: Record<string, string>
 }) => {
-  const first_message = messages.find((msg) => msg.parent_id === first_id)
+  if (!messages || _.size(messages) === 0) return
+  const first_message = _(messages)
+    .compact()
+    .find((msg) => msg.parent_id === first_id)
   if (!first_message) return
   const rows: MessageRowT[] = [[[], first_message, []]]
   let parent_id = first_id
@@ -39,7 +42,11 @@ const buildRows = ({
   row_parent_id: string
 }): MessageRowT | undefined => {
   // get all branches
-  const branches: TextMessageT[] = messages.filter((msg) => msg.parent_id === row_parent_id)
+  const branches: TextMessageT[] = _(messages)
+    .compact()
+    .filter((msg) => msg.parent_id === row_parent_id)
+    .uniqBy("id")
+    .value()
   let active_branch = branches.find((msg) => msg.active)
   let active_branch_index: number = 0
   if (active_branch) {
@@ -49,7 +56,11 @@ const buildRows = ({
   if (!active_branch) active_branch = branches[active_branch_index]
 
   // filter all messages except the active branch
-  const nonactive_branches = branches.filter((msg) => msg.id !== active_branch?.id)
+  const nonactive_branches = _(branches)
+    .compact()
+    .filter((msg) => msg.id !== active_branch?.id)
+    .uniqBy("id")
+    .value()
 
   return [[], branches[active_branch_index], nonactive_branches]
 }

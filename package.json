@@ -30,6 +30,7 @@
     "gpt-tokens": "^1.0.10",
     "highlight.js": "^11.8.0",
     "idb-keyval": "^6.2.1",
+    "js-tiktoken": "^1.0.7",
     "langchain": "^0.0.75",
     "lodash": "^4.17.21",
     "msgpackr": "^1.9.5",
