@@ -10,7 +10,7 @@ import * as Selection from "selection-popover"
 import * as Toolbar from "@radix-ui/react-toolbar"
 import { error } from "@/components/libraries/logging"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { atomDark, vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { createHash } from "@/security/common"
 
 type MessageProps = {
@@ -18,17 +18,6 @@ type MessageProps = {
   isActive: boolean
   onClick: () => void
   className?: string
-}
-
-const CodeBlock = ({ language, value }: any) => {
-  return (
-    <>
-      <div>Your custom div content here</div>
-      <SyntaxHighlighter language={language || "text"} style={atomDark}>
-        {value}
-      </SyntaxHighlighter>
-    </>
-  )
 }
 
 const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className }) => {
@@ -90,14 +79,14 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
 
   return (
     <Selection.Root open={selection_open} onOpenChange={setSelectionOpen}>
-      <Selection.Trigger>
+      <Selection.Trigger className="flex">
         <div
           onMouseEnter={handleMouseHover}
           onMouseLeave={handleMouseHover}
-          className={`chat flex flex-col border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-center h-full items-start relative ${
+          className={`chat flex flex-col border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-center items-start relative ${
             isActive
               ? " text-white"
-              : "bg-zinc-800 text-zinc-100 text-xs h-fit hover:bg-zinc-700 border-zinc-700 cursor-pointer"
+              : "bg-zinc-800 text-zinc-100 text-xs h-fit hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden"
           } ${message.type === "ai" ? "bg-zinc-800" : "border-zinc-800 bg-zinc-800 text-zinc-300"}
           ${className} ${message.hash === "1337" ? "italic text-xs opacity-100" : ""}`}
           onClick={() => {
@@ -106,7 +95,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
             }
           }}
         >
-          {isHovering && (
+          {isHovering && isActive && (
             <div className="flex gap-2 border-t border-t-zinc-700 bg-zinc-800 absolute right-2 -top-7 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded mt-2">
               <div className="tooltip-left tooltip" data-tip="Copy message to clipboard">
                 {used_icon_id === message.id + "all/copy" ? (

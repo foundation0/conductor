@@ -25,11 +25,11 @@
   }
 
   pre {
-    overflow: auto;
-    width: 100%;
-    text-wrap: balance;
-    background: #0d1117;
-    border-radius: 5px;
+    overflow: auto !important;
+    width: 100% !important;
+    text-wrap: balance !important;
+    background: #0d1117 !important;
+    border-radius: 5px !important;
 
     pre {
       text-wrap: balance;
@@ -68,5 +68,13 @@
       font-size: 0.75rem;
     }
   }
+}
 
+.branch {
+  p {
+    max-width: 250px;
+    text-wrap: nowrap !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
 }

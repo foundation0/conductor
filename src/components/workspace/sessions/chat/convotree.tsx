@@ -43,7 +43,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                 </div>
               </div>
             </div>
-            <div className={`Message flex flex-grow-1 ${row[2].length > 0 ? "flex-shrink-0" : ""}`}>
+            <div className={`Message flex flex-grow-1 ${row[2].length > 0 ? "max-w-2/3" : ""}`}>
               <Message
                 message={row[1]}
                 isActive={true}
@@ -70,10 +70,9 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                 </div>
               ) : null}
             </div>
-            <div className="flex flex-nowrap flex-row items-center gap-2">
+            <div className={`flex flex-nowrap flex-col items-start gap-2 branch ${row[2].length > 0 ? "w-1/3" : ""}`}>
               {row[2].map((msg) => {
                 if (msg.hash === "1337") return null
-                if (msg.text.length > 100) msg.text = msg.text.slice(0, 100) + "..."
                 return (
                   <Message
                     key={msg.id}
