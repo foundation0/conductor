@@ -35,6 +35,7 @@ export const GroupS = z.object({
 
 export const WorkspaceS = z.object({
   _v: z.number().default(1),
+  _updated: z.number().optional(),
   id: z.string().catch(() => getId()),
   name: z.string().catch("Workspace"),
   icon: z.string().optional(),

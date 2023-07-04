@@ -5,6 +5,7 @@ import { validateBinary } from "./binary"
 
 export const UserS = z.object({
   _v: z.number().default(1),
+  _updated: z.number().optional(),
   id: z.string().nonempty(),
   master_key: z.string(),
   master_password: z.string(),
@@ -44,6 +45,7 @@ export const UsersS = z.record(PublicUserS) // key is user_key
 
 export const BufferObjectS = z.object({
   _v: z.number().default(1),
+  _updated: z.number().optional(),
   reminder: z.string().nonempty(),
   o: z.object({
     nonce: z.string().nonempty(),

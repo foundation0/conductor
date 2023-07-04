@@ -36,10 +36,11 @@ export const LogItemS = z.object({
 
 export const AppStateS = z.object({
   _v: z.number().default(1),
+  _updated: z.number().optional(),
   active_workspace_id: z.string(),
   active_sessions: z.record(ActiveSessionS),
   active_message_id: z.string().optional(),
   open_folders: z.array(OpenFolderS),
   open_sessions: z.array(OpenSessionS),
-  logs: z.array(LogItemS).optional()
+  logs: z.array(LogItemS).optional(),
 })

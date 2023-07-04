@@ -1,5 +1,5 @@
 import Workspace from "."
-import { initLoaders } from "@/data/loaders"
+import { loader, initLoaders } from "@/data/loaders"
 import { ActionFunctionArgs, redirect } from "react-router-dom"
 import UserActions from "@/data/actions/user"
 import WorkspaceCreate from "@/components/workspace/create"
@@ -10,6 +10,7 @@ import { SessionS, WorkspaceS } from "@/data/schemas/workspace"
 import { z } from "zod"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
+import pDebounce from "p-debounce"
 
 export const WorkspaceCreateR = {
   path: "create",
@@ -158,13 +159,7 @@ export const WorkspaceR = {
 }
 
 export const WorkspaceSettingsR = {
-  loader: async function () {
-    const { UserState } = await initLoaders()
-    const data = {
-      user_state: UserState.get(),
-    }
-    return data
-  },
+  loader,
   path: "settings",
   element: <WorkspaceSettings />,
 }
@@ -172,13 +167,6 @@ export const WorkspaceSettingsR = {
 export const WorkspaceIdR = {
   path: ":workspace_id",
   element: <Workspace />,
-  loader: async function () {
-    const { AppState, UserState } = await initLoaders()
-    const data = {
-      app_state: AppState.get(),
-      user_state: UserState.get(),
-    }
-    return data
-  },
+  loader,
   children: [WorkspaceSettingsR, SessionIdR],
 }

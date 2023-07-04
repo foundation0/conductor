@@ -2,7 +2,7 @@ import Conductor from "@/components/conductor/"
 import { WorkspaceIdR, WorkspaceR } from "../workspace/routes"
 import { initLoaders } from "@/data/loaders"
 import Settings from "@/components/conductor/settings"
-import { LoginR, UserIdR } from "@/components/user/routes"
+import { LocalUsersR, UserIdR } from "@/components/user/routes"
 import { RequireAuth } from "../libraries/auth"
 
 const loader = async () => {

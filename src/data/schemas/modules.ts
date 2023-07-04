@@ -10,6 +10,7 @@ export const LLMVariantS = z.object({
 
 export const ModuleS = z.object({
   _v: z.number().default(1),
+  _updated: z.number().optional(),
   id: z.string(),
   meta: z.object({
     name: z.string(),

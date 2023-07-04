@@ -1,6 +1,6 @@
 import { ActionFunctionArgs, redirect } from "react-router-dom"
 import Sessions from "."
-import { initLoaders } from "@/data/loaders"
+import { initLoaders, loader } from "@/data/loaders"
 import SessionActions from "@/data/actions/sessions"
 import { AppStateT } from "@/data/loaders/app"
 import _ from "lodash"
@@ -8,17 +8,7 @@ import _ from "lodash"
 export const SessionIdR = {
   path: ":session_id",
   element: <Sessions />,
-  loader: async () => { _
-    const { AppState, UserState, SessionState, ClipboardState, MessagesState } = await initLoaders()
-    const app_state: AppStateT = await AppState.get()
-    const user_state = await UserState.get()
-    const sessions_state = await SessionState.get()
-    const clipboard_state = await ClipboardState.get()
-    const messages_state = _.get(app_state, `active_sessions[${app_state?.active_workspace_id}].session_id`)
-      ? await MessagesState({ session_id: _.get(app_state, `active_sessions[${app_state?.active_workspace_id}].session_id`) })
-      : []
-    return { app_state, user_state, sessions_state, clipboard_state, messages_state, MessagesState }
-  },
+  loader,
 }
 
 export const SessionR = {

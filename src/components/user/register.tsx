@@ -12,7 +12,7 @@ import { UserT } from "@/data/loaders/user"
 import { useAuth } from "@/components/hooks/useAuth"
 import { UserS } from "@/data/schemas/user"
 
-export function OnboardingPage() {
+export function RegisterPage() {
   const [messages, setMessages] = useState<string[]>([
     "<p>Hi there, <strong>welcome to Prompt!</strong></p>",
     "<p><strong>Prompt is an all-in-one application for AI-powered creators and professionals.</strong> Prompt is extendable, so you can use Prompt to create anything from a blog post to a music album (once audio modules are available).</p>",
@@ -45,7 +45,7 @@ export function OnboardingPage() {
       return
     }
     const created_user = await createUser({ username, password, reminder })
-    
+
     if (!created_user || !UserS.safeParse(created_user.user).success) return null
     setActiveUser(created_user.user as UserT)
     setTimeout(() => {
@@ -170,7 +170,7 @@ export function OnboardingPage() {
             >
               Create account <BiRightArrowAlt className="float-right w-5 h-5" />
             </button>
-            <Link to="/authentication" className=" mt-10 w-full flex">
+            <Link to="/login" className=" mt-10 w-full flex">
               <button
                 type="button"
                 className="bg-zinc-800/30 hover:bg-zinc-900/70 border border-dashed border-zinc-700  border-t-zinc-600/70 lex inset-y-0 right-0 font-medium rounded-lg text-sm text-zinc-400 hover:text-zinc-200 p-4 py-3 justify-start items-start text-left"

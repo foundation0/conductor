@@ -8,3 +8,12 @@ export async function error({ message, data, type }: { message: string; data?: a
   // })
   eventEmitter.emit("new_error", { type: type || "error", message, data })
 }
+
+
+
+export async function info({ message, data }: { message: string; data?: any; type?: string }) {
+  eventEmitter.emit("info", { type: "info", message, data })
+  if(localStorage?.getItem("debug") === "true") {
+    console.log(message, data)
+  }
+}

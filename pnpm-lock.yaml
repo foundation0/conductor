@@ -47,6 +47,12 @@ dependencies:
   daisyui:
     specifier: ^2.52.0
     version: 2.52.0(autoprefixer@10.4.14)(postcss@8.4.24)
+  debounce-async:
+    specifier: ^0.0.2
+    version: 0.0.2
+  debounceify:
+    specifier: ^1.0.0
+    version: 1.0.0
   decimal.js:
     specifier: ^10.4.3
     version: 10.4.3
@@ -83,6 +89,9 @@ dependencies:
   nanoid:
     specifier: ^4.0.2
     version: 4.0.2
+  p-debounce:
+    specifier: ^4.0.0
+    version: 4.0.0
   react:
     specifier: ^18.2.0
     version: 18.2.0
@@ -2669,6 +2678,14 @@ packages:
       '@babel/runtime': 7.22.5
     dev: false
 
+  /debounce-async@0.0.2:
+    resolution: {integrity: sha512-iSDXfVl3aVGmukEnBQshFAzooCsKdZb1KmdbivsY4zeFEzT9IfEQdys1/wHIZovXZskF6MQpstnMOxQojLVjsw==}
+    dev: false
+
+  /debounceify@1.0.0:
+    resolution: {integrity: sha512-7BeSMAPUohdDJ7sU6Tq2M8HkJR05IqQCeVm/qNemrpOgP5SGZD5WeNOXNfsgbESinz6OjMooWPTGZiKUX91XJQ==}
+    dev: false
+
   /debug@4.3.4:
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
     engines: {node: '>=6.0'}
@@ -4743,6 +4760,11 @@ packages:
       lodash.isequal: 4.5.0
       type-fest: 2.19.0
       vali-date: 1.0.0
+    dev: false
+
+  /p-debounce@4.0.0:
+    resolution: {integrity: sha512-4Ispi9I9qYGO4lueiLDhe4q4iK5ERK8reLsuzH6BPaXn53EGaua8H66PXIFGrW897hwjXp+pVLrm/DLxN0RF0A==}
+    engines: {node: '>=12'}
     dev: false
 
   /p-finally@1.0.0:

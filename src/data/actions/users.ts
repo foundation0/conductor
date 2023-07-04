@@ -1,7 +1,6 @@
 import { UsersS, PublicUserS } from "@/data/schemas/user"
 import { initLoaders } from "@/data/loaders"
 import { z } from "zod"
-import { pack } from "msgpackr"
 
 const API = {
   async getUsers(): Promise<z.infer<typeof UsersS>> {
@@ -25,7 +24,7 @@ const API = {
     const users = await API.getUsers()
     delete users[id]
     UsersState.set(users)
-  }
+  },
 }
 
 export default API

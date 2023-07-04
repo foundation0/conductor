@@ -19,6 +19,7 @@ export const TextMessageS = z.object({
 
 export const ChatS = z.object({
   _v: z.number().default(1),
+  _updated: z.number().optional(),
   id: z.string().nonempty(),
   type: z
     .string()
@@ -37,5 +38,6 @@ export const ChatS = z.object({
 
 export const SessionsS = z.object({
   _v: z.number().default(1),
+  _updated: z.number().optional(),
   active: z.record(ChatS),
 })

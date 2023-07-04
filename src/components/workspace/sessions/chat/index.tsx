@@ -1,8 +1,8 @@
 import Input from "@/components/workspace/sessions/chat/input"
-import { ChatT, SessionsT, TextMessageT } from "@/data/loaders/sessions"
-import _, { set } from "lodash"
+import { SessionsT, TextMessageT } from "@/data/loaders/sessions"
+import _ from "lodash"
 import AutoScroll from "@brianmcallister/react-auto-scroll"
-import { ReactNode, SetStateAction, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import { nanoid } from "nanoid"
 import { buildMessageTree } from "@/components/libraries/computeMessageChain"
@@ -18,7 +18,6 @@ import { z } from "zod"
 import { Link } from "react-router-dom"
 import generateLLMModuleOptions from "@/components/libraries/generateLLMModuleOptions"
 import { WorkspaceS } from "@/data/schemas/workspace"
-import { error } from "@/components/libraries/logging"
 import { fieldFocus } from "@/components/libraries/fieldFocus"
 import { addMessage } from "./addMessage"
 import PromptIcon from "@/assets/prompt.svg"
@@ -46,7 +45,6 @@ export default function Chat() {
   const [messages_state, setMessagesStates] = useState<any>()
   const [raw_messages, setRawMessages] = useState<TextMessageT[] | undefined>(messages_state?.get())
   const [processed_messages, setProcessedMessages] = useState<MessageRowT[] | undefined>([])
-  const [Convotree, setConvotree] = useState<JSX.Element>(<></>)
   const [branch_parent_id, setBranchParentId] = useState<boolean | string>(false)
   const [branch_msg_id, setBranchMsgId] = useState<string>("")
   const [gen_in_progress, setGenInProgress] = useState<boolean>(false)
@@ -309,13 +307,14 @@ export default function Chat() {
       }
       return message
     })
-    /* compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: messages }) */
-    // setBranchParentId(false)
+    /* 
+    TODO: Make this faster to enable visual ques for what is included in the sliding window memory
+    compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: messages }) 
+    */
     if (no_update) return updated_messages
 
     setRawMessages(updated_messages)
     await SessionsActions.updateMessages({ session_id, messages: updated_messages })
-    // setMsgUpdateTs(new Date().getTime())
   }
 
   // create new branch
@@ -345,7 +344,7 @@ export default function Chat() {
     setBranchMsgId(new_branch_msg.id)
     setBranchParentId(parent_id)
 
-    // hacky settimeout because yay react...
+    // hacky settimeout because react...
     setTimeout(() => {
       setRawMessages(updated_raw_messages)
     }, 200)
@@ -399,7 +398,6 @@ export default function Chat() {
       },
     })
     if (branch_msg_id) setBranchMsgId("")
-    // setMsgUpdateTs(new Date().getTime())
   }
 
   if (!session || !module) return null

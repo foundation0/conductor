@@ -6,8 +6,17 @@ function override(key: string) {
   } else return false
 }
 
-export default {
+const config = {
   DB: {
     URI: override("DB_URI") || "https://db.promptc0.com/",
+    CF: {
+      get_limit: 1000,
+      set_limit: 5000,
+    }
   },
+  features: {
+    local_encryption: false // DO NOT CHANGE THIS AFTER INITIAL SETUP OR YOU WILL LOSE ALL YOUR DATA - TODO: functions to migrate data from non-encrypted to encrypted
+  }
 }
+
+export default config

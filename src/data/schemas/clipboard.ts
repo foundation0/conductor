@@ -16,6 +16,7 @@ export const ClipS = z.object({
 
 export const ClipboardS = z.object({
   _v: z.number().default(1),
+  _updated: z.number().optional(),
   session_id: z.string(),
   clips: z.array(ClipS),
 })

@@ -1,6 +1,7 @@
-import { initLoaders } from "@/data/loaders"
-import { LoginPage } from "./login"
-import { OnboardingPage } from './onboarding'
+import { loader } from "@/data/loaders"
+import { LocalUsersPage } from "./local_users"
+import { RegisterPage } from "./register"
+import { AddExistingUser } from "./existing_user"
 
 export const UserIdR = {
   // loader,
@@ -8,19 +9,18 @@ export const UserIdR = {
   element: <div>User</div>,
 }
 
-export const LoginR = {
-  loader: async function () {
-    const { UsersState } = await initLoaders()
-    const data = {
-      users_state: UsersState.get(),
-    }
-    return data
-  },
+export const LocalUsersR = {
+  loader,
   path: "authentication",
-  element: <LoginPage />,
+  element: <LocalUsersPage />,
 }
 
 export const OnboardingR = {
   path: "onboarding",
-  element: <OnboardingPage />,
+  element: <RegisterPage />,
+}
+
+export const AddExistingUserR = {
+  path: "login",
+  element: <AddExistingUser />,
 }

@@ -12,7 +12,7 @@ import { z } from "zod"
 import { HiOutlineTrash } from "react-icons/hi"
 import UsersActions from "@/data/actions/users"
 
-export function LoginPage() {
+export function LocalUsersPage() {
   let { users_state } = useLoaderData() as { users_state: UsersT }
   let navigate = useNavigate()
   let location = useLocation()
@@ -137,10 +137,10 @@ export function LoginPage() {
                 {active_user?.profile_photos?.length || 0 > 0 ? (
                   <img src={getPhoto({ id: _.first(active_user?.profile_photos) || "" })} className="h-full w-full" />
                 ) : (
-                  active_user.name.slice(0, 1)
+                  active_user?.name?.slice(0, 1)
                 )}
               </div>
-              <div className="text-sm font-semibold">{active_user.name}</div>
+              <div className="text-sm font-semibold">{active_user?.name}</div>
             </div>
             <div className="flex flex-row">
               <label className="flex flex-row backdrop-blur bg-zinc-700/30 bg-opacity-80 border border-zinc-900 border-t-zinc-700 rounded-lg items-center">
@@ -209,8 +209,7 @@ export function LoginPage() {
                                 ? UsersActions.removeUser({ id: user.id })
                                 : null
                               navigate("/login")
-                              }
-                            }
+                            }}
                           />
                         </div>
                         <BiRightArrowAlt className="w-5 h-5" />
@@ -220,6 +219,20 @@ export function LoginPage() {
                 })
                 .value()}
               <div className=" flex flex-col w-full gap-2">
+                <Link to="/login">
+                  <div
+                    onClick={() => {}}
+                    className="flex flex-row bg-zinc-800/30 hover:bg-zinc-900/70 border border-dashed border-zinc-700  border-t-zinc-600/70 rounded-md flex-1 p-3 cursor-pointer text-zinc-500 hover:text-zinc-200"
+                  >
+                    <div className="flex w-8 h-8 rounded-full bg-zinc-700/30  justify-center items-center overflow-hidden text-zinc-500 font-semibold">
+                      <HiPlus className="w-3 h-3 " />
+                    </div>
+                    <div className="flex items-center text-xs ml-2">Login to existing account</div>
+                    <div className="flex flex-grow justify-end items-center">
+                      <BiRightArrowAlt className="w-5 h-5" />
+                    </div>
+                  </div>
+                </Link>
                 <Link to="/onboarding">
                   <div
                     onClick={() => {}}

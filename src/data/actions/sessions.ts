@@ -52,30 +52,9 @@ const API = {
   },
 
   addMessage: async function ({ session_id, message }: { message: Partial<TextMessageT>; session_id: string }) {
-    const { SessionState, AppState, UserState, MessagesState } = await initLoaders()
-    const state: SessionsT = SessionState.get()
-    const app_state: AppStateT = AppState.get()
-    const user_state: UserT = UserState.get()
+    const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })
     const messages: TextMessageT[] = messages_state.get()
-
-    const active_workspace = _.find(user_state.workspaces, { id: app_state.active_workspace_id })
-    if (!active_workspace) throw new Error("Active workspace not found")
-
-    if (!state.active[session_id]) {
-      state.active[session_id] = {
-        _v: 1,
-        id: session_id,
-        type: "chat",
-        created_at: new Date(),
-        settings: {
-          module: active_workspace.defaults.llm_module || {
-            id: "openai",
-            variant: "gpt-3.5-turbo",
-          },
-        },
-      }
-    }
 
     if (message.parent_id === "first" && messages.length > 0) {
       throw new Error("multiple first messages")
@@ -108,8 +87,6 @@ const API = {
     updated_messages = updated_messages.filter((m) => m.id !== "temp")
 
     await messages_state.set(updated_messages)
-    await SessionState.set(state)
-    await AppState.set({ ...app_state, active_message_id: undefined })
 
     return vmessage.data
   },
@@ -149,7 +126,6 @@ const API = {
       id: new_session.session.id,
       type: "chat",
       created_at: new Date(),
-      messages: [],
       settings: {
         module: active_workspace.defaults.llm_module || {
           id: "openai",
