@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react"
 import * as Toast from "@radix-ui/react-toast"
 import eventEmitter from "@/components/libraries/events"
-import { useLoaderData } from "react-router-dom"
-import { AppStateT } from "@/data/loaders/app"
-import _, { set } from "lodash"
-import { initLoaders } from "@/data/loaders"
+import _ from "lodash"
 
 const ToastNotification = () => {
   const [openn, setOpen] = useState(false)
@@ -12,10 +9,6 @@ const ToastNotification = () => {
 
   useEffect(() => {
     const handleErrorEvent = async (error: any) => {
-      // const { AppState } = await initLoaders()
-      // const app_state = AppState.get()
-      // const log = _.find(app_state.logs, { id: lid })
-      // if (!log) return
       setMsg({ type: error.type, title: "Error", message: error.message })
       setOpen(true)
     }
