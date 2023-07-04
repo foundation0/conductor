@@ -246,7 +246,7 @@ export function LocalUsersPage() {
                               confirm("Are you sure you want to remove this account from this device?")
                                 ? UsersActions.removeUser({ id: user.id })
                                 : null
-                              navigate("/login")
+                              setTimeout(() => navigate("/authentication", { replace: true }), 300)
                             }}
                           />
                         </div>

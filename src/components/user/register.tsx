@@ -225,7 +225,7 @@ export function RegisterPage() {
                 <BiRightArrowAlt className="float-right w-5 h-5" />
               )}
             </button>
-            <Link to="/login" className=" mt-10 w-full flex">
+            <Link to="/authentication" className=" mt-10 w-full flex">
               <button
                 type="button"
                 className="bg-zinc-800/30 hover:bg-zinc-900/70 border border-dashed border-zinc-700  border-t-zinc-600/70 lex inset-y-0 right-0 font-medium rounded-lg text-sm text-zinc-400 hover:text-zinc-200 p-4 py-3 justify-start items-start text-left"
