@@ -74,8 +74,8 @@ export default function Input({
     const area_rows = Math.floor(contentHeight / lineHeight)
 
     if (rows != area_rows) {
-      setRows(area_rows)
-    } else if (textarea.value.split("\n").length !== rows) setRows(textarea.value.split("\n").length)
+      setRows(area_rows < 20 ? area_rows : 20)
+    } else if (textarea.value.split("\n").length !== rows) setRows(textarea.value.split("\n").length < 20 ? textarea.value.split("\n").length : 20)
   }
 
   function sendMessage() {
