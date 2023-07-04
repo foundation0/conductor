@@ -156,6 +156,7 @@ export function RegisterPage() {
                 id="password"
                 autoComplete="off"
               />
+              <div className="flex float-right w-full justify-center">d</div>
             </label>
             <label className="flex flex-col bg-zinc-700/30 border border-zinc-900 border-t-zinc-700 rounded-lg items-start px-4 py-2 text-xs font-semibold">
               Password reminder in case you forget your password:
