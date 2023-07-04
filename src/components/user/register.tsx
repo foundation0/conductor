@@ -12,6 +12,7 @@ import { UserT } from "@/data/loaders/user"
 import { useAuth } from "@/components/hooks/useAuth"
 import { UserS } from "@/data/schemas/user"
 import eventEmitter from "@/components/libraries/events"
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai"
 
 export function RegisterPage() {
   const [messages, setMessages] = useState<string[]>([
@@ -29,6 +30,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState<string>("")
   const [reminder, setReminder] = useState<string>("")
   const [loginInProgress, setLoginInProgress] = useState<boolean>(false)
+  const [show_password, setShowPassword] = useState<boolean>(false)
 
   const navigate = useNavigate()
 
@@ -147,16 +149,28 @@ export function RegisterPage() {
             <label className="flex flex-row bg-zinc-700/30 border border-zinc-900 border-t-zinc-700 rounded-lg items-center pl-4 text-xs font-semibold">
               Password:
               <input
-                className="flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent input  font-normal"
+                className="flex flex-grow p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent input  font-normal"
                 name="password"
-                type="password"
+                type={show_password ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value.trim())}
                 placeholder="Type your password"
                 id="password"
                 autoComplete="off"
               />
-              <div className="flex float-right w-full justify-center">d</div>
+              <div
+                className="flex float-right justify-end pr-4"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setShowPassword(!show_password)
+                }}
+              >
+                {show_password ? (
+                  <AiFillEyeInvisible className="w-4 h-4 text-zinc-500 cursor-pointer" />
+                ) : (
+                  <AiFillEye className="w-4 h-4 text-zinc-500 cursor-pointer" />
+                )}
+              </div>
             </label>
             <label className="flex flex-col bg-zinc-700/30 border border-zinc-900 border-t-zinc-700 rounded-lg items-start px-4 py-2 text-xs font-semibold">
               Password reminder in case you forget your password:
