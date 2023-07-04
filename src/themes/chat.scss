@@ -31,12 +31,19 @@
     background: #0d1117;
     border-radius: 5px;
 
-    &>code {
-      color: #c9d1d9;
-      background: #0d1117;
-      display: block;
-      overflow-x: auto;
-      padding: 1em;
+    pre {
+      text-wrap: balance;
+      margin: 0px !important;
+      background: transparent !important;
+      padding: 0px !important;
+    }
+
+    code {
+      color: #c9d1d9 !important;
+      background: #0d1117 !important;
+      display: block !important;
+      overflow-x: auto !important;
+      padding: 1em !important;
     }
   }
 
@@ -55,10 +62,11 @@
     white-space: pre-line;
     color: #e9e9e9;
     overflow-wrap: anywhere;
+
     &>code {
       padding: 0.1rem 0.4rem;
       font-size: 0.75rem;
     }
   }
-  
+
 }

@@ -17,7 +17,7 @@ type LoaderT = { app_state: AppStateT; user_state: UserT }
 
 export default function Workspace() {
   const { app_state, user_state } = useLoaderData() as LoaderT
-  
+
   const workspace_id = useParams().workspace_id
   const navigate = useNavigate()
 
