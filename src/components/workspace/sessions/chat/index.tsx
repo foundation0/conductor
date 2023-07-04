@@ -493,7 +493,7 @@ export default function Chat() {
       <div
         id="Input"
         ref={eInput}
-        className={`absolute bottom-0 left-0 right-0 my-4 px-4 ${!api_key ? "opacity-25" : ""}`}
+        className={`absolute bottom-0 left-0 right-0 my-4 mx-4 ${!api_key ? "opacity-25" : ""}`}
       >
         <Input
           send={send}
