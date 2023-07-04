@@ -82,6 +82,15 @@ dialog {
   }
 }
 
+.OrganizerSession {
+  .easy-edit-wrapper {
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+    max-width: 90%;
+    overflow: hidden;
+}
+}
+
 .Clipboard {
   .easy-edit-button-wrapper {
     flex-direction: column;
