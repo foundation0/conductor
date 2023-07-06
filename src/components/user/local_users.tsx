@@ -12,6 +12,7 @@ import { z } from "zod"
 import { HiOutlineTrash } from "react-icons/hi"
 import UsersActions from "@/data/actions/users"
 import eventEmitter from "@/components/libraries/events"
+import { FaUserPlus } from "react-icons/fa"
 
 export function LocalUsersPage() {
   let { users_state } = useLoaderData() as { users_state: UsersT }
@@ -45,10 +46,10 @@ export function LocalUsersPage() {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     setLoginInProgress(true)
     event.preventDefault()
-    
+
     let formData = new FormData(event.currentTarget)
     let password = formData.get("password") as string
-    
+
     auth.signin({ username: active_user.username, password }, () => {
       navigate(from, { replace: true })
     })
@@ -150,8 +151,8 @@ export function LocalUsersPage() {
           <form className="flex flex-col justify-center items-center " onSubmit={handleSubmit}>
             <div className="flex flex-col justify-center items-center mb-2">
               <div className="flex w-20 h-20 rounded-full bg-zinc-900/30 border-t border-t-zinc-700 justify-center items-center overflow-hidden">
-                {active_user?.profile_photos?.length || 0 > 0 ? (
-                  <img src={getPhoto({ id: _.first(active_user?.profile_photos) || "" })} className="h-full w-full" />
+                {_.size(active_user?.profile_photos) > 0 ? (
+                  <img src={_.first(active_user?.profile_photos)} className="h-full w-full" />
                 ) : (
                   active_user?.name?.slice(0, 1)
                 )}
@@ -263,7 +264,7 @@ export function LocalUsersPage() {
                     className="flex flex-row bg-zinc-800/30 hover:bg-zinc-900/70 border border-dashed border-zinc-700  border-t-zinc-600/70 rounded-md flex-1 p-3 cursor-pointer text-zinc-500 hover:text-zinc-200"
                   >
                     <div className="flex w-8 h-8 rounded-full bg-zinc-700/30  justify-center items-center overflow-hidden text-zinc-500 font-semibold">
-                      <HiPlus className="w-3 h-3 " />
+                      <FaUserPlus className="w-3 h-3 " />
                     </div>
                     <div className="flex items-center text-xs ml-2">Login to existing account</div>
                     <div className="flex flex-grow justify-end items-center">

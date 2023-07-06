@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useLoaderData, useNavigate } from "react-router-dom"
 import { UserT } from "@/data/loaders/user"
 import UserActions from "@/data/actions/user"
@@ -7,13 +7,14 @@ import _ from "lodash"
 // @ts-ignore
 import EasyEdit from "react-easy-edit"
 import { MdCheck, MdClose } from "react-icons/md"
-import { z } from "zod"
 import { getAddress, hex2buf } from "@/security/common"
-import { HiPlus } from "react-icons/hi"
 import { MdSettingsSuggest } from "react-icons/md"
 import { ModuleSettings } from "@/components/conductor/module_settings"
 import IntersectIcon from "@/assets/icons/intersect.svg"
 import PersonaIcon from "@/assets/icons/persona.svg"
+import { useDropzone } from "react-dropzone"
+import { MdOutlineAddAPhoto } from "react-icons/md"
+import { error } from "../libraries/logging"
 
 // function to detect numbers in strings
 function isNumeric(str: string) {
@@ -48,9 +49,10 @@ export default function Settings() {
     await UserActions.updateUser(new_user_state)
 
     // pass profile updates to local users list
-    if (field_name[0] === "meta" && ["name"].indexOf(field_name[1]) !== -1) {
+    if (field_name[0] === "meta" && ["name", "profile_photos"].indexOf(field_name[1]) !== -1) {
       const public_user = await UsersActions.getUser({ id: user_state.id })
-      const updated_public_user = { ...public_user, [field_name[1]]: field_value }
+      const f_name = field_name.slice(1).join(".")
+      const updated_public_user = _.set(public_user, f_name, field_value)
       await UsersActions.updateUser(updated_public_user)
     }
     navigate("/conductor/settings")
@@ -80,6 +82,42 @@ export default function Settings() {
       }, 100)
     }
   }, [field_edit_id])
+
+  const getPhoto = ({ id }: { id: string }) => {
+    return ""
+  }
+
+  const onDrop = useCallback((acceptedFiles: any, fileRejections: any) => {
+    if (fileRejections.length > 0) {
+      fileRejections.map(({ file, errors }: any) => {
+        return error({
+          message: `File ${file.name} was rejected: ${errors.map((e: any) => e.message).join(", ")}`,
+          data: errors,
+        })
+      })
+    } else {
+      const reader = new FileReader()
+
+      reader.onabort = () => console.log("file reading was aborted")
+      reader.onerror = () => console.log("file reading has failed")
+      reader.onload = () => {
+        // Do whatever you want with the file contents
+        const data_url = reader.result as string
+        if (!data_url) return
+        handleEdit({ value: data_url, name: `meta.profile_photos.0` })
+      }
+      reader.readAsDataURL(acceptedFiles[0] as any)
+    }
+  }, [])
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    maxFiles: 2,
+    maxSize: 1000000,
+    accept: {
+      "image/png": [".png", ".jpg", ".jpeg", ".gif"],
+    },
+  })
+
   // @ts-ignore
   const version = __APP_VERSION__ || "// dev build"
   return (
@@ -92,48 +130,64 @@ export default function Settings() {
         <div className=" text-zinc-400 shadow font-semibold text-lg mb-3 w-full border-b border-b-zinc-700">
           Your profile
         </div>
-        <div className="flex flex-col w-full gap-4 ">
-          <div className="w-full">
-            <div className="flex flex-row w-full gap-4 h-8">
-              <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Id</div>
-              <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
-                {getAddress({ public_key: hex2buf({ input: user_state.public_key }) })}
-              </div>
+        <div className="flex flex-row w-full">
+          <div className="flex flex-col flex-shrink mr-4">
+            <div
+              {...getRootProps()}
+              className="relative flex w-20 h-20 rounded-full bg-zinc-800/80 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-2xl font-bold text-zinc-500"
+            >
+              {_.size(user_state.meta?.profile_photos) > 0 && (
+                <img src={_.first(user_state.meta?.profile_photos) || ""} className="h-full w-full" />
+              )}
+              <input {...getInputProps()} />
+              <MdOutlineAddAPhoto className="absolute opacity-80 hover:opacity-100 text-zinc-200 w-5 h-5 cursor-pointer" />
             </div>
           </div>
-          <div className="w-full">
-            <div className="flex flex-row w-full gap-4 h-8">
-              <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Username</div>
-              <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
-                @{user_state.meta?.username}
+          <div className="flex flex-grow flex-1">
+            <div className="flex flex-col w-full gap-4 ">
+              <div className="w-full">
+                <div className="flex flex-row w-full gap-4 h-8">
+                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Id</div>
+                  <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
+                    {getAddress({ public_key: hex2buf({ input: user_state.public_key }) })}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          <div className="w-full">
-            <div className="flex flex-row w-full gap-4 h-8">
-              <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Display name</div>
-              <div
-                className="flex flex-grow text-end text-sm justify-center items-center "
-                onClick={() => {
-                  setFieldEditId("name")
-                  return false
-                }}
-              >
-                <EasyEdit
-                  type="text"
-                  onSave={(data: any) => {
-                    setFieldEditId("")
-                    handleEdit({ value: data, name: `meta.name` })
-                  }}
-                  onCancel={() => setFieldEditId("")}
-                  onBlur={() => setFieldEditId("")}
-                  cancelOnBlur={true}
-                  saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                  cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
-                  onHoverCssClass={`cursor-pointer`}
-                  value={user_state.meta?.name || "click to add"}
-                  editComponent={<EditComponent />}
-                />
+              <div className="w-full">
+                <div className="flex flex-row w-full gap-4 h-8">
+                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Username</div>
+                  <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
+                    @{user_state.meta?.username}
+                  </div>
+                </div>
+              </div>
+              <div className="w-full">
+                <div className="flex flex-row w-full gap-4 h-8">
+                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Display name</div>
+                  <div
+                    className="flex flex-grow text-end text-sm justify-center items-center mr-2"
+                    onClick={() => {
+                      setFieldEditId("name")
+                      return false
+                    }}
+                  >
+                    <EasyEdit
+                      type="text"
+                      onSave={(data: any) => {
+                        setFieldEditId("")
+                        handleEdit({ value: data, name: `meta.name` })
+                      }}
+                      onCancel={() => setFieldEditId("")}
+                      onBlur={() => setFieldEditId("")}
+                      cancelOnBlur={true}
+                      saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
+                      cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                      onHoverCssClass={`cursor-pointer`}
+                      value={user_state.meta?.name || user_state.meta?.username || "click to add"}
+                      editComponent={<EditComponent />}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

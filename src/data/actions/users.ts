@@ -14,7 +14,7 @@ const API = {
   async addUser(user: z.infer<typeof PublicUserS>) {
     const { UsersState } = await initLoaders()
     const users = await API.getUsers()
-    UsersState.set({ ...users, [user.id]: user })
+    await UsersState.set({ ...users, [user.id]: user })
   },
   async updateUser(user: z.infer<typeof PublicUserS>) {
     API.addUser(user)
