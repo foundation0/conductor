@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { TextMessageT } from "@/data/loaders/sessions"
 import ReactMarkdown from "react-markdown"
-import rehypeHighlight from "rehype-highlight"
-import rehypeRaw from "rehype-raw"
 import { MdCheck, MdContentCopy, MdInbox } from "react-icons/md"
 import { useNavigate, useParams } from "react-router-dom"
 import ClipboardActions from "@/data/actions/clipboard"
@@ -12,7 +10,7 @@ import { error } from "@/components/libraries/logging"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { createHash } from "@/security/common"
-import { set } from "lodash"
+import { GoCodescan } from "react-icons/go"
 
 type MessageProps = {
   message: TextMessageT
@@ -141,7 +139,19 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                       /* onMouseEnter={handleMouseHoverCode}
                   onMouseLeave={handleMouseHoverCode}  */
                     >
-                      <div className="absolute right-2 top-0 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2">
+                      <div className="flex gap-2 absolute right-2 top-0 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2">
+                        <div className="tooltip-left tooltip" data-tip="Verify code (coming soon)">
+                          {used_icon_id === message.id + createHash({ str: String(children).replace(/\n$/, "") }) ? (
+                            <MdCheck />
+                          ) : (
+                            <GoCodescan
+                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                              onClick={() => {
+                                alert('Coming soon')
+                              }}
+                            />
+                          )}
+                        </div>
                         <div className="tooltip-left tooltip" data-tip="Copy code to clipboard">
                           {used_icon_id === message.id + createHash({ str: String(children).replace(/\n$/, "") }) ? (
                             <MdCheck />
