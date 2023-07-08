@@ -128,7 +128,7 @@ export const store = async <TData>({
       throw new Error("Store data does not match schema")
     }
     if (!local_store) {
-      config.features.local_encryption ? set(key, pack(encrypt({ data: s, key: enc_key }))) : set(key, s)
+      config.features.local_encryption && enc_key ? set(key, pack(encrypt({ data: s, key: enc_key }))) : set(key, s)
     }
 
     if (!cf_store) {
