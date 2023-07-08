@@ -32,6 +32,7 @@ export default function Conductor() {
         const group = workspace?.groups?.find((g) => g.id === sess.group_id)
         const folder = group?.folders?.find((f) => f.id === sess.folder_id)
         const session = folder?.sessions?.find((s) => s.id === sess.session_id) ?? null
+        if (!session) return null
         return (
           <Link key={sess.session_id} to={`/conductor/${workspace?.id}/${session?.id}`}>
             <div className="flex flex-row gap-2 border-t border-t-zinc-700 py-2 pl-2 pr-4 text-sm rounded-lg border-zinc-800 bg-zinc-800 hover:bg-zinc-800/70 text-zinc-300">
@@ -40,7 +41,7 @@ export default function Conductor() {
               </div>
               <div className="flex flex-1 items-center text-sm">
                 <RiHashtag className={`w-3.5 h-3.5`} />
-                <div className="pb-0.5">{session?.name}</div>
+                <div className="pb-0.5 font-semibold">{session?.name}</div>
               </div>
             </div>
           </Link>
