@@ -46,14 +46,14 @@ export default function WorkspaceSelector() {
                   <div className="tooltip tooltip-right" data-tip={`Open ${workspace.name}`}>
                     <Link
                       to={`/conductor/${workspace.id}/${session_id}`}
-                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl border-t mb-2 text-zinc-500 ${
+                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl border-t mb-2 overflow-hidden text-zinc-500 ${
                         workspace_id === workspace.id
                           ? "bg-zinc-800 border-t-zinc-700"
                           : "border-zinc-800 border hover:bg-zinc-800 hover:border-t-zinc-700 cursor-pointer"
                       }`}
                     >
                       {workspace.icon ? (
-                        <img src={workspace.icon} className="w-5 h-5 text-zinc-500" />
+                        <img src={workspace.icon} className="w-full h-full text-zinc-500" />
                       ) : (
                         workspace.name.slice(0, 1)
                       )}

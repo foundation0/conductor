@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useFetcher, useLoaderData, useNavigate, useParams } from "react-router-dom"
 import { UserT } from "@/data/loaders/user"
 import UserActions from "@/data/actions/user"
@@ -7,6 +7,9 @@ import _ from "lodash"
 import EasyEdit from "react-easy-edit"
 import { MdCheck, MdClose } from "react-icons/md"
 import generate_llm_module_options from "@/components/libraries/generate_llm_module_options"
+import { useDropzone } from "react-dropzone"
+import { error } from "../libraries/logging"
+import { MdOutlineAddAPhoto } from "react-icons/md"
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -59,6 +62,38 @@ export default function Settings() {
       }, 100)
     }
   }, [field_edit_id])
+
+  const onDrop = useCallback((acceptedFiles: any, fileRejections: any) => {
+    if (fileRejections.length > 0) {
+      fileRejections.map(({ file, errors }: any) => {
+        return error({
+          message: `File ${file.name} was rejected: ${errors.map((e: any) => e.message).join(", ")}`,
+          data: errors,
+        })
+      })
+    } else {
+      const reader = new FileReader()
+
+      reader.onabort = () => console.log("file reading was aborted")
+      reader.onerror = () => console.log("file reading has failed")
+      reader.onload = () => {
+        // Do whatever you want with the file contents
+        const data_url = reader.result as string
+        if (!data_url) return
+        handleEdit({ value: data_url, name: `workspaces.${workspace_i}.icon` })
+      }
+      reader.readAsDataURL(acceptedFiles[0] as any)
+    }
+  }, [])
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    maxFiles: 2,
+    maxSize: 1000000,
+    accept: {
+      "image/png": [".png", ".jpg", ".jpeg", ".gif"],
+    },
+  })
+
   if (!workspace) return null
 
   const saveButton = <MdCheck className="w-3 h-3 text-zinc-200" />
@@ -71,62 +106,74 @@ export default function Settings() {
         <hr className="w-full border-zinc-700 my-4" />
 
         <div className=" text-zinc-400 shadow font-semibold text-lg mb-3">Details</div>
-
-        <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-name`}>
-          <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Name</div>
-          <div
-            className="flex flex-grow text-end text-sm "
-            onClick={() => {
-              setFieldEditId(`${workspace.id}-name`)
-              return false
-            }}
-          >
-            <EasyEdit
-              type="text"
-              onSave={(data: any) => {
-                setFieldEditId("")
-                handleEdit({ value: data, name: `workspaces.${workspace_i}.name` })
-              }}
-              onCancel={() => setFieldEditId("")}
-              onBlur={() => setFieldEditId("")}
-              cancelOnBlur={true}
-              saveButtonLabel={saveButton}
-              cancelButtonLabel={cancelButton}
-              onHoverCssClass={`cursor-pointer`}
-              value={workspace.name || "click to add name"}
-              editComponent={<EditComponent />}
-            />
-          </div>
-        </div>
-        <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-defaults-llm-module`}>
-          <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Default LLM module</div>
-          <div
-            className="flex flex-grow text-end text-sm "
-            onClick={() => {
-              setFieldEditId(`${workspace.id}-defaults-llm-module`)
-              return false
-            }}
-          >
-            <select
-              className="border rounded-lg block w-full p-2 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
-              defaultValue={
-                workspace.defaults?.llm_module?.id
-                  ? `{"id": "${workspace.defaults?.llm_module?.id}", "variant": "${workspace.defaults?.llm_module?.variant}"}`
-                  : "click to select"
-              }
-              onChange={(data) => {
-                handleEdit({
-                  value: data.target.value,
-                  name: `workspaces.${workspace_i}.defaults.llm_module`,
-                  is_json: true,
-                })
-              }}
+        <div className="flex flex-row w-full gap-4">
+          <div className="flex">
+            <div
+              {...getRootProps()}
+              className="relative flex w-20 h-20 rounded-xl bg-zinc-800/80 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-2xl font-bold text-zinc-500 mb-2"
             >
-              {generate_llm_module_options({ user_state })}
-            </select>
+              {workspace?.icon && <img src={workspace?.icon || ""} className="h-full w-full" />}
+              <input {...getInputProps()} />
+              <MdOutlineAddAPhoto className="absolute opacity-80 hover:opacity-100 text-zinc-200 w-5 h-5 cursor-pointer" />
+            </div>
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-name`}>
+              <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Name</div>
+              <div
+                className="flex flex-grow text-end text-sm "
+                onClick={() => {
+                  setFieldEditId(`${workspace.id}-name`)
+                  return false
+                }}
+              >
+                <EasyEdit
+                  type="text"
+                  onSave={(data: any) => {
+                    setFieldEditId("")
+                    handleEdit({ value: data, name: `workspaces.${workspace_i}.name` })
+                  }}
+                  onCancel={() => setFieldEditId("")}
+                  onBlur={() => setFieldEditId("")}
+                  cancelOnBlur={true}
+                  saveButtonLabel={saveButton}
+                  cancelButtonLabel={cancelButton}
+                  onHoverCssClass={`cursor-pointer`}
+                  value={workspace.name || "click to add name"}
+                  editComponent={<EditComponent />}
+                />
+              </div>
+            </div>
+            <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-defaults-llm-module`}>
+              <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Default LLM module</div>
+              <div
+                className="flex flex-grow text-end text-sm "
+                onClick={() => {
+                  setFieldEditId(`${workspace.id}-defaults-llm-module`)
+                  return false
+                }}
+              >
+                <select
+                  className="border rounded-lg block w-full p-2 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
+                  defaultValue={
+                    workspace.defaults?.llm_module?.id
+                      ? `{"id": "${workspace.defaults?.llm_module?.id}", "variant": "${workspace.defaults?.llm_module?.variant}"}`
+                      : "click to select"
+                  }
+                  onChange={(data) => {
+                    handleEdit({
+                      value: data.target.value,
+                      name: `workspaces.${workspace_i}.defaults.llm_module`,
+                      is_json: true,
+                    })
+                  }}
+                >
+                  {generate_llm_module_options({ user_state })}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
-
         <div className=" text-zinc-400 shadow font-semibold text-lg mb-3 mt-8">Manage</div>
         <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-delete-workspace`}>
           <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
