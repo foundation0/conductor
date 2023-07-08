@@ -3,9 +3,19 @@ import { Outlet } from "react-router-dom"
 import PromptIcon from "@/assets/prompt.svg"
 import { useLocation } from "react-router-dom"
 import _ from "lodash"
+import { useAuth } from "../hooks/useAuth"
+import { useEffect } from "react"
+import { setActiveUser } from "../libraries/active_user"
 
 export default function Conductor() {
   const location = useLocation()
+  const auth = useAuth()
+  
+  useEffect(() => {
+    if (auth?.user) {
+      setActiveUser(auth?.user)
+    }
+  }, [location.pathname])
 
   return (
     <main className={`flex flex-row flex-1 m-0 p-0 dark h-full bg-zinc-900`}>

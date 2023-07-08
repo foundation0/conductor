@@ -9,6 +9,7 @@ import { Link } from "react-router-dom"
 import { useEffect } from "react"
 import _ from "lodash"
 import { MdSettings } from "react-icons/md"
+import { BsDiscord } from "react-icons/bs"
 
 export default function WorkspaceSelector() {
   const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
@@ -70,7 +71,14 @@ export default function WorkspaceSelector() {
               </Link>
             </div>
           </div>
-          <div className="flex">
+          <div className="flex flex-col">
+            <div className="flex rounded-full h-12 w-12 justify-center items-center">
+              <div className="tooltip tooltip-right" data-tip="Questions? Problems? Ideas? Join Prompt Discord!">
+                <Link to={`https://discord.gg/PFMtbdrvXw`} target="_blank">
+                  <BsDiscord className="w-5 h-5 text-zinc-400 hover:text-zinc-200" />
+                </Link>
+              </div>
+            </div>
             <div className="avatar rounded-full h-12 w-12 justify-center items-center">
               <Link to={`/conductor/settings`}>
                 <MdSettings className="w-5 h-5 text-zinc-400 hover:text-zinc-200" />

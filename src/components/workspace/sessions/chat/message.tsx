@@ -85,7 +85,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       <Selection.Root>
         <Selection.Trigger className="flex">
           <div
-            className={`chat flex flex-col border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-center items-start relative ${
+            className={`chat flex flex-col max-w-screen-lg border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-center items-start relative ${
               isActive
                 ? " text-white"
                 : "bg-zinc-800 text-zinc-100 text-xs h-fit hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden"
@@ -147,7 +147,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                             <GoCodescan
                               className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
                               onClick={() => {
-                                alert('Coming soon')
+                                alert("Coming soon")
                               }}
                             />
                           )}

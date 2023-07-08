@@ -1,7 +1,7 @@
 import { UserT } from "@/data/loaders/user"
 import _ from "lodash"
 
-export default function generateLLMModuleOptions({ user_state, selected }: { user_state: UserT, selected?: string }) {
+export default function generate_llm_module_options({ user_state, selected }: { user_state: UserT, selected?: string }) {
   const objects = user_state.modules.installed.filter((mod) => mod.meta.type === "LLM")
   // expand modules into array of objects based on variants
   let result = _.reduce(

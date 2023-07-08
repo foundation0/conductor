@@ -15,6 +15,8 @@ import PersonaIcon from "@/assets/icons/persona.svg"
 import { useDropzone } from "react-dropzone"
 import { MdOutlineAddAPhoto } from "react-icons/md"
 import { error } from "../libraries/logging"
+import { Link } from "react-router-dom"
+import { useAuth } from "../hooks/useAuth"
 
 // function to detect numbers in strings
 function isNumeric(str: string) {
@@ -36,8 +38,9 @@ function parseNumber(str: string) {
   return str
 }
 
-export default function Settings() {
+export default function Settings(props: any) {
   const navigate = useNavigate()
+  let auth = useAuth()
   const { user_state } = useLoaderData() as { user_state: UserT }
   const [field_edit_id, setFieldEditId] = useState("")
 
@@ -186,6 +189,21 @@ export default function Settings() {
                       value={user_state.meta?.name || user_state.meta?.username || "click to add"}
                       editComponent={<EditComponent />}
                     />
+                  </div>
+                </div>
+              </div>
+              <div className="w-full">
+                <div className="flex flex-row w-full gap-4 h-8">
+                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300"></div>
+                  <div
+                    className="flex flex-grow text-end text-sm justify-center items-center mr-2"
+                    
+                  >
+                    <button onClick={() => {
+                      auth.signout(() => {
+                        navigate("/conductor/authenticate")
+                      })
+                    }}>Logout</button>
                   </div>
                 </div>
               </div>

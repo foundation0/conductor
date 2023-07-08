@@ -52,7 +52,7 @@ export function RegisterPage() {
     const created_user = await createUser({ username, password, reminder })
 
     if (!created_user || !UserS.safeParse(created_user.user).success) return null
-    setActiveUser(created_user.user as UserT)
+    await setActiveUser(created_user.user as UserT)
     setTimeout(() => {
       auth.signin({ username: created_user.user.meta?.username || username, password }, () => {
         navigate("/conductor/")

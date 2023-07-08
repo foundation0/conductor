@@ -6,7 +6,7 @@ import _ from "lodash"
 // @ts-ignore
 import EasyEdit from "react-easy-edit"
 import { MdCheck, MdClose } from "react-icons/md"
-import generateLLMModuleOptions from "@/components/libraries/generateLLMModuleOptions"
+import generate_llm_module_options from "@/components/libraries/generate_llm_module_options"
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -122,7 +122,7 @@ export default function Settings() {
                 })
               }}
             >
-              {generateLLMModuleOptions({ user_state })}
+              {generate_llm_module_options({ user_state })}
             </select>
           </div>
         </div>

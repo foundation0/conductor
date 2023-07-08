@@ -5,7 +5,7 @@ import AutoScroll from "@brianmcallister/react-auto-scroll"
 import { useEffect, useRef, useState } from "react"
 import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import { nanoid } from "nanoid"
-import { buildMessageTree } from "@/components/libraries/computeMessageChain"
+import { buildMessageTree } from "@/components/libraries/compute_message_chain"
 import { useLoaderData, useNavigate, useParams } from "react-router-dom"
 import SessionsActions from "@/data/actions/sessions"
 import { initLoaders } from "@/data/loaders"
@@ -16,7 +16,7 @@ import { FaUser } from "react-icons/fa"
 import { ModuleS } from "@/data/schemas/modules"
 import { z } from "zod"
 import { Link } from "react-router-dom"
-import generateLLMModuleOptions from "@/components/libraries/generateLLMModuleOptions"
+import generate_llm_module_options from "@/components/libraries/generate_llm_module_options"
 import { WorkspaceS } from "@/data/schemas/workspace"
 import { fieldFocus } from "@/components/libraries/fieldFocus"
 import { addMessage } from "./addMessage"
@@ -402,7 +402,7 @@ export default function Chat() {
 
   if (!session || !module) return null
   return (
-    <div className="flex flex-1 flex-col pt-2 relative max-w-screen-lg" ref={eContainer}>
+    <div className="flex flex-1 flex-col pt-2 relative" ref={eContainer}>
       <div className="flex flex-1">
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
           {processed_messages && processed_messages?.length > 0 ? (
@@ -421,7 +421,7 @@ export default function Chat() {
                   })
                 }}
               >
-                {generateLLMModuleOptions({
+                {generate_llm_module_options({
                   user_state,
                   selected: `{"id": "${session.settings.module.id}", "variant": "${session.settings.module.variant}"}`,
                 })}
@@ -456,7 +456,7 @@ export default function Chat() {
                       })
                     }}
                   >
-                    {generateLLMModuleOptions({ user_state })}
+                    {generate_llm_module_options({ user_state })}
                   </select>
                 </div>
                 <div className="flex mt-5 flex-col justify-center items-center gap-4">
@@ -490,20 +490,18 @@ export default function Chat() {
           </div>
         </AutoScroll>
       </div>
-      <div
-        id="Input"
-        ref={eInput}
-        className={`absolute bottom-0 left-0 right-0 my-4 mx-4 ${!api_key ? "opacity-25" : ""}`}
-      >
-        <Input
-          send={send}
-          session_id={session_id}
-          messages={processed_messages}
-          gen_in_progress={gen_in_progress}
-          is_new_branch={branch_parent_id}
-          disabled={!api_key}
-          genController={genController}
-        />
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center">
+        <div id="Input" ref={eInput} className={`max-w-screen-lg w-full my-4 mx-4 ${!api_key ? "opacity-25" : ""}`}>
+          <Input
+            send={send}
+            session_id={session_id}
+            messages={processed_messages}
+            gen_in_progress={gen_in_progress}
+            is_new_branch={branch_parent_id}
+            disabled={!api_key}
+            genController={genController}
+          />
+        </div>
       </div>
     </div>
   )

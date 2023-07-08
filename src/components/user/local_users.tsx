@@ -223,8 +223,8 @@ export function LocalUsersPage() {
                   return (
                     <div
                       key={user.id}
-                      onClick={() => {
-                        setActiveUser(user)
+                      onClick={async () => {
+                        await setActiveUser(user)
                         setTimeout(() => {
                           fieldFocus({ selector: "#authentication_password" })
                         }, 200)

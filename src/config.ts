@@ -16,6 +16,9 @@ const config = {
   },
   features: {
     local_encryption: false // DO NOT CHANGE THIS AFTER INITIAL SETUP OR YOU WILL LOSE ALL YOUR DATA - TODO: functions to migrate data from non-encrypted to encrypted
+  },
+  user: {
+    active_user_ttl: 1000 * 60 * 60 * 24 // 1 day
   }
 }
 

@@ -12,9 +12,7 @@ import { AppStateT } from "@/data/loaders/app"
 const noopAPI = { get: () => null, set: () => null }
 
 let API: any = {}
-
 let APICache: any = {}
-
 let SessionCache: any = {}
 
 export async function initLoaders() {
@@ -35,12 +33,11 @@ export async function initLoaders() {
   } else {
     // when user is authentication
     if (API._status === "authenticated") return API
-    console.log("fooooo", API._status)
     const user_state = APICache?.user_state || (await UserState())
     const app_state = APICache?.app_state || (await AppState())
     const session_state = APICache?.session_state || (await SessionState())
     const clipboard_state = APICache?.clipboard_state || (await ClipboardState())
-    const users_state = APICache?.users_state
+    const users_state = APICache?.users_state || (await UsersState())
 
     // set cache
     APICache = { ...APICache, user_state, app_state, session_state, clipboard_state, users_state }
