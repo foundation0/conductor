@@ -137,7 +137,7 @@ export default function Settings(props: any) {
           <div className="flex flex-col flex-shrink mr-4">
             <div
               {...getRootProps()}
-              className="relative flex w-20 h-20 rounded-full bg-zinc-800/80 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-2xl font-bold text-zinc-500"
+              className="relative flex w-20 h-20 rounded-full bg-zinc-800/80 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-2xl font-bold text-zinc-500 mb-2"
             >
               {_.size(user_state.meta?.profile_photos) > 0 && (
                 <img src={_.first(user_state.meta?.profile_photos) || ""} className="h-full w-full" />
@@ -145,6 +145,16 @@ export default function Settings(props: any) {
               <input {...getInputProps()} />
               <MdOutlineAddAPhoto className="absolute opacity-80 hover:opacity-100 text-zinc-200 w-5 h-5 cursor-pointer" />
             </div>
+            <button
+              className={`bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-100 rounded-lg block px-2 py-1.5 text-xs font-semibold cursor-pointer`}
+              onClick={() => {
+                auth.signout(() => {
+                  navigate("/conductor/authenticate")
+                })
+              }}
+            >
+              Logout
+            </button>
           </div>
           <div className="flex flex-grow flex-1">
             <div className="flex flex-col w-full gap-4 ">
@@ -189,21 +199,6 @@ export default function Settings(props: any) {
                       value={user_state.meta?.name || user_state.meta?.username || "click to add"}
                       editComponent={<EditComponent />}
                     />
-                  </div>
-                </div>
-              </div>
-              <div className="w-full">
-                <div className="flex flex-row w-full gap-4 h-8">
-                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300"></div>
-                  <div
-                    className="flex flex-grow text-end text-sm justify-center items-center mr-2"
-                    
-                  >
-                    <button onClick={() => {
-                      auth.signout(() => {
-                        navigate("/conductor/authenticate")
-                      })
-                    }}>Logout</button>
                   </div>
                 </div>
               </div>

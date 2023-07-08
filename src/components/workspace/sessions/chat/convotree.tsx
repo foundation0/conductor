@@ -3,7 +3,7 @@ import { TextMessageT } from "@/data/loaders/sessions"
 import Message from "./message"
 import _ from "lodash"
 import { RiAddCircleFill } from "react-icons/ri"
-import { fieldFocus } from "@/components/libraries/fieldFocus"
+import { fieldFocus } from "@/components/libraries/field_focus"
 type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 
 type ConversationTreeProps = {

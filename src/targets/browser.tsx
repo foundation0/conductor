@@ -40,9 +40,10 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
     UsersActions.addUser({
       id: user.id as string,
-      name: user.meta.username,
+      name: user.meta.name || user.meta.username,
       username: user.meta.username,
       last_seen: new Date().getTime(),
+      profile_photos: user.meta.profile_photos || [],
     })
 
     return v1AuthProvider.signin(() => {

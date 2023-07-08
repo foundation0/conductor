@@ -3,7 +3,7 @@ import _ from "lodash"
 import PromptIcon from "@/assets/prompt.svg"
 import { useEffect, useState } from "react"
 //@ts-ignore
-import { fieldFocus } from "@/components//libraries/fieldFocus"
+import { fieldFocus } from "@/components/libraries/field_focus"
 import { AiTwotoneAlert } from "react-icons/ai"
 import { createUser } from "@/components//libraries/auth"
 import { useNavigate, Link } from "react-router-dom"

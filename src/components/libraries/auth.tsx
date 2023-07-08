@@ -163,6 +163,7 @@ export async function authenticateUser({ username, password }: { username: strin
 
   // get user
   const user = await get({ key: opened_buffer.user_key })
+  console.log('arm', opened_buffer.user_key)
   if (!user) return error({ message: "user not found" })
 
   // try to open user

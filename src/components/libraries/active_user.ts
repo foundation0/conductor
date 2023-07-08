@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom"
 
 let active_user_ttl: any = null
 
-export function getActiveUser() {
+export function getActiveUser(): UserT | null {
   const au = localStorage.getItem("active_user")
   if (!au) return null
   const active_user = JSON.parse(au)

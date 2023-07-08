@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/components/hooks/useAuth"
-import { fieldFocus } from "../libraries/fieldFocus"
+import { fieldFocus } from "../libraries/field_focus"
 import { useEffect, useState } from "react"
 import { BiRightArrowAlt } from "react-icons/bi"
 import _ from "lodash"

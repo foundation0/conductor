@@ -1,14 +1,6 @@
 import { ZodTypeAny } from "zod"
 import _ from "lodash"
-import {
-  buf2hex,
-  createHash,
-  decrypt,
-  encrypt,
-  hex2buf,
-  keyPair,
-  signMessage,
-} from "@/security/common"
+import { buf2hex, createHash, decrypt, encrypt, hex2buf, keyPair, signMessage } from "@/security/common"
 import { pack, unpack } from "msgpackr"
 import { get, set } from "idb-keyval"
 import { getActiveUser } from "@/components/libraries/active_user"
@@ -84,6 +76,7 @@ export const store = async <TData>({
     : await initial()
 
   let key_pair: { public_key: Uint8Array; secret_key: Uint8Array } | null = null
+  let remote_key: string | null = null
   let cf_store: any = null
   if (!["users"].includes(name)) {
     if (!active_user) {
@@ -93,9 +86,14 @@ export const store = async <TData>({
 
     // Create a key pair from the master key
     key_pair = keyPair({ seed: hex2buf({ input: active_user?.master_key }) })
-
+    if (name !== "user") {
+      remote_key = keyHash(active_user?.master_key + key)
+    } else {
+      remote_key = keyHash(active_user?.master_key + active_user?.meta?.username)
+      console.log('urm', remote_key)
+    }
     // Get the store from the cloud storage
-    cf_store = await getCF({ key: keyHash(username + key) })
+    cf_store = await getCF({ key: remote_key })
 
     // If the cloud store is larger than the local store, decrypt the cloud store
     if (cf_store && buf2hex({ input: cf_store.public_key }) === active_user.public_key) {
@@ -132,9 +130,9 @@ export const store = async <TData>({
     }
 
     if (!cf_store) {
-      if (key_pair && name !== "users") {
+      if (key_pair && remote_key && name !== "users") {
         const enc_data = await processForRemote({ data: s, key_pair, enc_key })
-        setCF({ key: keyHash(username + key), value: enc_data })
+        setCF({ key: remote_key, value: enc_data })
       }
     }
 
@@ -162,9 +160,9 @@ export const store = async <TData>({
         if (no_storage) return
         if (!enc_key) throw new Error("No encryption key")
         // If a key pair exists, encrypt the data and save it to the cloud storage
-        if (key_pair && name !== "users") {
+        if (key_pair && remote_key && name !== "users") {
           const enc_data = await processForRemote({ data: vstate.data, key_pair, enc_key })
-          setCF({ key: keyHash(username + key), value: enc_data })
+          setCF({ key: remote_key, value: enc_data })
         }
         // Save the data to the local storage
         if (config.features.local_encryption) await set(key, pack(encrypt({ data: vstate.data, key: enc_key })))

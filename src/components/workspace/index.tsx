@@ -11,7 +11,7 @@ import MembersIcon from "@/assets/icons/members.svg"
 import CabinetIcon from "@/assets/icons/cabinet.svg"
 import Comment1Icon from "@/assets/icons/comment-1.svg"
 import IntersectIcon from "@/assets/icons/intersect.svg"
-import { fieldFocus } from "@/components/libraries/fieldFocus"
+import { fieldFocus } from "@/components/libraries/field_focus"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 

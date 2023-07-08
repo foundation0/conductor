@@ -11,7 +11,7 @@ import AppStateActions from "@/data/actions/app"
 import { useEffect, useState } from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import UserActions from "@/data/actions/user"
-import { fieldFocus } from "@/components/libraries/fieldFocus"
+import { fieldFocus } from "@/components/libraries/field_focus"
 import { useHotkeys } from "react-hotkeys-hook"
 
 // @ts-ignore

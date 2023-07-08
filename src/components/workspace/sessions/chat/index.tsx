@@ -18,7 +18,7 @@ import { z } from "zod"
 import { Link } from "react-router-dom"
 import generate_llm_module_options from "@/components/libraries/generate_llm_module_options"
 import { WorkspaceS } from "@/data/schemas/workspace"
-import { fieldFocus } from "@/components/libraries/fieldFocus"
+import { fieldFocus } from "@/components/libraries/field_focus"
 import { addMessage } from "./addMessage"
 import PromptIcon from "@/assets/prompt.svg"
 const padding = 50
