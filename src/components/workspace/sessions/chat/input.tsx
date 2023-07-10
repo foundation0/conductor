@@ -109,7 +109,7 @@ export default function Input({
             ref={inputRef}
             rows={rows}
             id="input"
-            className={`flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ${
+            className={`flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture ${
               !gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch ? "hidden" : ""
             }`}
             placeholder={

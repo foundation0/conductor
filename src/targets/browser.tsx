@@ -15,6 +15,7 @@ import { error } from "@/components/libraries/logging"
 import { setActiveUser, getActiveUser, removeActiveUser } from "@/components/libraries/active_user"
 import ToastNotification from "@/components/notifications/toast"
 import UsersActions from "@/data/actions/users"
+import { ph } from "@/components/libraries/logging"
 
 // pseudo polyfills
 if (typeof window !== "undefined") {
@@ -23,6 +24,8 @@ if (typeof window !== "undefined") {
     env: {},
   }
 }
+
+
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   let [user, setUser] = React.useState<any>(getActiveUser())
@@ -56,6 +59,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     return v1AuthProvider.signout(() => {
       setUser(null)
       removeActiveUser()
+      ph()?.reset()
       callback()
     })
   }

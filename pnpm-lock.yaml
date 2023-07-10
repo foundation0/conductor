@@ -86,6 +86,9 @@ dependencies:
   p-debounce:
     specifier: ^4.0.0
     version: 4.0.0
+  posthog-js:
+    specifier: ^1.70.1
+    version: 1.70.1
   react:
     specifier: ^18.2.0
     version: 18.2.0
@@ -3086,6 +3089,10 @@ packages:
       xml2js: 0.5.0
     dev: false
 
+  /fflate@0.4.8:
+    resolution: {integrity: sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==}
+    dev: false
+
   /file-selector@0.6.0:
     resolution: {integrity: sha512-QlZ5yJC0VxHxQQsQhXvBaC7VRJ2uaxTf+Tfpu4Z/OcVQJVpZO+DGU0rkoVW5ce2SccxugvpBJoMvUs59iILYdw==}
     engines: {node: '>= 12'}
@@ -4835,6 +4842,12 @@ packages:
       nanoid: 3.3.6
       picocolors: 1.0.0
       source-map-js: 1.0.2
+
+  /posthog-js@1.70.1:
+    resolution: {integrity: sha512-UAnUOVBA60HapPmVHuV+8L6B10kKnH9WugNym/RZjAfOg8iCGCHxoUtD+80DqU/sO35YdFbgGK25e2BofEIaRg==}
+    dependencies:
+      fflate: 0.4.8
+    dev: false
 
   /prebuild-install@7.1.1:
     resolution: {integrity: sha512-jAXscXWMcCK8GgCoHOfIr0ODh5ai8mj63L2nWrjuAgXE6tDyYGnx4/8o/rCgU+B4JSyZBKbeZqzhtwtC3ovxjw==}

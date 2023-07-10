@@ -39,12 +39,12 @@ export default function Workspace() {
     }
   }, [workspace_id])
 
-  const [active_sidebar_tab, setActiveSidebarTab] = useState("organizer")
+  const [active_sidebar_tab, setActiveSidebarTab] = useState("sessions")
   const sidebar_tab_class = "h-5 w-5 hover:text-zinc-200 contrast-150"
   const sidebar_tabs = [
     {
-      id: "organizer",
-      onClick: () => setActiveSidebarTab("organizer"),
+      id: "sessions",
+      onClick: () => setActiveSidebarTab("sessions"),
       icon: <img src={Comment1Icon} className={sidebar_tab_class} />,
     },
     {
@@ -98,7 +98,7 @@ export default function Workspace() {
         </div>
         <div className="px-2 w-60 min-w-min max-w-lg">
           <Switch fallback={""}>
-            <Match when={active_sidebar_tab === "organizer"}>
+            <Match when={active_sidebar_tab === "sessions"}>
               <Organizer app_state={app_state} user_state={user_state} />
             </Match>
             <Match when={["data", "members", "market"].indexOf(active_sidebar_tab) !== -1}>

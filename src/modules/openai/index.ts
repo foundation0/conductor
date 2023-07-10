@@ -12,6 +12,7 @@ import { BufferMemory, BufferWindowMemory } from "langchain/memory"
 import { TextMessageS } from "@/data/schemas/sessions"
 import _ from "lodash"
 import Icon from "./icon.svg"
+import { ph } from "@/components/libraries/logging"
 
 export const specs: z.infer<typeof ModuleS> = {
   _v: 1,
@@ -135,6 +136,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
             message: err.response.data.error.message,
             status: err.response.status,
           }
+          if(error.message === 'Cancel: canceled') return
           if (typeof onError === "function") onError(error)
         },
       },
