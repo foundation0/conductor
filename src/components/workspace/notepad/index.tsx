@@ -190,7 +190,9 @@ export default function Notepad() {
               >
                 <div
                   className={`flex gap-2  bg-zinc-900 absolute right-2 -top-6 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded-lg mt-2 ${
-                    field_edit_id === c.id + "all/edit" ? "bg-zinc-900 border-t-2 border-dashed border-t-zinc-700" : "bg-zinc-900"
+                    field_edit_id === c.id + "all/edit"
+                      ? "bg-zinc-900 border-t-2 border-dashed border-t-zinc-700"
+                      : "bg-zinc-900"
                   }`}
                 >
                   {field_edit_id === c.id + "all/edit" ? (

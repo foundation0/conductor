@@ -13,6 +13,7 @@ import { createHash } from "@/security/common"
 import { GoCodescan } from "react-icons/go"
 import { copyToClipboard } from "@/components/libraries/copypasta"
 import { BiNotepad } from "react-icons/bi"
+import _ from "lodash"
 
 type MessageProps = {
   message: TextMessageT
@@ -156,12 +157,12 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                         <div className="tooltip tooltip-left" data-tip="Save code to notepad">
                           {used_icon_id === message.id + "all/clip" ? (
                             <MdCheck />
-                          ) : (
+                          ) : ( 
                             <BiNotepad
                               className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
                               onClick={() => {
                                 addToClipboard({
-                                  text: String(children).replace(/\n$/, ""),
+                                  text: `\`\`\`${match[1] || ""}\n${String(children).replace(/\n$/, "")}\n\`\`\``,
                                   msg_id: message.id,
                                   icon_id:
                                     message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "notepad",
