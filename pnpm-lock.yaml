@@ -74,6 +74,9 @@ dependencies:
   lodash:
     specifier: ^4.17.21
     version: 4.17.21
+  lottie-light-react:
+    specifier: ^2.4.0
+    version: 2.4.0(react-dom@18.2.0)(react@18.2.0)
   msgpackr:
     specifier: ^1.9.5
     version: 1.9.5
@@ -3900,6 +3903,21 @@ packages:
     hasBin: true
     dependencies:
       js-tokens: 4.0.0
+    dev: false
+
+  /lottie-light-react@2.4.0(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-TXJOnyqEc6ev9/um8Xkxve5EVcgCX2pi1olWc8jj+81qaPyFBA+VxHIc2Ojl42IqeAiKhGHz098ztQOIImJcyg==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      lottie-web: 5.12.2
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
+  /lottie-web@5.12.2:
+    resolution: {integrity: sha512-uvhvYPC8kGPjXT3MyKMrL3JitEAmDMp30lVkuq/590Mw9ok6pWcFCwXJveo0t5uqYw1UREQHofD+jVpdjBv8wg==}
     dev: false
 
   /loupe@2.3.6:

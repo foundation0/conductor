@@ -12,6 +12,8 @@ import CabinetIcon from "@/assets/icons/cabinet.svg"
 import Comment1Icon from "@/assets/icons/comment-1.svg"
 import IntersectIcon from "@/assets/icons/intersect.svg"
 import { fieldFocus } from "@/components/libraries/field_focus"
+import Lottie from "lottie-light-react"
+import WorkingOnIt from "@/assets/animations/working_on_it.json"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
@@ -100,8 +102,9 @@ export default function Workspace() {
               <Organizer app_state={app_state} user_state={user_state} />
             </Match>
             <Match when={["data", "members", "market"].indexOf(active_sidebar_tab) !== -1}>
-              <div className="flex flex-col align-center items-center justify-center flex-grow text-zinc-600 font-semibold">
-                TBD
+              <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
+                <Lottie animationData={WorkingOnIt}></Lottie>
+                <div className="text-md text-center">Coming soon&trade;</div>
               </div>
             </Match>
           </Switch>
