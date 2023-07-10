@@ -14,11 +14,11 @@ export const ClipS = z.object({
   bin: z.custom((data) => validateBinary(data)).optional(),
 })
 
-export const ClipboardS = z.object({
+export const NotepadS = z.object({
   _v: z.number().default(1),
   _updated: z.number().optional(),
   session_id: z.string(),
   clips: z.array(ClipS),
 })
 
-export const ClipboardsS = z.record(ClipboardS)
+export const NotepadsS = z.record(NotepadS)

@@ -13,27 +13,50 @@ button:disabled {
   opacity: 0.5 !important;
 }
 
+/* Vertical Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
-/* Track */
+/* Vertical Track */
 ::-webkit-scrollbar-track {
   -webkit-border-radius: 10px;
   border-radius: 10px;
 }
 
-/* Handle */
+/* Vertical Handle */
 ::-webkit-scrollbar-thumb {
   opacity: 0.1;
   -webkit-border-radius: 10px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.1);
+}
 
+/* Horizontal Scrollbar */
+::-webkit-scrollbar:horizontal {
+  height: 8px;
+}
+
+/* Horizontal Track */
+::-webkit-scrollbar-track:horizontal {
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+}
+
+/* Horizontal Handle */
+::-webkit-scrollbar-thumb:horizontal {
+  opacity: 0.1;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Tooltip tweaks */
-.tooltip.tooltip-open:before, .tooltip.tooltip-open:after, .tooltip:hover:before, .tooltip:hover:after, .tooltip:before {
+.tooltip.tooltip-open:before,
+.tooltip.tooltip-open:after,
+.tooltip:hover:before,
+.tooltip:hover:after,
+.tooltip:before {
   font-size: 0.7rem !important;
   border-top: 1px solid #ffffff20;
 }

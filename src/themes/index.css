@@ -1,6 +1,7 @@
 @import "./dark.scss";
 @import "./patches.scss";
 @import "./chat.scss";
+@import "./notepad.scss";
 
 @tailwind base;
 @tailwind components;

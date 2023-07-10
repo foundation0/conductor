@@ -12,22 +12,34 @@ import { useFetcher, useLoaderData, useNavigate, useParams } from "react-router-
 import { Link } from "react-router-dom"
 import AppStateActions from "@/data/actions/app"
 import { useHotkeys } from "react-hotkeys-hook"
+import { BiNotepad } from "react-icons/bi"
+import eventEmitter from "@/components/libraries/events"
 
 export default function Tabs({
-  setShowClipboard,
+  setShowNotepad: setShowClipboard,
   setShowMembers,
 }: {
-  setShowClipboard: () => void
+  setShowNotepad: () => void
   setShowMembers: () => void
 }) {
   const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
 
   const [open_tabs, setOpenTabs] = useState<any>([])
+  const [item_added_to_notepad, setItemAddedToNotepad] = useState(false)
 
   const navigate = useNavigate()
   const fetcher = useFetcher()
   const workspace_id = useParams().workspace_id as string
   const session_id = useParams().session_id as string
+
+  useEffect(() => {
+    eventEmitter.on("item_added_to_notepad", () => {
+      setItemAddedToNotepad(true)
+      setTimeout(() => {
+        setItemAddedToNotepad(false)
+      }, 2000)
+    })
+  }, [])
 
   // Generate visible tabs
   const generateVisibleTabs = () => {
@@ -202,7 +214,12 @@ export default function Tabs({
       </div>
       <div className="flex-grow flex flex-row gap-3 pr-3 justify-end items-center ">
         <div className="tooltip tooltip-left" data-tip="Show/hide clipboard">
-          <MdInbox className="text-zinc-500 hover:text-zinc-200 cursor-pointer " onClick={() => setShowClipboard()} />
+          <BiNotepad
+            className={` hover:text-zinc-200 cursor-pointer ${
+              item_added_to_notepad ? "animate-pulse text-zinc-200" : "text-zinc-500"
+            }`}
+            onClick={() => setShowClipboard()}
+          />
         </div>
         {/* <div className="tooltip tooltip-left" data-tip="Show/hide session members">
           <HiUsers className="cursor-pointer" onClick={() => setShowMembers()} />

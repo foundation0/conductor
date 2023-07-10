@@ -1,7 +1,7 @@
 import { state as AppState } from "@/data/loaders/app"
 import { state as UserState } from "@/data/loaders/user"
 import { state as SessionState } from "@/data/loaders/sessions"
-import { state as ClipboardState } from "@/data/loaders/clipboard"
+import { state as NotepadState } from "@/data/loaders/notepad"
 import { state as UsersState } from "@/data/loaders/users"
 import { state as MessagesState } from "@/data/loaders/messages"
 import { getActiveUser } from "@/components/libraries/active_user"
@@ -25,7 +25,7 @@ export async function initLoaders() {
       AppState: noopAPI,
       UserState: noopAPI,
       SessionState: noopAPI,
-      ClipboardState: noopAPI,
+      NotepadState: noopAPI,
       MessagesState: noopAPI,
       UsersState: APICache?.users_state || (await UsersState()),
     }
@@ -36,11 +36,11 @@ export async function initLoaders() {
     const user_state = APICache?.user_state || (await UserState())
     const app_state = APICache?.app_state || (await AppState())
     const session_state = APICache?.session_state || (await SessionState())
-    const clipboard_state = APICache?.clipboard_state || (await ClipboardState())
+    const notepad_state = APICache?.notepad_state || (await NotepadState())
     const users_state = APICache?.users_state || (await UsersState())
 
     // set cache
-    APICache = { ...APICache, user_state, app_state, session_state, clipboard_state, users_state }
+    APICache = { ...APICache, user_state, app_state, session_state, notepad_state, users_state }
 
     API = {
       _status: "authenticated",
@@ -53,7 +53,7 @@ export async function initLoaders() {
         SessionCache[session_id] = s
         return s
       },
-      ClipboardState: clipboard_state,
+      NotepadState: notepad_state,
       UsersState: users_state,
     }
   }
@@ -61,16 +61,16 @@ export async function initLoaders() {
 }
 
 export const loader = async () => {
-  const { AppState, UserState, SessionState, ClipboardState, MessagesState, UsersState } = await initLoaders()
+  const { AppState, UserState, SessionState, NotepadState, MessagesState, UsersState } = await initLoaders()
   const users_state = await UsersState.get()
   const app_state: AppStateT = await AppState.get()
   const user_state = await UserState.get()
   const sessions_state = await SessionState.get()
-  const clipboard_state = await ClipboardState.get()
+  const notepad_state = await NotepadState.get()
   const messages_state = _.get(app_state, `active_sessions[${app_state?.active_workspace_id}].session_id`)
     ? await MessagesState({
         session_id: _.get(app_state, `active_sessions[${app_state?.active_workspace_id}].session_id`),
       })
     : []
-  return { app_state, user_state, sessions_state, clipboard_state, messages_state, MessagesState, users_state }
+  return { app_state, user_state, sessions_state, notepad_state, messages_state, MessagesState, users_state }
 }

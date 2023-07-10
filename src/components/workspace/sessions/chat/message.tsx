@@ -3,7 +3,7 @@ import { TextMessageT } from "@/data/loaders/sessions"
 import ReactMarkdown from "react-markdown"
 import { MdCheck, MdContentCopy, MdInbox } from "react-icons/md"
 import { useNavigate, useParams } from "react-router-dom"
-import ClipboardActions from "@/data/actions/clipboard"
+import NotepadActions from "@/data/actions/notepad"
 import * as Selection from "selection-popover"
 import * as Toolbar from "@radix-ui/react-toolbar"
 import { error } from "@/components/libraries/logging"
@@ -11,6 +11,8 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { createHash } from "@/security/common"
 import { GoCodescan } from "react-icons/go"
+import { copyToClipboard } from "@/components/libraries/copypasta"
+import { BiNotepad } from "react-icons/bi"
 
 type MessageProps = {
   message: TextMessageT
@@ -48,25 +50,6 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
     if (selection_box) selection_box.style.opacity = "0"
   }
 
-  const copyToClipboard = async (text: string, id?: string) => {
-    if (!navigator.clipboard) {
-      console.error("Clipboard API not available")
-      return
-    }
-
-    try {
-      const permission = await navigator.permissions.query({ name: "clipboard-write" as any })
-      if (permission.state === "granted" || permission.state === "prompt") {
-        await navigator.clipboard.writeText(text)
-        if (id) setUsedIcon(id)
-      } else {
-        error({ message: "Clipboard permission denied" })
-      }
-    } catch (err) {
-      error({ message: "Copy failed", data: err })
-    }
-  }
-
   useEffect(() => {
     if (used_icon_id) setTimeout(closeSelection, selector_delay)
   }, [used_icon_id])
@@ -74,7 +57,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
   const addToClipboard = async ({ text, msg_id, icon_id }: { text: string; msg_id: string; icon_id?: string }) => {
     if (text && msg_id && session_id) {
       if (icon_id) setUsedIcon(icon_id)
-      await ClipboardActions.add({ session_id, data: text, msg_id, type: "text" })
+      await NotepadActions.add({ session_id, data: text, msg_id, type: "text" })
       setTimeout(closeSelection, selector_delay)
       if (workspace_id) navigate(`/conductor/${workspace_id}/${session_id}`)
     }
@@ -98,7 +81,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
             }}
           >
             {is_hovering && isActive && (
-              <div className="flex gap-2 border-t border-t-zinc-700 bg-zinc-800 absolute right-2 -top-7 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded mt-2">
+              <div className="flex gap-2 border-t border-t-zinc-700 bg-zinc-800 absolute right-2 -top-7 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded-lg mt-2">
                 <div className="tooltip-left tooltip" data-tip="Copy message to clipboard">
                   {used_icon_id === message.id + "all/copy" ? (
                     <MdCheck />
@@ -106,16 +89,16 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                     <MdContentCopy
                       className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
                       onClick={() => {
-                        copyToClipboard(message.text, message.id + "all/copy")
+                        copyToClipboard(message.text, message.id + "all/copy", setUsedIcon)
                       }}
                     />
                   )}
                 </div>
-                <div className="tooltip tooltip-top" data-tip="Save to inbox">
+                <div className="tooltip tooltip-top" data-tip="Save to notepad">
                   {used_icon_id === message.id + "all/clip" ? (
                     <MdCheck />
                   ) : (
-                    <MdInbox
+                    <BiNotepad
                       className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
                       onClick={() => {
                         addToClipboard({
@@ -141,7 +124,8 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                     >
                       <div className="flex gap-2 absolute right-2 top-0 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2">
                         <div className="tooltip-left tooltip" data-tip="Verify code (coming soon)">
-                          {used_icon_id === message.id + createHash({ str: String(children).replace(/\n$/, "") }) ? (
+                          {used_icon_id ===
+                          message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "scan" ? (
                             <MdCheck />
                           ) : (
                             <GoCodescan
@@ -153,7 +137,8 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                           )}
                         </div>
                         <div className="tooltip-left tooltip" data-tip="Copy code to clipboard">
-                          {used_icon_id === message.id + createHash({ str: String(children).replace(/\n$/, "") }) ? (
+                          {used_icon_id ===
+                          message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "copy" ? (
                             <MdCheck />
                           ) : (
                             <MdContentCopy
@@ -161,8 +146,26 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                               onClick={() => {
                                 copyToClipboard(
                                   String(children).replace(/\n$/, ""),
-                                  message.id + createHash({ str: String(children).replace(/\n$/, "") })
+                                  message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "copy",
+                                  setUsedIcon
                                 )
+                              }}
+                            />
+                          )}
+                        </div>
+                        <div className="tooltip tooltip-left" data-tip="Save code to notepad">
+                          {used_icon_id === message.id + "all/clip" ? (
+                            <MdCheck />
+                          ) : (
+                            <BiNotepad
+                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                              onClick={() => {
+                                addToClipboard({
+                                  text: String(children).replace(/\n$/, ""),
+                                  msg_id: message.id,
+                                  icon_id:
+                                    message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "notepad",
+                                })
                               }}
                             />
                           )}
@@ -204,7 +207,8 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                         onClick={() => {
                           copyToClipboard(
                             window?.getSelection()?.toString() || "",
-                            message.id + createHash({ str: window?.getSelection()?.toString() || "" }) + "copy"
+                            message.id + createHash({ str: window?.getSelection()?.toString() || "" }) + "copy",
+                            setUsedIcon
                           )
                         }}
                       />
@@ -219,7 +223,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                   message.id + createHash({ str: window?.getSelection()?.toString() || "" }) + "clip" ? (
                     <MdCheck />
                   ) : (
-                    <div className="tooltip tooltip-top" data-tip="Save to inbox">
+                    <div className="tooltip tooltip-top" data-tip="Save to notepad">
                       <MdInbox
                         className="h-3.5 w-3.5"
                         onClick={() => {

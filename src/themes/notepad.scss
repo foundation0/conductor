@@ -1,0 +1,21 @@
+.Notepad {
+  p:not(:first-child) {
+    @apply mb-3;
+    white-space: pre-wrap;
+    tab-size: 2;
+  }
+
+  .code {
+    @apply my-4;
+
+    pre {
+      @apply bg-zinc-900 border border-zinc-800 rounded !important;
+    }
+
+    code {
+      @apply bg-zinc-900;
+      font-size: 0.7rem !important;
+      text-wrap: wrap;
+    }
+  }
+}
