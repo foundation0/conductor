@@ -9,12 +9,12 @@
     @apply my-4;
 
     pre {
-      @apply bg-zinc-900 border border-zinc-800 rounded !important;
+      @apply bg-zinc-900 border border-zinc-800 rounded;
     }
 
     code {
       @apply bg-zinc-900;
-      font-size: 0.7rem !important;
+      font-size: 0.7rem;
       text-wrap: wrap;
     }
   }
