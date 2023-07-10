@@ -92,7 +92,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
   })
 
   const controller = new AbortController()
-  setGenController(controller)
+  setGenController && setGenController(controller)
 
   const llm_prompt = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(prompt.instructions || ""),

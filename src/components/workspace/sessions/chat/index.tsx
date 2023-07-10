@@ -21,6 +21,8 @@ import { WorkspaceS } from "@/data/schemas/workspace"
 import { fieldFocus } from "@/components/libraries/field_focus"
 import { addMessage } from "./add_message"
 import PromptIcon from "@/assets/prompt.svg"
+import { autoRename } from "./auto_renamer"
+import UserActions from "@/data/actions/user"
 
 const padding = 50
 
@@ -170,13 +172,38 @@ export default function Chat() {
 
   // Update local session state when sessions[session_id] changes
   const updateSession = async () => {
-    const { SessionState } = await initLoaders()
+    const { AppState, SessionState, UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const workspace = user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
     const s = await SessionState.get()
     const ss = await MessagesState({ session_id })
     const msgs: TextMessageT[] = ss?.get()
     setSession(s.active[session_id])
     setRawMessages(_.uniqBy(msgs || [], "id"))
     setMessagesStates(ss)
+    const app_state = await AppState.get()
+    let session_name = ""
+    for (const group of workspace.groups) {
+      for (const folder of group.folders) {
+        const session = folder.sessions?.find((s) => s.id === session_id)
+        if (session) session_name = session.name
+      }
+    }
+    const active_session = _.find(app_state.open_sessions, { session_id: session_id })
+    if (_.size(msgs) >= 2 && _.size(msgs) <= 5 && session_name === "Untitled" && active_session) {
+      const generated_session_name = await autoRename({ messages: msgs, module, api_key })
+      if (generated_session_name) {
+        // update session name
+        await UserActions.renameItem({
+          new_name: generated_session_name,
+          group_id: active_session.group_id,
+          folder_id: active_session.folder_id,
+          session_id,
+        })
+
+        navigate(`/conductor/${workspace_id}/${session_id}`)
+      }
+    }
     // setMsgUpdateTs(new Date().getTime())
   }
 
@@ -369,6 +396,7 @@ export default function Chat() {
       new_processed_messages[msg_index][1] = message
       // setProcessedMessages(new_processed_messages)
     }
+
     setProcessedMessages(new_processed_messages)
     // setProcessedMessages(rows)
   }

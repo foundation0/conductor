@@ -65,7 +65,11 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
   }
   // console.log(new Date().getTime(), selection_open, is_hovering)
   return (
-    <div onMouseEnter={() => handleMouseHover(true)} onMouseLeave={() => handleMouseHover(false)} className="ph-no-capture">
+    <div
+      onMouseEnter={() => handleMouseHover(true)}
+      onMouseLeave={() => handleMouseHover(false)}
+      className="ph-no-capture"
+    >
       <Selection.Root>
         <Selection.Trigger className="flex">
           <div
@@ -157,7 +161,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                         <div className="tooltip tooltip-left" data-tip="Save code to notepad">
                           {used_icon_id === message.id + "all/clip" ? (
                             <MdCheck />
-                          ) : ( 
+                          ) : (
                             <BiNotepad
                               className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
                               onClick={() => {

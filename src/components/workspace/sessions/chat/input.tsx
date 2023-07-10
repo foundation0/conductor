@@ -75,7 +75,8 @@ export default function Input({
 
     if (rows != area_rows) {
       setRows(area_rows < 20 ? area_rows : 20)
-    } else if (textarea.value.split("\n").length !== rows) setRows(textarea.value.split("\n").length < 20 ? textarea.value.split("\n").length : 20)
+    } else if (textarea.value.split("\n").length !== rows)
+      setRows(textarea.value.split("\n").length < 20 ? textarea.value.split("\n").length : 20)
   }
 
   function sendMessage() {

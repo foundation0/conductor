@@ -22,7 +22,8 @@ export async function info({ message, data }: { message: string; data?: any; typ
 
 export function ph() {
   // production
-  if (!posthog) { //__APP_VERSION__ && 
+  if (!posthog) {
+    //__APP_VERSION__ &&
     posthog = Posthog.init("phc_zm6kOtEDAWZTS41cSLFFFMKilxkWgf4K78Hs1tboeNp", { api_host: "https://eu.posthog.com" })
   }
   return posthog
