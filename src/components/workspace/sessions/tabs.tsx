@@ -24,7 +24,7 @@ export default function Tabs({
 }) {
   const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
 
-  const [open_tabs, setOpenTabs] = useState<any>([])
+  const [open_tabs, setOpenTabs] = useState<any>(null)
   const [item_added_to_notepad, setItemAddedToNotepad] = useState(false)
 
   const navigate = useNavigate()
@@ -119,7 +119,7 @@ export default function Tabs({
   // if there are no open sessions, add the first session from first group to open sessions
   useEffect(() => {
     const active_workspace = user_state.workspaces.find((ws) => ws.id === workspace_id) as z.infer<typeof WorkspaceS>
-    if (open_tabs.length === 0) {
+    if (open_tabs?.length === 0) {
       const first_group = _.first(active_workspace.groups)
       if (!first_group) throw new Error("first group not found")
       const first_folder = _.first(first_group.folders)
@@ -132,7 +132,7 @@ export default function Tabs({
         console.warn("first session not found")
       }
     }
-  }, [open_tabs.length === 0])
+  }, [open_tabs?.length === 0])
 
   // if the current session is not in tabs, add it
   useEffect(() => {

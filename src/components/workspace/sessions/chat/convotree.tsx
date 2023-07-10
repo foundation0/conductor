@@ -75,15 +75,16 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                 {row[2].map((msg) => {
                   if (msg.hash === "1337") return null
                   return (
-                    <Message
-                      key={msg.id}
-                      message={msg}
-                      isActive={false}
-                      onClick={() => {
-                        onBranchClick(msg.id)
-                        fieldFocus({ selector: "#input" })
-                      }}
-                    />
+                    <div key={msg.id} className="tooltip tooltip-top" data-tip={msg.text}>
+                      <Message
+                        message={msg}
+                        isActive={false}
+                        onClick={() => {
+                          onBranchClick(msg.id)
+                          fieldFocus({ selector: "#input" })
+                        }}
+                      />
+                    </div>
                   )
                 })}
               </div>
