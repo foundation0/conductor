@@ -36,8 +36,8 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
               <div className="flex flex-shrink mr-2">
                 <div className="flex">
                   <div className="avatar placeholder mt-1">
-                    <div className="bg-zinc-800 text-zinc-200 rounded w-8 h-8 flex border-t border-zinc-700">
-                      <span className="text-sm w-6 h-6 flex justify-center items-center">
+                    <div className="bg-zinc-800 text-zinc-200 rounded w-8 h-8 overflow-hidden flex border-t border-zinc-700">
+                      <span className="text-sm w-full h-full flex justify-center items-center">
                         {row[1].type === "human" ? participants["user"] : participants[row[1].source || "AI"]}
                       </span>
                     </div>

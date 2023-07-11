@@ -148,12 +148,19 @@ export default function Chat() {
     if (!module) return
     processed_messages.forEach((ms) => {
       const m = ms[1]
-      if (m.source && !p[m.source] && module.specs.meta.vendor?.name === m.source) {
+      if (m.source !== "human" && module.specs.meta.vendor?.name === m.source) {
         p[m.source] = module.specs.meta.icon ? (
           <img src={module.specs.meta.icon} className="w-3 h-3 bg-zinc-200" />
         ) : (
           <FaUser />
         )
+      } else {
+        p["user"] =
+          _.size(user_state.meta?.profile_photos) > 0 ? (
+            <img src={_.first(user_state.meta?.profile_photos) || ""} className="h-full w-full" />
+          ) : (
+            <div>{user_state.meta?.username?.[0].toUpperCase()}</div>
+          )
       }
     })
     setParticipants(p)
