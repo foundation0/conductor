@@ -25,8 +25,6 @@ if (typeof window !== "undefined") {
   }
 }
 
-
-
 function AuthProvider({ children }: { children: React.ReactNode }) {
   let [user, setUser] = React.useState<any>(getActiveUser())
 
@@ -61,7 +59,8 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       removeActiveUser()
       ph()?.reset()
-      callback()
+      window.location.href = "/authentication"
+      // callback()
     })
   }
 
