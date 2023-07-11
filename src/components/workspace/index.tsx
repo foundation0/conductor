@@ -14,6 +14,7 @@ import IntersectIcon from "@/assets/icons/intersect.svg"
 import { fieldFocus } from "@/components/libraries/field_focus"
 import Lottie from "lottie-light-react"
 import WorkingOnIt from "@/assets/animations/working_on_it.json"
+import { MdKeyboardDoubleArrowLeft, MdKeyboardDoubleArrowRight } from "react-icons/md"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
@@ -64,50 +65,69 @@ export default function Workspace() {
     },
   ]
 
+  const [sidebar_minimized, setSidebarMinimized] = useState(false)
+
   return (
-    <div className="flex flex-1 bg-zinc-900">
-      <div id="Modes" className=" bg-zinc-800/90 border-r border-l border-zinc-700/50">
-        <div id="Workspace" className="flex flex-row bg-zinc-900 px-4 h-10">
-          <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300">
-            {_.find(user_state.workspaces, { id: workspace_id })?.name}
+    <div className="flex flex-1 bg-zinc-900 ">
+      <div id="Modes" className="relative bg-zinc-800/90 border-r border-l border-zinc-700/50">
+        <div
+          className="absolute inset-0 flex items-center justify-end -mr-1.5 z-10 cursor-pointer"
+          onClick={() => setSidebarMinimized(!sidebar_minimized)}
+        >
+          <div
+            className="flex justify-center items-center h-6 w-3 bg-zinc-800/90 rounded-sm border-r  border-zinc-700/50 tooltip tooltip-right"
+            data-tip="Maximize/minimize sidebar"
+          >
+            {sidebar_minimized ? (
+              <MdKeyboardDoubleArrowRight className="text-zinc-400 w-3 h-3" />
+            ) : (
+              <MdKeyboardDoubleArrowLeft className="text-zinc-400 w-3 h-3" />
+            )}
           </div>
-          <Link className="flex items-center" to={`/conductor/${workspace_id}/settings`}>
-            <MdSettingsSuggest className="w-4 h-4 text-zinc-400" />
-          </Link>
         </div>
-        <div className="tabs flex flex-row h-12 justify-center items-center">
-          {sidebar_tabs.map((tab) => (
-            <div
-              key={tab.id}
-              className={`flex flex-1 tab px-2 ${
-                active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
-              }`}
-              onClick={tab.onClick}
-            >
-              <div
-                className={`flex w-7 h-7 rounded justify-center items-center saturate-0 ${
-                  active_sidebar_tab === tab.id
-                    ? " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 "
-                    : "text-zinc-500 "
-                } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 hover:saturate-100 hover:contrast-100`}
-              >
-                {tab.icon}
-              </div>
+        <div className={`h-full ${sidebar_minimized ? "w-0 hidden" : "w-60 min-w-min max-w-lg"}`}>
+          <div id="Workspace" className="flex flex-row bg-zinc-900 px-4 h-10">
+            <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300">
+              {_.find(user_state.workspaces, { id: workspace_id })?.name}
             </div>
-          ))}
-        </div>
-        <div className="px-2 w-60 min-w-min max-w-lg">
-          <Switch fallback={""}>
-            <Match when={active_sidebar_tab === "sessions"}>
-              <Organizer app_state={app_state} user_state={user_state} />
-            </Match>
-            <Match when={["data", "members", "market"].indexOf(active_sidebar_tab) !== -1}>
-              <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
-                <Lottie animationData={WorkingOnIt}></Lottie>
-                <div className="text-md text-center">Coming soon&trade;</div>
+            <Link className="flex items-center" to={`/conductor/${workspace_id}/settings`}>
+              <MdSettingsSuggest className="w-4 h-4 text-zinc-400" />
+            </Link>
+          </div>
+          <div className="tabs flex flex-row h-12 justify-center items-center">
+            {sidebar_tabs.map((tab) => (
+              <div
+                key={tab.id}
+                className={`flex flex-1 tab px-2 ${
+                  active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
+                }`}
+                onClick={tab.onClick}
+              >
+                <div
+                  className={`flex w-7 h-7 rounded justify-center items-center saturate-0 ${
+                    active_sidebar_tab === tab.id
+                      ? " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 "
+                      : "text-zinc-500 "
+                  } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 hover:saturate-100 hover:contrast-100`}
+                >
+                  {tab.icon}
+                </div>
               </div>
-            </Match>
-          </Switch>
+            ))}
+          </div>
+          <div className={`px-2`}>
+            <Switch fallback={""}>
+              <Match when={active_sidebar_tab === "sessions"}>
+                <Organizer app_state={app_state} user_state={user_state} />
+              </Match>
+              <Match when={["data", "members", "market"].indexOf(active_sidebar_tab) !== -1}>
+                <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
+                  <Lottie animationData={WorkingOnIt}></Lottie>
+                  <div className="text-md text-center">Coming soon&trade;</div>
+                </div>
+              </Match>
+            </Switch>
+          </div>
         </div>
       </div>
       <div id="View" className="flex flex-1 bg-zinc-850">
