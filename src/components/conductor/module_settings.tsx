@@ -94,7 +94,7 @@ export function ModuleSettings({
             {module.vendor} {module.name} API key
           </div>
           <div
-            className="flex flex-grow w-full text-sm "
+            className="flex flex-grow w-full text-sm ph-no-capture"
             onClick={() => {
               setFieldEditId(`${module.id}-apikey`)
               return false
