@@ -28,7 +28,7 @@ export default function WorkspaceSelector() {
           <div className="Logo flex items-center justify-center h-12">
             <img src={PromptIcon} className="w-4 h-4 opacity-60" />
           </div>
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col gap-2 flex-1">
             <For each={user_state.workspaces}>
               {(workspace) => {
                 let session_id = ""
@@ -43,19 +43,20 @@ export default function WorkspaceSelector() {
                   session_id = app_state.active_sessions[workspace.id].session_id
                 }
                 return (
-                  <div className="tooltip tooltip-right" data-tip={`Open ${workspace.name}`}>
+                  <div className="tooltip tooltip-right relative" data-tip={`Open ${workspace.name}`}>
+                    {workspace.id === workspace_id && (
+                      <div className="absolute -left-3 top-1/4 h-1/2 flex justify-center items-center bg-zinc-300 w-2 rounded-full"></div>
+                    )}
                     <Link
                       to={`/conductor/${workspace.id}/${session_id}`}
-                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl border-t mb-2 overflow-hidden text-zinc-500 ${
-                        workspace_id === workspace.id
-                          ? "bg-zinc-800 border-t-zinc-700"
-                          : "border-zinc-800 border hover:bg-zinc-800 hover:border-t-zinc-700 cursor-pointer"
+                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl overflow-hidden font-semibold text-zinc-500 ${
+                        workspace_id === workspace.id ? "bg-zinc-800 " : "cursor-pointer opacity-50 hover:opacity-100"
                       }`}
                     >
                       {workspace.icon ? (
                         <img src={workspace.icon} className="w-full h-full text-zinc-500" />
                       ) : (
-                        workspace.name.slice(0, 1)
+                        workspace.name.slice(0, 1).toUpperCase()
                       )}
                     </Link>
                   </div>
@@ -64,7 +65,7 @@ export default function WorkspaceSelector() {
             </For>
             <div className="tooltip tooltip-right" data-tip="Create a new workspace">
               <Link
-                className="flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl cursor-pointer border-zinc-700 border border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500"
+                className="flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2 border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500"
                 to={`workspace/create`}
               >
                 <HiPlus className="w-3 h-3 " />
