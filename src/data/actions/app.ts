@@ -8,6 +8,7 @@ import _ from "lodash"
 import { initLoaders } from "@/data/loaders"
 import UserActions from "@/data/actions/user"
 import { LogItemS } from "@/data/schemas/app"
+import { error } from "@/components/libraries/logging"
 
 async function getActiveWorkspace() {
   const { AppState, UserState } = await initLoaders()
@@ -30,6 +31,11 @@ const API = {
   _addWorkspaceToAppState: async function ({ workspace }: { workspace: z.infer<typeof WorkspaceS> }) {
     const { AppState } = await initLoaders()
 
+    // get first group, folder, and session
+    const group = workspace.groups[0]
+    const folder = group.folders[0]
+    const session = _.get(folder, "sessions.0")
+    if (!session) return error({ message: "No session found in workspace" })
     const app_state: AppStateT = AppState.get()
     await AppState.set({
       ...app_state,
@@ -38,20 +44,29 @@ const API = {
         ...app_state.active_sessions,
         [workspace.id]: {
           _v: 1,
-          session_id: "default-session",
+          session_id: session.id,
           workspace_id: workspace.id,
-          group_id: "default-group",
-          folder_id: "default-folder",
+          group_id: group.id,
+          folder_id: folder.id,
         },
       },
       open_sessions: [
         ...app_state.open_sessions,
         {
           _v: 1,
-          session_id: nanoid(),
+          session_id: session.id,
           workspace_id: workspace.id,
-          group_id: "default-group",
-          folder_id: "default-folder",
+          group_id: group.id,
+          folder_id: folder.id,
+        },
+      ],
+      open_folders: [
+        ...app_state.open_folders,
+        {
+          _v: 1,
+          folder_id: folder.id,
+          workspace_id: workspace.id,
+          group_id: group.id,
         },
       ],
     })

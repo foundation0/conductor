@@ -285,7 +285,7 @@ const API = {
                 {
                   _v: 1,
                   id: session_id,
-                  name: "Default",
+                  name: "Untitled",
                   icon: "📝",
                 },
               ],
@@ -298,6 +298,22 @@ const API = {
 
     // add new workspace to app state
     await addWorkspaceToAppState({ workspace: new_workspace })
+
+    // add new workspace to sessions
+    const { SessionState } = await initLoaders()
+    const sessions = await SessionState.get()
+    const new_sessions: SessionsT = _.cloneDeep(sessions)
+    new_sessions.active[session_id] = {
+      _v: 1,
+      _updated: new Date().getTime(),
+      id: session_id,
+      type: "chat",
+      created_at: new Date(),
+      settings: {
+        module: new_workspace.defaults.llm_module as any,
+      },
+    }
+    await SessionState.set(new_sessions)
 
     return new_workspace
   },

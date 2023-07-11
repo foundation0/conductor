@@ -90,7 +90,7 @@ export const WorkspaceR = {
         if (typeof name === "string" && name) {
           const nw = await UserActions.addWorkspace({ name })
           if (!nw) return { ok: false }
-          return redirect(`/conductor/${nw.id}`)
+          return redirect(`/conductor/${nw.id}/${_.get(nw, "groups[0].folders[0].sessions[0].id") || ""}`)
         }
         return { ok: false }
 
