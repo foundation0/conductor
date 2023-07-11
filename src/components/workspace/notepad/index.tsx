@@ -19,6 +19,7 @@ import { error } from "@/components/libraries/logging"
 import { copyToClipboard } from "@/components/libraries/copypasta"
 import { BiEdit, BiTrash } from "react-icons/bi"
 import { UserT } from "@/data/loaders/user"
+import { BiNotepad } from "react-icons/bi"
 
 export default function Notepad() {
   const { notepad_state, user_state } = useLoaderData() as { notepad_state: NotepadsT; user_state: UserT }
@@ -366,7 +367,8 @@ export default function Notepad() {
         </>
       ) : (
         <div className="flex flex-col align-center items-center justify-center flex-grow text-zinc-600 font-semibold">
-          Clipboard is empty
+          <BiNotepad className="w-32 h-32" />
+          This session has no notes saved
         </div>
       )}
     </div>

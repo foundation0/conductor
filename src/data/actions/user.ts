@@ -10,11 +10,12 @@ import AppStateActions from "@/data/actions/app"
 import { AppStateT } from "@/data/loaders/app"
 import { SessionsT } from "@/data/loaders/sessions"
 import SessionsActions from "@/data/actions/sessions"
+import { error } from "@/components/libraries/logging"
 
 const API = {
   updateUser: async function (state: Partial<UserT>) {
     const { UserState } = await initLoaders()
-    const s = UserState.get()
+    const s = await UserState.get()
     const updated_state: UserT = { ...s, ...state }
     const parsed = UserS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
@@ -25,7 +26,7 @@ const API = {
   addGroup: async ({ name, workspace_id }: { workspace_id: string; name?: string }) => {
     const { UserState } = await initLoaders()
     // create new group in user_state
-    let us: UserT = _.cloneDeep(UserState.get())
+    let us: UserT = _.cloneDeep(await UserState.get())
     const new_group = {
       _v: 1,
       id: nanoid(),
@@ -44,27 +45,36 @@ const API = {
     return API.updateUser(us)
   },
   deleteGroup: async ({ workspace_id, group_id }: { workspace_id: string; group_id: string }) => {
+    if (!workspace_id || !group_id)
+      return error({ message: "Missing workspace_id or group_id", data: { workspace_id, group_id } })
     const { UserState, AppState, SessionState } = await initLoaders()
 
     // delete group's sessions from app_state.open_sessions
-    const as: AppStateT = _.cloneDeep(AppState.get())
+    const as: AppStateT = _.cloneDeep(await AppState.get())
     const new_open_sessions = as.open_sessions.filter((open_session) => open_session.group_id !== group_id)
     as.open_sessions = new_open_sessions
     await AppStateActions.updateAppState(as)
 
     // delete group's sessions from sessions
-    const sessions = SessionState.get()
-
-    const new_sessions: SessionsT = { _v: 1, active: {} }
-    Object.keys(sessions).forEach((ses_id) => {
-      if (!new_open_sessions.find((open_session) => open_session.session_id === ses_id)) {
-        new_sessions.active[ses_id] = sessions.active[ses_id]
+    const sessions: SessionsT = await SessionState.get()
+    const group_sessions = _.find(UserState.get().workspaces, { id: workspace_id })?.groups.map((group: any) => {
+      if (group.id === group_id) {
+        return group.folders.map((folder: any) => folder.sessions)
       }
-    })
-    await SessionsActions.updateSessions(new_sessions)
+    })[0] as z.infer<typeof SessionS>[] | []
+    if (_.size(group_sessions) > 0) {
+      const new_sessions: SessionsT = { _v: 1, active: {}, _updated: new Date().getTime() }
+      // filter out sessions that are in the group
+      Object.keys(sessions.active).forEach((ses_id) => {
+        if (!group_sessions.find((session) => session?.id === ses_id)) {
+          new_sessions.active[ses_id] = sessions.active[ses_id]
+        }
+      })
+      await SessionsActions.updateSessions(new_sessions)
+    }
 
     // delete group from user_state
-    let us: UserT = _.cloneDeep(UserState.get())
+    let us: UserT = _.cloneDeep(await UserState.get())
     const updated_groups = _.find(us.workspaces, { id: workspace_id })?.groups.filter((group) => group.id !== group_id)
     if (!updated_groups) return
     us.workspaces = _.map(us.workspaces, (workspace) => {
@@ -83,7 +93,7 @@ const API = {
   addFolder: async ({ name, group_id, workspace_id }: { workspace_id: string; group_id: string; name?: string }) => {
     const { UserState, AppState } = await initLoaders()
     // create new folder in user_state
-    let us: UserT = _.cloneDeep(UserState.get())
+    let us: UserT = _.cloneDeep(await UserState.get())
     const new_folder = {
       _v: 1,
       id: nanoid(),
@@ -106,7 +116,7 @@ const API = {
     await API.updateUser(us)
 
     // create new folder in app_state
-    const as: AppStateT = _.cloneDeep(AppState.get())
+    const as: AppStateT = _.cloneDeep(await AppState.get())
     as.open_folders = [
       ...as.open_folders,
       { _v: 1, folder_id: new_folder.id, group_id: group_id, workspace_id: workspace_id },
@@ -124,13 +134,13 @@ const API = {
   }) => {
     const { UserState, AppState, SessionState } = await initLoaders()
     // delete folder's sessions from app_state.open_sessions
-    const as: AppStateT = _.cloneDeep(AppState.get())
+    const as: AppStateT = _.cloneDeep(await AppState.get())
     const new_open_sessions = as.open_sessions.filter((open_session) => open_session.folder_id !== folder_id)
     as.open_sessions = new_open_sessions
     await AppStateActions.updateAppState(as)
 
     // delete folder from user_state
-    let us: UserT = _.cloneDeep(UserState.get())
+    let us: UserT = _.cloneDeep(await UserState.get())
     const updated_group = _.find(us.workspaces, { id: workspace_id })?.groups.map((group) => {
       if (group.id === group_id) {
         group.folders = group.folders.filter((folder) => folder.id !== folder_id)
@@ -160,9 +170,9 @@ const API = {
     })[0] as z.infer<typeof SessionS>[] | undefined
 
     // delete each session from sessions
-    const sessions = SessionState.get()
+    const sessions = await SessionState.get()
     const new_sessions: SessionsT = { _v: 1, active: {} }
-    Object.keys(sessions).forEach((ses_id) => {
+    Object.keys(sessions.active).forEach((ses_id) => {
       if (!sessions_in_folder?.find((session) => session?.id === ses_id)) {
         new_sessions.active[ses_id] = sessions.active[ses_id]
       }
@@ -186,7 +196,7 @@ const API = {
     folder_id?: string
   }) {
     const { UserState } = await initLoaders()
-    const state = UserState.get()
+    const state = await UserState.get()
 
     // check group exists, if not, pick the first one
     let g = active_workspace.groups.find((g) => g.id === group_id)
@@ -238,7 +248,7 @@ const API = {
 
   addWorkspace: async function ({ name }: { name: string }) {
     const { UserState, AppState } = await initLoaders()
-    const user_state = UserState.get()
+    const user_state = await UserState.get()
     const addWorkspaceToAppState = AppStateActions._addWorkspaceToAppState
 
     const id = getId()
@@ -304,8 +314,8 @@ const API = {
     session_id?: string
   }) {
     const { UserState, AppState } = await initLoaders()
-    const app_state: AppStateT = AppState.get()
-    const user_state: UserT = UserState.get()
+    const app_state: AppStateT = await AppState.get()
+    const user_state: UserT = await UserState.get()
 
     let us = _.cloneDeep(user_state)
     if (group_id && !folder_id) {

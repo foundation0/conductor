@@ -16,7 +16,7 @@ import { BiNotepad } from "react-icons/bi"
 import eventEmitter from "@/components/libraries/events"
 
 export default function Tabs({
-  setShowNotepad: setShowClipboard,
+  setShowNotepad: setShowNotepad,
   setShowMembers,
 }: {
   setShowNotepad: () => void
@@ -213,12 +213,12 @@ export default function Tabs({
         <RxPlus />
       </div>
       <div className="flex-grow flex flex-row gap-3 pr-3 justify-end items-center ">
-        <div className="tooltip tooltip-left" data-tip="Show/hide clipboard">
+        <div className="tooltip tooltip-left" data-tip="Show/hide notepad">
           <BiNotepad
             className={` hover:text-zinc-200 cursor-pointer ${
               item_added_to_notepad ? "animate-pulse text-zinc-200" : "text-zinc-500"
             }`}
-            onClick={() => setShowClipboard()}
+            onClick={() => setShowNotepad()}
           />
         </div>
         {/* <div className="tooltip tooltip-left" data-tip="Show/hide session members">

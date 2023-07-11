@@ -7,6 +7,7 @@ import { initLoaders } from "@/data/loaders"
 import AppStateActions from "@/data/actions/app"
 import UserActions from "@/data/actions/user"
 import { UserT } from "@/data/loaders/user"
+import { error } from "@/components/libraries/logging"
 
 const API = {
   updateSessions: async function (state: SessionsT) {
@@ -14,7 +15,7 @@ const API = {
     const sessions: SessionsT = SessionState.get()
     const updated_state: SessionsT = { ...sessions, ...state }
     const parsed = SessionsS.safeParse(updated_state)
-    if (!parsed.success) throw new Error("Invalid state")
+    if (!parsed.success) return error({ message: "Invalid sessions state", data: parsed.error })
     await SessionState.set(parsed.data)
     return parsed.data
   },

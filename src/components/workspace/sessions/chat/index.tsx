@@ -9,7 +9,6 @@ import { buildMessageTree } from "@/components/libraries/compute_message_chain"
 import { useLoaderData, useNavigate, useParams } from "react-router-dom"
 import SessionsActions from "@/data/actions/sessions"
 import { initLoaders } from "@/data/loaders"
-import useClipboardApi from "use-clipboard-api"
 import { Module } from "@/modules/"
 import { UserT } from "@/data/loaders/user"
 import { FaUser } from "react-icons/fa"
@@ -42,7 +41,7 @@ export default function Chat() {
   )
 
   // setup session
-  const [session, setSession] = useState(sessions_state.active[session_id])
+  const [session, setSession] = useState(sessions_state.active[session_id] || null)
 
   // setup messages and generation related states
   const [messages_state, setMessagesStates] = useState<any>()
@@ -80,16 +79,6 @@ export default function Chat() {
   const [module, setModule] = useState<{ specs: z.infer<typeof ModuleS>; main: Function } | undefined>(undefined)
 
   const navigate = useNavigate()
-
-  // Handle copy/paste
-  const [value, copy] = useClipboardApi()
-  useEffect(() => {
-    if (value)
-      setTimeout(() => {
-        copy("")
-        window?.getSelection()?.empty()
-      }, 1000)
-  }, [value])
 
   // keep track of input height
   useEffect(() => {
