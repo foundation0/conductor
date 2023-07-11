@@ -70,7 +70,7 @@ export default function Workspace() {
   return (
     <div className="flex flex-1 bg-zinc-900 ">
       <div id="Modes" className="relative bg-zinc-800/90 border-r border-l border-zinc-700/50">
-        <div className="absolute inset-0 flex items-center justify-end -mr-1.5 z-10">
+        <div className="absolute -right-1.5 top-1/2 z-10">
           <div
             className="cursor-pointer flex justify-center items-center h-6 w-3 bg-zinc-800/90 rounded-sm border-r  border-zinc-700/50 tooltip tooltip-right"
             data-tip="Maximize/minimize sidebar"
