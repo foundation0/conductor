@@ -29,7 +29,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   if (paddingBottom < 80) paddingBottom = 80
   return (
     <div className="flex flex-row px-4 justify-center" style={{ paddingBottom: `${paddingBottom}px` }}>
-      <div className="flex flex-col gap-6 w-[1024px] max-w-screen-lg">
+      <div className="flex flex-col gap-6 min-w-[500px] max-w-screen-lg">
         {rows.map((row, index) => {
           return (
             <div key={index} className="flex flex-grow-1">
