@@ -34,6 +34,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       setActiveUser(user)
     }
+    ph()
   }, [])
 
   let signin = async (newUser: { username: string; password: string }, callback: VoidFunction) => {
