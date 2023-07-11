@@ -35,7 +35,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
     const open_folder = _.find(app_state.open_folders, { folder_id })
     if (open_folder) {
       // if it is, close it
-      const new_open_folders = app_state.open_folders.filter((open_folder) => open_folder.folder_id !== folder_id)
+      const new_open_folders: any = app_state.open_folders.filter((open_folder) => open_folder.folder_id !== folder_id)
       AppStateActions.updateAppState({
         open_folders: new_open_folders,
       })
@@ -182,7 +182,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
         <div key={group.id} className="OrganizerGroup flex flex-1 flex-col gap-2">
           <div className="flex flex-row items-center">
             <div
-              className="flex flex-1 cursor-pointer items-center text-zinc-500 text-xs font-bold ml-1"
+              className="flex flex-1 cursor-pointer items-center text-zinc-500 text-xs font-bold ml-1 ph-no-capture"
               data-id={group.id}
             >
               <EasyEdit
@@ -330,7 +330,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                   )}
                 </div>
                 <div
-                  className="flex flex-1 h-5 items-center cursor-pointer text-zinc-400 font-xs"
+                  className="flex flex-1 h-5 items-center cursor-pointer text-zinc-400 font-xs ph-no-capture"
                   data-id={folder.id}
                   onClick={() => {
                     if (field_edit_id === folder.id) return
@@ -449,7 +449,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         />
                       </div>
                       <Link
-                        className={`flex flex-1 relative items-center cursor-pointer text-xs text-ellipsis overflow-hidden ${
+                        className={`flex flex-1 relative items-center cursor-pointer text-xs text-ellipsis overflow-hidden ph-no-capture ${
                           session.id === session_id ? " text-zinc-100" : "text-zinc-400"
                         }`}
                         to={`/conductor/${workspace_id}/${session.id}`}

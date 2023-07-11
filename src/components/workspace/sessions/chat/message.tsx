@@ -68,7 +68,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
     <div
       onMouseEnter={() => handleMouseHover(true)}
       onMouseLeave={() => handleMouseHover(false)}
-      className="ph-no-capture"
+      className=""
     >
       <Selection.Root>
         <Selection.Trigger className="flex">
@@ -127,7 +127,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                       /* onMouseEnter={handleMouseHoverCode}
                   onMouseLeave={handleMouseHoverCode}  */
                     >
-                      <div className="flex gap-2 absolute right-2 top-0 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2">
+                      <div className="flex gap-2 absolute right-2 top-0 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2 ph-no-capture">
                         <div className="tooltip-left tooltip" data-tip="Verify code (coming soon)">
                           {used_icon_id ===
                           message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "scan" ? (

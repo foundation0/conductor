@@ -70,7 +70,7 @@ export default function Tabs({
           >
             <div className="flex flex-row items-center gap-4 hover:text-zinc-200">
               <div
-                className={`text-xs font-semibold flex flex-grow truncate items-center  ${
+                className={`text-xs font-semibold flex flex-grow truncate items-center ph-no-capture ${
                   s.id === session_id ? " text-zinc-200" : "text-zinc-600"
                 }`}
                 onContextMenu={(e) => {

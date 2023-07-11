@@ -183,7 +183,7 @@ export default function Notepad() {
           {notepad?.clips?.map((c) => {
             return (
               <div
-                className={`flex flex-col w-auto rounded-xl px-4 py-3 text-xs relative cursor-text bg-zinc-900 ${
+                className={`flex flex-col w-auto rounded-xl px-4 py-3 text-xs relative cursor-text bg-zinc-900 ph-no-capture ${
                   field_edit_id === c.id + "all/edit" ? "border-2 border-dashed border-zinc-700" : ""
                 }`}
                 key={c.id}
