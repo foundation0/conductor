@@ -17,7 +17,7 @@ export default function Settings() {
   const [field_edit_id, setFieldEditId] = useState("")
   const workspace_id = useParams().workspace_id as string
   const [workspace, setWorkspace] = useState(user_state.workspaces.find((w) => w.id === workspace_id))
-  const [workspace_i, setWorkspace_i] = useState(0)
+  const [workspace_i, setWorkspace_i] = useState(user_state.workspaces.findIndex((w) => w.id === workspace_id))
 
   const fetcher = useFetcher()
 
