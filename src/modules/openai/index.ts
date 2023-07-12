@@ -36,6 +36,7 @@ export const specs: z.infer<typeof ModuleS> = {
       },
       {
         id: "gpt-4-32k",
+        active: false,
         context_len: 32768,
         cost_input: 0.06,
         cost_output: 0.12,

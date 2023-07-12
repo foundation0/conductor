@@ -75,6 +75,27 @@ export async function addMessage({
   if (message || resend) {
     let m: TextMessageT | undefined = undefined
 
+    const memory = await compileSlidingWindowMemory({
+      model: session?.settings.module.variant,
+      prompt: {
+        instructions: "you are a helpful assistant",
+        user: message,
+      },
+      messages: _.map(processed_messages, (m) => m[1]),
+      module,
+    })
+    if (!memory) return
+    const variant = _.find(module?.specs.meta.variants, { id: session?.settings.module.variant })
+    if ((memory?.token_count || 0) > variant.context_len) {
+      setGenInProgress(false)
+      return error({
+        message: `Prompt too long (~${memory?.token_count / 5} words) for the model's context window (~${
+          variant.context_len / 5
+        } words)`,
+        data: { model: session?.settings.module.variant },
+      })
+    }
+
     // @ts-ignore
     if (resend) m = _.last(processed_messages)?.[1]
     else {
@@ -121,12 +142,7 @@ export async function addMessage({
         instructions: "you are a helpful assistant",
         user: m.text,
       }
-      const memory = await compileSlidingWindowMemory({
-        model: session?.settings.module.variant,
-        prompt,
-        messages: _.map(processed_messages, (m) => m[1]),
-        module,
-      })
+
       setMsgsInMem(memory ? memory.included_ids : [])
       console.info(`Message tokens: ${memory?.token_count}, USD: $${memory?.usd_cost}`)
       const response = await module?.main(
@@ -142,6 +158,7 @@ export async function addMessage({
           onClose: () => {},
           onError: (data: any) => {
             has_error = true
+            setGenInProgress(false)
             error({ message: data.message || data.code, data })
           },
         }

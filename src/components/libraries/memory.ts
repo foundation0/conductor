@@ -2,7 +2,6 @@ import _ from "lodash"
 import { error } from "./logging"
 import { main as CostEstimator, InputT as CostEstimatorInputT } from "@/modules/openai-cost-estimator/"
 
-
 export async function compileSlidingWindowMemory({ model, prompt, messages, module }: any) {
   // get module variant's token count
   const variant = _.find(module?.specs.meta.variants, { id: model })
@@ -18,18 +17,28 @@ export async function compileSlidingWindowMemory({ model, prompt, messages, modu
   let token_count = 0
   let usd_cost = 0
 
-  // compute instructions if any
-  if (prompt?.instructions) {
+  // compute instructions and user
+  if (prompt?.instructions || prompt?.user) {
     const costs = await CostEstimator({
       model,
-      messages: [{ role: "system", content: prompt.instructions }],
+      messages: [
+        { role: "system", content: prompt.instructions || "" },
+        { role: "user", content: prompt.user || "" },
+      ],
       costs: { input: variant.cost_input || 0, output: variant.cost_output || 0 },
     })
     if (!costs) return error({ message: "costs not found", data: { model } })
     token_count += costs.tokens
     usd_cost += costs.usd
   }
-  if (token_count > context_len) return error({ message: "instructions too long", data: { model } })
+  if (token_count > context_len)
+    return error({
+      message: `Prompt (~${_.round(token_count / 5, 0)} words) too long for ${model} (${_.round(
+        context_len / 5,
+        0
+      )} words). Try model with longer context.`,
+      data: { model },
+    })
 
   const included_ids: string[] = []
   for (let i = 0; i < history.length; i++) {
