@@ -71,7 +71,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       className=""
     >
       <Selection.Root>
-        <Selection.Trigger className="flex">
+        <Selection.Trigger className="flex ph-no-capture">
           <div
             className={`chat flex flex-col max-w-screen-lg border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-center items-start relative ${
               isActive
@@ -127,7 +127,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                       /* onMouseEnter={handleMouseHoverCode}
                   onMouseLeave={handleMouseHoverCode}  */
                     >
-                      <div className="flex gap-2 absolute right-2 top-0 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2 ph-no-capture">
+                      <div className="flex gap-2 absolute right-2 top-0 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2">
                         <div className="tooltip-left tooltip" data-tip="Verify code (coming soon)">
                           {used_icon_id ===
                           message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "scan" ? (
