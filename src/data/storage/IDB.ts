@@ -2,7 +2,7 @@ import { ZodTypeAny } from "zod"
 import _ from "lodash"
 import { buf2hex, createHash, decrypt, encrypt, hex2buf, keyPair, signMessage } from "@/security/common"
 import { pack, unpack } from "msgpackr"
-import { get, set } from "idb-keyval"
+import { get, set, del } from "idb-keyval"
 import { getActiveUser } from "@/components/libraries/active_user"
 import { set as setCF, get as getCF, keyHash } from "@/components/libraries/cloudflare"
 import { UserT } from "@/data/loaders/user"
@@ -24,11 +24,21 @@ export const mergeState = <T>(state: T, updated_state: T): T => {
   throw new Error("Invalid state or updated_state")
 }
 
-async function processForRemote({ data, key_pair, enc_key }: { data: any; key_pair: any; enc_key: any }) {
+async function processForRemote({
+  data,
+  key_pair,
+  enc_key,
+  destroy,
+}: {
+  data: any
+  key_pair: any
+  enc_key: any
+  destroy?: boolean
+}) {
   const enc_vstate = encrypt({ data, key: enc_key })
   const packed_vstate = pack(enc_vstate)
   const signature = await signMessage(packed_vstate, key_pair.secret_key)
-  const enc_data = pack({ data: enc_vstate, signature, public_key: key_pair.public_key })
+  const enc_data = pack({ data: enc_vstate, signature, public_key: key_pair.public_key, destroy })
   return enc_data
 }
 
@@ -49,7 +59,7 @@ export const store = async <TData>({
   initial: Function
   _debug?: TData
   ztype: ZodTypeAny
-}): Promise<{ get: () => TData; set: (data: TData, no_storage?: boolean) => void } | null> => {
+}): Promise<{ get: () => TData; set: (data: TData, no_storage?: boolean) => void; destroy: () => void } | null> => {
   // Log the creation of the store
   info({ message: `setting up store for ${name}` })
   // Get the active user and create a master password hash
@@ -90,7 +100,7 @@ export const store = async <TData>({
       remote_key = keyHash(active_user?.master_key + key)
     } else {
       remote_key = keyHash(active_user?.master_key + active_user?.meta?.username)
-      console.log('urm', remote_key)
+      console.log("urm", remote_key)
     }
     // Get the store from the cloud storage
     cf_store = await getCF({ key: remote_key })
@@ -167,6 +177,14 @@ export const store = async <TData>({
         // Save the data to the local storage
         if (config.features.local_encryption) await set(key, pack(encrypt({ data: vstate.data, key: enc_key })))
         else await set(key, vstate.data)
+        return true
+      },
+      destroy: async () => {
+        await del(key)
+        if (remote_key) {
+          const enc_data = await processForRemote({ data: 1, key_pair, enc_key, destroy: true })
+          setCF({ key: remote_key, value: enc_data })
+        }
         return true
       },
     }

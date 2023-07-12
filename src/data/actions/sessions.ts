@@ -148,7 +148,7 @@ const API = {
     folder_id: string
     session_id: string
   }) => {
-    const { SessionState, UserState, AppState } = await initLoaders()
+    const { SessionState, UserState, AppState, MessagesState } = await initLoaders()
 
     // delete session from app_state.open_sessions
     const as: AppStateT = _.cloneDeep(AppState.get())
@@ -187,6 +187,10 @@ const API = {
       }
     })
     await API.updateSessions(new_sessions)
+
+    // delete from CF
+    const ms = await MessagesState({ session_id })
+    await ms.destroy()
   },
 }
 
