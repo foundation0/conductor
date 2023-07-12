@@ -192,7 +192,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
         </Selection.Trigger>
         <Selection.Portal>
           <Selection.Content>
-            <Toolbar.Root className="flex p-[10px] w-full min-w-max rounded-md bg-zinc-800 border border-zinc-600 text-zinc-300 shadow-lg shadow-zinc-900">
+            <Toolbar.Root className="flex p-[5px] w-full min-w-max rounded-md bg-zinc-800 border border-zinc-600 text-zinc-300 shadow-lg shadow-zinc-900">
               <Toolbar.ToggleGroup type="multiple">
                 <Toolbar.ToggleItem
                   className="flex-shrink-0 flex-grow-0 basis-auto h-3 px-2 rounded inline-flex leading-none items-center justify-center ml-0.5 outline-none focus:outline-none active:outline-none focus:relative first:ml-0 text-xs cursor-pointer hover:text-zinc-200"
@@ -225,7 +225,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                     <MdCheck />
                   ) : (
                     <div className="tooltip tooltip-top" data-tip="Save to notepad">
-                      <MdInbox
+                      <BiNotepad
                         className="h-3.5 w-3.5"
                         onClick={() => {
                           addToClipboard({
