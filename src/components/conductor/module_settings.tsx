@@ -8,13 +8,27 @@ import { HiPlus } from "react-icons/hi"
 import { error } from "../libraries/logging"
 import { useNavigate } from "react-router-dom"
 import { ZodSchema } from "zod"
+import { zodToJsonSchema } from "zod-to-json-schema"
 
 function getZodKeys({ schema }: { schema: any }) {
+  const json_sc: any = zodToJsonSchema(schema)
   const keys = Object.keys(schema.shape)
-  return keys.filter((key) => {
-    // @ts-ignore
-    return LLMVariantS.shape[key]?.description !== "deprecated"
-  })
+  const active_keys = _.keys(json_sc.properties)
+    .filter((key) => {
+      return json_sc.properties[key]?.description !== "deprecated"
+    })
+    .map((key) => {
+      return {
+        key,
+        type: json_sc.properties[key]?.type,
+      }
+    })
+  return active_keys
+  /* return active_keys.map((key) => {
+    return {
+      key,
+      type: schema.shape[key]?.type,
+    } */
 }
 
 export function ModuleSettings({
@@ -49,7 +63,7 @@ export function ModuleSettings({
     handleEdit({ value: variants, name: `modules.installed.${index}.meta.variants` })
   }
 
-  let schema_keys: string[] = []
+  let schema_keys: { key: string; type: string }[] = []
   if (module.meta.type.toLowerCase() === "llm") schema_keys = getZodKeys({ schema: LLMVariantS })
 
   return (
@@ -119,7 +133,7 @@ export function ModuleSettings({
         </div>
         {Object.keys(module.settings).map((key: any, index: number) => {
           if (key === "api_key") return
-          const setting = module.settings[key]
+
           return (
             <div
               key={`${module.id}-${key}`}
@@ -200,8 +214,10 @@ export function ModuleSettings({
                     </div>
 
                     {expanded_models.indexOf(variant.id) === -1 &&
-                      schema_keys.map((key: any) => {
-                        const edit_key = `modules.installed.${index}.meta.variants.${variant_index}.${key}`
+                      schema_keys.map((schema: any) => {
+                        const { key, type } = schema
+                        const v_index = _.findIndex(module.meta.variants, (v: any) => v.id === variant.id)
+                        const edit_key = `modules.installed.${index}.meta.variants.${v_index}.${key}`
                         return (
                           <div
                             key={`${module.id}-${variant.id}-${key}`}
@@ -218,21 +234,39 @@ export function ModuleSettings({
                                 return false
                               }}
                             >
-                              <EasyEdit
-                                type="text"
-                                onSave={(data: any) => {
-                                  setFieldEditId("")
-                                  handleEdit({ value: data, name: edit_key })
-                                }}
-                                onCancel={() => setFieldEditId("")}
-                                onBlur={() => setFieldEditId("")}
-                                cancelOnBlur={true}
-                                saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                                cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
-                                onHoverCssClass={`cursor-pointer`}
-                                value={_.get(module, `meta.variants.${variant_index}.${key}`) || "click to add"}
-                                editComponent={<EditComponent />}
-                              />
+                              {" "}
+                              {type !== "boolean" ? (
+                                <EasyEdit
+                                  type="text"
+                                  onSave={(data: any) => {
+                                    setFieldEditId("")
+                                    handleEdit({ value: data, name: edit_key })
+                                  }}
+                                  onCancel={() => setFieldEditId("")}
+                                  onBlur={() => setFieldEditId("")}
+                                  cancelOnBlur={true}
+                                  saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
+                                  cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                                  onHoverCssClass={`cursor-pointer`}
+                                  value={_.get(module, `meta.variants.${v_index}.${key}`) || "click to add"}
+                                  editComponent={<EditComponent />}
+                                />
+                              ) : (
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    onChange={() => {
+                                      handleEdit({
+                                        value: !_.get(module, `meta.variants.${v_index}.${key}`),
+                                        name: edit_key,
+                                      })
+                                    }}
+                                    checked={_.get(module, `meta.variants.${v_index}.${key}`) === false ? false : true}
+                                    className="sr-only peer"
+                                  />
+                                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                </label>
+                              )}
                             </div>
                           </div>
                         )
@@ -256,7 +290,8 @@ export function ModuleSettings({
               </div>
 
               {expanded_models.indexOf("new-variant") === -1 &&
-                schema_keys.map((key: any) => {
+                schema_keys.map((schema: any) => {
+                  const { key, type } = schema
                   const variant_index = _.size(module.meta.variants)
                   const edit_key = `modules.installed.${index}.meta.variants.${variant_index}.${key}`
                   if (key !== "id") return null
@@ -276,28 +311,30 @@ export function ModuleSettings({
                           return false
                         }}
                       >
-                        <EasyEdit
-                          type="text"
-                          onSave={(data: any) => {
-                            if (_.filter(module.meta.variants, (v: any) => v.id === data).length > 0) {
-                              return error({ message: `Variant with id ${data} already exists` })
-                            }
-                            setExpandedModels(expanded_models.filter((id) => id !== "new-variant"))
-                            setFieldEditId("")
-                            setTimeout(() => {
-                              handleEdit({ value: data, name: edit_key })
-                              navigate(`/conductor/settings`)
-                            }, 100)
-                          }}
-                          onCancel={() => setFieldEditId("")}
-                          onBlur={() => setFieldEditId("")}
-                          cancelOnBlur={true}
-                          saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                          cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
-                          onHoverCssClass={`cursor-pointer`}
-                          value={_.get(module, `meta.variants.${variant_index}.${key}`) || "click to add"}
-                          editComponent={<EditComponent />}
-                        />
+                        {type !== "boolean" ? (
+                          <EasyEdit
+                            type="text"
+                            onSave={(data: any) => {
+                              if (_.filter(module.meta.variants, (v: any) => v.id === data).length > 0) {
+                                return error({ message: `Variant with id ${data} already exists` })
+                              }
+                              setExpandedModels(expanded_models.filter((id) => id !== "new-variant"))
+                              setFieldEditId("")
+                              setTimeout(() => {
+                                handleEdit({ value: data, name: edit_key })
+                                navigate(`/conductor/settings`)
+                              }, 100)
+                            }}
+                            onCancel={() => setFieldEditId("")}
+                            onBlur={() => setFieldEditId("")}
+                            cancelOnBlur={true}
+                            saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
+                            cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                            onHoverCssClass={`cursor-pointer`}
+                            value={_.get(module, `meta.variants.${variant_index}.${key}`) || "click to add"}
+                            editComponent={<EditComponent />}
+                          />
+                        ) : null}
                       </div>
                     </div>
                   )

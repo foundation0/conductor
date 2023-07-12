@@ -26,6 +26,7 @@ export default function generate_llm_module_options({
             has_api_key: api_key ? true : false,
             variant: id,
             context_len: variants[i].context_len,
+            active: variants[i].active,
           })
         })
       }
@@ -41,12 +42,14 @@ export default function generate_llm_module_options({
   return result.map((mod: any) => {
     return (
       <option
-        disabled={!mod.has_api_key}
+        disabled={!mod.has_api_key || mod.active === false}
         key={`{"id": "${mod.id}", "variant": "${mod.variant}"}`}
         value={`{"id": "${mod.id}", "variant": "${mod.variant}"}`}
         /* selected={selected === `{"id": "${mod.id}", "variant": "${mod.variant}"}`} */
       >
-        {`${mod.id} / ${mod.variant} ${mod.context_len ? `(~${_.round(mod.context_len/5, 0)} words limit per message)` : ""}`}
+        {`${mod.id} / ${mod.variant} ${
+          mod.context_len ? `(~${_.round(mod.context_len / 5, 0)} words limit per message)` : ""
+        }`}
         {!mod.has_api_key ? " (no api key)" : ""}
       </option>
     )

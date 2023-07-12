@@ -65,11 +65,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
   }
   // console.log(new Date().getTime(), selection_open, is_hovering)
   return (
-    <div
-      onMouseEnter={() => handleMouseHover(true)}
-      onMouseLeave={() => handleMouseHover(false)}
-      className=""
-    >
+    <div onMouseEnter={() => handleMouseHover(true)} onMouseLeave={() => handleMouseHover(false)} className="">
       <Selection.Root>
         <Selection.Trigger className="flex ph-no-capture">
           <div
