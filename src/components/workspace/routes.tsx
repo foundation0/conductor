@@ -117,18 +117,25 @@ export const WorkspaceR = {
           )
           const updated_open_sessions = open_sessions.filter((s) => !open_sessions_to_delete.includes(s.session_id))
 
-          // delete all workspace's sessions from app states's active sessions
-          const active_sessions_ids = Object.keys(app_state.active_sessions)
-          const active_sessions_to_delete = _.intersection(
-            active_sessions_ids,
-            workspace_sessions.map((s) => s.id)
+          // delete all workspace's folders froo app state's open folders
+          const workspace_folders = workspace.groups.flatMap((g) => g.folders)
+          const open_folders = app_state.open_folders
+          const open_folders_ids = open_folders.map((f) => f.folder_id)
+          const open_folders_to_delete = _.intersection(
+            open_folders_ids,
+            workspace_folders.map((f) => f.id)
           )
-          const updated_active_sessions = _.omit(app_state.active_sessions, active_sessions_to_delete)
+          const updated_open_folders = open_folders.filter((f) => !open_folders_to_delete.includes(f.folder_id))
+
+          // delete all workspace's sessions from app states's active sessions
+          const updated_active_sessions = _.cloneDeep(app_state.active_sessions)
+          delete updated_active_sessions[workspace_id]
 
           // update app state with new open and active sessions
           await AppState.set({
             ...app_state,
             open_sessions: updated_open_sessions,
+            open_folders: updated_open_folders,
             active_sessions: updated_active_sessions,
           })
         }
