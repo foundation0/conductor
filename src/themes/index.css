@@ -2,6 +2,7 @@
 @import "./patches.scss";
 @import "./chat.scss";
 @import "./notepad.scss";
+@import "./floater.scss";
 
 @tailwind base;
 @tailwind components;

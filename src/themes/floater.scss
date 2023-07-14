@@ -1,0 +1,26 @@
+.__floater  {
+  .react-joyride__tooltip {
+    @apply bg-zinc-800 border-t border-t-zinc-700 text-sm text-zinc-200 #{!important};
+
+    button[aria-label="Next"], button[aria-label="Last"], button[aria-label="Skip"] {
+      @apply backdrop-blur bg-zinc-500/20 hover:bg-zinc-500/40 text-zinc-200 rounded-lg text-xs font-semibold py-2 px-3 uppercase #{!important};
+    }
+    button[aria-label="Back"] {
+      @apply backdrop-blur bg-zinc-500/10 hover:bg-zinc-500/30 text-zinc-400 hover:text-zinc-200 rounded-lg text-xs font-semibold py-2 px-3 uppercase #{!important};
+    }
+    button[aria-label="Close"] {
+      @apply p-0 m-2 #{!important};
+      svg {
+        @apply h-2 w-2 #{!important};
+        path {
+          fill: #ffffff50
+        }
+      }
+    }
+  }
+  .__floater__arrow {
+    polygon {
+      fill: rgb(39 39 42 / var(--tw-bg-opacity));
+    }
+  }
+}

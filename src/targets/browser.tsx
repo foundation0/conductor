@@ -23,6 +23,7 @@ if (typeof window !== "undefined") {
   window.process = {
     env: {},
   }
+  window.global = window;
 }
 
 function AuthProvider({ children }: { children: React.ReactNode }) {

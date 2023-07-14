@@ -15,12 +15,23 @@ import { fieldFocus } from "@/components/libraries/field_focus"
 import Lottie from "lottie-light-react"
 import WorkingOnIt from "@/assets/animations/working_on_it.json"
 import { MdKeyboardDoubleArrowLeft, MdKeyboardDoubleArrowRight } from "react-icons/md"
+import Joyride, { ACTIONS, EVENTS, STATUS, Step } from "react-joyride"
+import {
+  Input,
+  Tabs,
+  Welcome,
+  WorkspaceOrganizer,
+  WorkspaceSelector,
+  WorkspaceSidebar,
+  OpenAISetup,
+} from "@/components/experiences/onboarding/v1"
+import UserActions from "@/data/actions/user"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
 export default function Workspace() {
   const { app_state, user_state } = useLoaderData() as LoaderT
-
+  const [run_onboarding, setRunOnboarding] = useState(false)
   const workspace_id = useParams().workspace_id
   const navigate = useNavigate()
 
@@ -66,9 +77,74 @@ export default function Workspace() {
   ]
 
   const [sidebar_minimized, setSidebarMinimized] = useState(false)
+  const steps: Step[] = [
+    {
+      target: "#Conductor",
+      content: <Welcome />,
+      placement: "center",
+    },
+    {
+      target: "#WorkspaceSelector",
+      content: <WorkspaceSelector />,
+      placement: "right-start",
+    },
+    {
+      target: "#WorkspaceSidebar",
+      content: <WorkspaceSidebar />,
+      placement: "right",
+    },
+    {
+      target: ".OrganizerTree",
+      content: <WorkspaceOrganizer />,
+      placement: "right-end",
+    },
+    {
+      target: "#OpenTabs",
+      content: <Tabs />,
+      placement: "bottom",
+    },
+    {
+      target: "#Input",
+      content: <Input />,
+      placement: "top",
+    },
+    {
+      target: "#ContentViews",
+      content: <OpenAISetup />,
+      placement: "center",
+    },
+  ]
+
+  const handleJoyrideCallback = (data: any) => {
+    const { action, index, status, type } = data
+    ACTIONS
+    if ([EVENTS.STEP_AFTER, EVENTS.TARGET_NOT_FOUND].includes(type)) {
+      // Update state to advance the tour
+      // this.setState({ stepIndex: index + (action === ACTIONS.PREV ? -1 : 1) });
+    } else if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      // Need to set our running state to false, so we can restart if we click start again.
+      // this.setState({ run: false });
+    }
+
+    // console.groupCollapsed(type);
+    // console.log(data); //eslint-disable-line no-console
+    // console.groupEnd();
+  }
+
+  useEffect(() => {
+    if (!user_state?.experiences?.find((e) => e.id === "onboarding/v1")) {
+      setRunOnboarding(true)
+    }
+    /* for testing: resets onboarding 
+    let new_user_state = { ...user_state }
+    new_user_state.experiences = []
+    UserActions.updateUser(new_user_state)
+    */
+  }, [])
 
   return (
     <div className="flex flex-1 bg-zinc-900 ">
+      <Joyride steps={steps} run={run_onboarding} continuous={true} callback={handleJoyrideCallback} />
       <div id="Modes" className="relative bg-zinc-800/90 border-r border-l border-zinc-700/50">
         <div className="absolute -right-1.5 top-1/2 z-10">
           <div
@@ -84,34 +160,36 @@ export default function Workspace() {
           </div>
         </div>
         <div className={`h-full ${sidebar_minimized ? "w-0 hidden" : "w-60 min-w-min max-w-lg"}`}>
-          <div id="Workspace" className="flex flex-row bg-zinc-900 px-4 h-10">
-            <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300">
-              {_.find(user_state.workspaces, { id: workspace_id })?.name}
-            </div>
-            <Link className="flex items-center" to={`/conductor/${workspace_id}/settings`}>
-              <MdSettingsSuggest className="w-4 h-4 text-zinc-400" />
-            </Link>
-          </div>
-          <div className="tabs flex flex-row h-12 justify-center items-center">
-            {sidebar_tabs.map((tab) => (
-              <div
-                key={tab.id}
-                className={`flex flex-1 tab px-2 ${
-                  active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
-                }`}
-                onClick={tab.onClick}
-              >
-                <div
-                  className={`flex w-7 h-7 rounded justify-center items-center saturate-0 ${
-                    active_sidebar_tab === tab.id
-                      ? " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 "
-                      : "text-zinc-500 "
-                  } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 hover:saturate-100 hover:contrast-100`}
-                >
-                  {tab.icon}
-                </div>
+          <div id="WorkspaceSidebar">
+            <div id="Workspace" className="flex flex-row bg-zinc-900 px-4 h-10">
+              <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300">
+                {_.find(user_state.workspaces, { id: workspace_id })?.name}
               </div>
-            ))}
+              <Link className="flex items-center" to={`/conductor/${workspace_id}/settings`}>
+                <MdSettingsSuggest className="w-4 h-4 text-zinc-400" />
+              </Link>
+            </div>
+            <div id="SidebarView" className="tabs flex flex-row h-12 justify-center items-center">
+              {sidebar_tabs.map((tab) => (
+                <div
+                  key={tab.id}
+                  className={`flex flex-1 tab px-2 ${
+                    active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
+                  }`}
+                  onClick={tab.onClick}
+                >
+                  <div
+                    className={`flex w-7 h-7 rounded justify-center items-center saturate-0 ${
+                      active_sidebar_tab === tab.id
+                        ? " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 "
+                        : "text-zinc-500 "
+                    } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 hover:saturate-100 hover:contrast-100`}
+                  >
+                    {tab.icon}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           <div className={`px-2`}>
             <Switch fallback={""}>

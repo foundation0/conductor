@@ -26,6 +26,12 @@ dependencies:
   '@radix-ui/react-toolbar':
     specifier: ^1.0.4
     version: 1.0.4(@types/react-dom@18.2.6)(@types/react@18.2.14)(react-dom@18.2.0)(react@18.2.0)
+  '@rive-app/canvas':
+    specifier: ^1.2.1
+    version: 1.2.1
+  '@rive-app/react-canvas':
+    specifier: ^3.0.54
+    version: 3.0.54(react@18.2.0)
   '@szhsin/react-menu':
     specifier: ^3.5.3
     version: 3.5.3(react-dom@18.2.0)(react@18.2.0)
@@ -128,6 +134,9 @@ dependencies:
   react-wrap-balancer:
     specifier: ^1.0.0
     version: 1.0.0(react@18.2.0)
+  rive-react:
+    specifier: ^3.0.54
+    version: 3.0.54(react@18.2.0)
   sass:
     specifier: ^1.63.6
     version: 1.63.6
@@ -1641,6 +1650,23 @@ packages:
   /@remix-run/router@1.7.1:
     resolution: {integrity: sha512-bgVQM4ZJ2u2CM8k1ey70o1ePFXsEzYVZoWghh6WjM8p59jQ7HxzbHW4SbnWFG7V9ig9chLawQxDTZ3xzOF8MkQ==}
     engines: {node: '>=14'}
+    dev: false
+
+  /@rive-app/canvas@1.2.1:
+    resolution: {integrity: sha512-udDH8al7ra9F7zBc3kzseEVa+9znucqfRtLPAPfXNNq/xfeGdvXCwWj7Vu5lFe0fJ76slKYtxUZIxp5LkiPVYw==}
+    dev: false
+
+  /@rive-app/react-canvas@3.0.54(react@18.2.0):
+    resolution: {integrity: sha512-jhgUeSKph3mF0nOyJs84L8u7eStRKX2tgxVgLZBB4+YLQfm4Tx9ZruYiiihtTeVU/dR0u1qav9P66rvr9keFyQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@rive-app/canvas': 1.2.1
+      react: 18.2.0
+    dev: false
+
+  /@rive-app/webgl@1.2.1:
+    resolution: {integrity: sha512-PqgAmLcXxn54z5CgwbJTuHjNiJLwHHrUAJeWni0jmOEREQunaI35wDlt3i1L9wYBjnZDqUfOhFkzBZLKIhyRbQ==}
     dev: false
 
   /@rollup/plugin-virtual@3.0.1:
@@ -5338,6 +5364,16 @@ packages:
   /reusify@1.0.4:
     resolution: {integrity: sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
+
+  /rive-react@3.0.54(react@18.2.0):
+    resolution: {integrity: sha512-N0yi9MaN3SNOdSjQeJ6vkw0S27BoVXbbSutiJuCDKuz9WgSZgxkw8jb7EGxGc+GAqcuCZrlf6+MpIu0iQ1LXjw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@rive-app/canvas': 1.2.1
+      '@rive-app/webgl': 1.2.1
+      react: 18.2.0
+    dev: false
 
   /rollup@3.26.2:
     resolution: {integrity: sha512-6umBIGVz93er97pMgQO08LuH3m6PUb3jlDUUGFsNJB6VgTCUaDFpupf5JfU30529m/UKOgmiX+uY6Sx8cOYpLA==}

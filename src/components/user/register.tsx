@@ -15,12 +15,12 @@ import eventEmitter from "@/components/libraries/events"
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai"
 
 export function RegisterPage() {
-  const [messages, setMessages] = useState<string[]>([
-    "<p>Hi there, <strong>welcome to Prompt!</strong></p>",
-    "<p><strong>Prompt is an all-in-one application for AI-powered creators and professionals.</strong> Prompt is extendable, so you can use Prompt to create anything from a blog post to a music album (once audio modules are available).</p>",
-    "<p><strong>Prompt is and always will be free</strong>, but using commercial AI, like ChatGPT, will cost based on usage. However, soon, you'll be able to run AI models locally through Prompt.</p>",
-    "<p>Create an account to get started. <u>All your data is stored only locally and the Prompt team has no access to your data.</u></p>",
-    "<span class='text-xs font-semibold'>FYI, this version of Prompt is still a technology preview, so expect things to break and change. You can follow our progress at <a href='https://github.com/promptc0/a0' target='_blank' class='underline tooltip tooltip-top' data-tip='stars appreciated ;)'>github</a> or <a href='https://twitter.com/promptc0' target='_blank' class='underline tooltip tooltip-top' data-tip='follow for updates'>twitter</a>.</span>",
+  const [messages, setMessages] = useState<[string, string][]>([
+  ["👋", "<p>Embark on a journey with Prompt, where AI-powered conversations fuel your professional creativity and productivity.</p>"],
+  ["🗂", "<p>Simplify your workflow with our unique multi-workspace feature, designed to keep your projects organized and your mind clear.</p>"],
+  ["🌐", "<p>Unleash your potential with Prompt's model-agnostic approach, supporting any AI model, including open-source options, for limitless possibilities.</p>"],
+  ["🔜", "Get ready for an exciting expansion into image, video, and audio models, set to broaden your creative canvas."],
+  ["⚠️", "<span class='text-xs font-semibold'>Heads up! Prompt is currently a technology preview. Stay connected with our progress on <a href='https://github.com/promptc0/a0' target='_blank' class='underline tooltip tooltip-top' data-tip='stars appreciated ;)'>github</a> or <a href='https://twitter.com/promptc0' target='_blank' class='underline tooltip tooltip-top' data-tip='follow for updates'>twitter</a>. Your support is our motivation!</span>"],
   ])
   const [char, setChar] = useState<{ m: string; t: number }>({ m: "", t: 0 })
 
@@ -40,7 +40,7 @@ export function RegisterPage() {
     if (reminder.length < 10) {
       if (
         !confirm(
-          "Your password reminder seems very short, are you sure it's enough?\n\nPrompt is built privacy-first and everything is encrypted to the teeth, but an unfortunate side-effect of that is that the Prompt team can not recover lost passwords."
+          "Your password reminder seems very short, are you sure it's enough?\n\nPrompt is built privacy-first and everything is encrypted to the teeth, but an unfortunate side-effect of that is that the Prompt team can not recover lost passwords. That means that your reminder is the only way for you to recover a forgotten password."
         )
       )
         return
@@ -225,7 +225,7 @@ export function RegisterPage() {
                 <BiRightArrowAlt className="float-right w-5 h-5" />
               )}
             </button>
-            <Link to="/authentication" className=" mt-10 w-full flex">
+            <Link to="/login" className=" mt-10 w-full flex">
               <button
                 type="button"
                 className="bg-zinc-800/30 hover:bg-zinc-900/70 border border-dashed border-zinc-700  border-t-zinc-600/70 lex inset-y-0 right-0 font-medium rounded-lg text-sm text-zinc-400 hover:text-zinc-200 p-4 py-3 justify-start items-start text-left"
@@ -253,11 +253,12 @@ export function RegisterPage() {
                     <div
                       className={`flex justify-center items-center bg-zinc-800 text-zinc-200 rounded w-9 h-9 border-t border-zinc-700`}
                     >
-                      <img className="w-3 h-3 opacity-60" src={PromptIcon} />
+                      {/* <img className="w-3 h-3 opacity-60" src={PromptIcon} /> */}
+                      {msg[0]}
                     </div>
                   </div>
                   <div
-                    dangerouslySetInnerHTML={{ __html: msg }}
+                    dangerouslySetInnerHTML={{ __html: msg[1] }}
                     className="flex flex-col border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-center h-full items-start border-zinc-800 bg-zinc-800 text-zinc-300"
                   ></div>
                 </div>

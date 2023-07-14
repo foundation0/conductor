@@ -50,6 +50,7 @@ export const state = async () =>
             _v: 1,
             workspace_id: initial_workspace_id,
             group_id: initial_group_id,
+            folder_id: initial_folder_id,
             session_id: initial_session_id,
           },
         ],

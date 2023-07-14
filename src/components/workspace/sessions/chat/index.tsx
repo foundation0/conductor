@@ -464,7 +464,7 @@ export default function Chat() {
                 msgs_in_mem={msgs_in_mem}
               />
             ) : api_key ? (
-              <div className="flex h-full flex-col justify-center items-center">
+              <div id="BlankChat" className="flex h-full flex-col justify-center items-center">
                 <img src={PromptIcon} className="w-52 h-52 mb-4 opacity-5" />
                 <div className="flex text-zinc-500 font-semibold text-sm pb-2">Select AI to chat with...</div>
                 <div className="flex">
@@ -502,14 +502,20 @@ export default function Chat() {
               </div>
             ) : (
               <div className="flex justify-center items-center h-full flex-col gap-2">
-                <div className="text-zinc-500">
-                  No API key for {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
-                </div>
-                <div className="text-sm">
-                  <Link to="/conductor/settings">
-                    Setup {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
-                  </Link>
-                </div>
+                {user_state?.experiences?.find((e) => e.id === "onboarding/v1") ? (
+                  <>
+                    <div className="text-zinc-500">
+                      No API key for {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
+                    </div>
+                    <div className="text-sm">
+                      <Link to="/conductor/settings">
+                        Setup {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <img src={PromptIcon} className="w-48 h-48 opacity-10" />
+                )}
               </div>
             )}
           </div>

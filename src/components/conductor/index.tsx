@@ -1,5 +1,5 @@
 import WorkspaceSelector from "@/components/workspace/selector"
-import { Outlet, useLoaderData } from "react-router-dom"
+import { Outlet, useLoaderData, useNavigate } from "react-router-dom"
 import PromptIcon from "@/assets/prompt.svg"
 import { useLocation } from "react-router-dom"
 import _ from "lodash"
@@ -12,8 +12,11 @@ import { useAuth } from "../hooks/useAuth"
 import { setActiveUser } from "../libraries/active_user"
 
 export default function Conductor() {
+  const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
+  const [active_sessions_elements, setActiveSessionsElements] = useState<any>([])
   const location = useLocation()
   const auth = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (auth?.user) {
@@ -21,8 +24,18 @@ export default function Conductor() {
     }
   }, [location.pathname])
 
-  const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
-  const [active_sessions_elements, setActiveSessionsElements] = useState<any>([])
+  useEffect(() => {
+    if (auth?.user && !user_state?.experiences?.find((e) => e.id === "onboarding/v1")) {
+      // get the first workspace and its first session
+      const workspace = user_state.workspaces[0]
+      const group = workspace?.groups[0]
+      const folder = group?.folders[0]
+      const session = _.get(folder, "sessions[0]")
+      if (workspace && session) {
+        navigate(`/conductor/${workspace.id}/${session.id}`)
+      }
+    }
+  }, [location.pathname === "/conductor/"])
 
   useEffect(() => {
     setActiveSessionsElements(
@@ -51,7 +64,7 @@ export default function Conductor() {
   }, [JSON.stringify([app_state.active_sessions])])
 
   return (
-    <main className={`flex flex-row flex-1 m-0 p-0 dark h-full bg-zinc-900/70`}>
+    <main id="Conductor" className={`flex flex-row flex-1 m-0 p-0 dark h-full bg-zinc-900/70`}>
       <div id="WorkspaceSelector" className="flex flex-shrink bg-zinc-900">
         <WorkspaceSelector />
       </div>
@@ -64,11 +77,15 @@ export default function Conductor() {
               <div className="flex justify-center items-center w-full">
                 <img src={PromptIcon} className="w-48 h-48 opacity-10" />
               </div>
-              <div className="text-center text-2xl font-semibold text-zinc-200">Welcome to Prompt</div>
-              <div className="mt-6 text-center text-md font-semibold text-zinc-400 mb-2">
-                Continue where you left off
-              </div>
-              {active_sessions_elements}
+              {user_state?.experiences?.find((e) => e.id === "onboarding/v1") && (
+                <>
+                  <div className="text-center text-2xl font-semibold text-zinc-200">Welcome to Prompt</div>
+                  <div className="mt-6 text-center text-md font-semibold text-zinc-400 mb-2">
+                    Continue where you left off
+                  </div>
+                  {active_sessions_elements}
+                </>
+              )}
             </div>
           </div>
         )}

@@ -22,13 +22,13 @@ export default function WorkspaceSelector() {
   }, [workspace_id])
 
   return (
-    <div className="flex">
+    <div id="WorkspaceSelector" className="flex">
       <div className="flex w-fit">
         <div className="flex flex-col h-full justify-center items-center px-2">
           <div className="Logo flex items-center justify-center h-12">
             <img src={PromptIcon} className="w-4 h-4 opacity-60" />
           </div>
-          <div className="flex flex-col gap-2 flex-1">
+          <div id="Workspaces" className="flex flex-col gap-2 flex-1">
             <For each={user_state.workspaces}>
               {(workspace) => {
                 let session_id = ""
@@ -72,7 +72,7 @@ export default function WorkspaceSelector() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-col">
+          <div id="GlobalActions" className="flex flex-col">
             <div className="flex rounded-full h-12 w-12 justify-center items-center">
               <div className="tooltip tooltip-right" data-tip="Questions? Problems? Ideas? Join Prompt Discord!">
                 <Link to={`https://discord.gg/PFMtbdrvXw`} target="_blank">

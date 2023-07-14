@@ -32,7 +32,7 @@ export function generateUser({ public_key }: { public_key: string }) {
           {
             _v: 1,
             id: initial_group_id,
-            name: "My workspace",
+            name: "My group",
             folders: [
               {
                 _v: 1,

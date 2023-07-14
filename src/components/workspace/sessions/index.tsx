@@ -18,7 +18,7 @@ export default function Workspace() {
 
   return (
     <div className="flex flex-1">
-      <div id="ContentTabs" className="flex flex-1 grow flex-col">
+      <div id="ContentTabs" className="flex flex-1 grow flex-col overflow-hidden">
         <div id="Tabs" className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950">
           <Tabs setShowNotepad={() => setSidebar("notepad")} setShowMembers={() => setSidebar("members")} />
         </div>

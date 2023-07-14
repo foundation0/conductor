@@ -1,0 +1,10 @@
+export default function WorkspaceSidebar() {
+  return (
+    <div className="flex flex-col gap-3 text-left">
+      <p className="flex text-xl font-semibold items-center">Workspace sidebar</p>
+      <p className="">Workspace sidebar gives you access to anything related to the active workspace.</p>
+      <p className="">At the top, you can see the name and access workspace's settings.</p>
+      <p className="">Below that are the icons that allows you to switch between workspace's sessions, data, members and modules.</p>
+    </div>
+  )
+}

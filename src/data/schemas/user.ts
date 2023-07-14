@@ -30,6 +30,14 @@ export const UserS = z.object({
     installed: z.array(ModuleS),
   }),
   workspaces: z.array(WorkspaceS),
+  experiences: z
+    .array(
+      z.object({
+        id: z.string().nonempty(),
+        completed: z.boolean(),
+      })
+    )
+    .optional(),
 })
 
 export const PublicUserS = z.object({

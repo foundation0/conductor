@@ -1,6 +1,6 @@
 import { OpenSessionS } from "@/data/schemas/app"
 import { FolderS, GroupS, WorkspaceS } from "@/data/schemas/workspace"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { z } from "zod"
 import _ from "lodash"
 import { RxPlus } from "react-icons/rx"
@@ -41,6 +41,7 @@ export default function Tabs({
     })
   }, [])
 
+
   // Generate visible tabs
   const generateVisibleTabs = () => {
     const active_workspace = user_state.workspaces.find((ws) => ws.id === workspace_id) as z.infer<typeof WorkspaceS>
@@ -62,7 +63,7 @@ export default function Tabs({
         if (!s) return false
         return (
           <Link
-            className={`flex flex-shrink-1 border-0 border-r border-zinc-800 tab h-full ${
+            className={`flex border-0 border-r border-zinc-800 tab m-0 px-3 h-full ${
               session_id === s.id ? "tab-active bg-zinc-900" : " bg-zinc-800 hover:bg-zinc-900"
             }`}
             key={s.id}
@@ -70,7 +71,7 @@ export default function Tabs({
           >
             <div className="flex flex-row items-center gap-4 hover:text-zinc-200">
               <div
-                className={`text-xs font-semibold flex flex-grow truncate items-center ph-no-capture ${
+                className={`text-xs font-semibold flex items-center ph-no-capture ${
                   s.id === session_id ? " text-zinc-200" : "text-zinc-600"
                 }`}
                 onContextMenu={(e) => {
@@ -78,12 +79,17 @@ export default function Tabs({
                   // TODO: add context menu
                 }}
               >
-                <RiHashtag className={`w-3.5 h-3.5 pr-1 `} />
-                {s.name}
+                <div className="flex">
+                  <RiHashtag className={`w-3.5 h-3.5 pr-1 `} />
+                </div>
+                <div className="flex truncate" data-original-text={s.name}>
+                  {s.name}
+                </div>
               </div>
+              
               {workspace_open_sessions.length > 1 ? (
                 <div
-                  className="text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit"
+                  className="flex text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit"
                   onClick={async (e) => {
                     e.preventDefault()
                     if (!session_id) return
@@ -183,7 +189,9 @@ export default function Tabs({
 
   return (
     <>
-      <div className="tabs flex flex-nowrap justify-center items-center">{open_tabs}</div>
+      <div id="OpenTabs" className="tabs flex flex-row flex-shrink items-center">
+        {open_tabs}
+      </div>
       <div
         className="h-full flex items-center p-4 leading-none cursor-pointer text-zinc-500 hover:text-zinc-200"
         onClick={async () => {

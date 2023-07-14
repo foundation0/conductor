@@ -2,7 +2,10 @@ import { z } from "zod"
 
 export const LLMVariantS = z.object({
   id: z.string(),
-  active: z.boolean().optional().catch(() => false),
+  active: z
+    .boolean()
+    .optional()
+    .catch(() => false),
   context_len: z.number().optional(),
   cost_input: z.number().optional(),
   cost_output: z.number().optional(),
