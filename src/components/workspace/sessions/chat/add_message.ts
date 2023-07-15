@@ -51,6 +51,8 @@ export async function addMessage({
 }) {
   if (!api_key) return
   if (!module) throw new Error("No module")
+  // const CostEstimator = new ComlinkWorker(new URL('../../modules/openai-cost-estimator/index.ts', import.meta.url), {/* normal Worker options*/})
+  // console.log(await CostEstimator.main())
   // if no activePath, use first as parent id
   let parent_id = "first"
   // if activePath exists, set parent id as the last message id in the chain
@@ -181,15 +183,14 @@ export async function addMessage({
 
         const model = user_state.modules.installed.find((m: any) => m.id === session.settings.module.id)
         const variant = _.find(model?.meta.variants, { id: session.settings.module.variant })
-        CostEstimator({
+        const costs = await CostEstimator({
           model: session.settings.module.variant,
           response: response || stream_response || "",
           costs: { input: variant?.cost_input || 0, output: variant?.cost_output || 0 },
-        }).then((costs: any) => {
-          if (!costs)
-            return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
-          console.log(`Output tokens: ${costs.tokens}, USD: $${costs.usd}`)
         })
+        if (!costs)
+          return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
+        console.log(`Output tokens: ${costs.tokens}, USD: $${costs.usd}`)
       } else if (!has_error && !response && !stream_response) {
         error({ message: "no response from the module", data: { module_id: module.specs.id } })
       }
