@@ -13,6 +13,7 @@ import { useAuth } from "@/components/hooks/useAuth"
 import { UserS } from "@/data/schemas/user"
 import eventEmitter from "@/components/libraries/events"
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai"
+import { ph } from "../libraries/logging"
 
 export function RegisterPage() {
   const [messages, setMessages] = useState<[string, string][]>([
@@ -55,6 +56,7 @@ export function RegisterPage() {
     await setActiveUser(created_user.user as UserT)
     setTimeout(() => {
       auth.signin({ username: created_user.user.meta?.username || username, password }, () => {
+        ph().capture("auth/_registration")
         navigate("/conductor/")
       })
     }, 200)

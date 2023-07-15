@@ -7,6 +7,7 @@ import { BiRightArrowAlt } from "react-icons/bi"
 import { fieldFocus } from "@/components/libraries/field_focus"
 import Lottie from "lottie-light-react"
 import Success from "@/assets/animations/success.json"
+import { ph } from "@/components/libraries/logging"
 
 export default function OpenAISetup() {
   const [api_key, setApiKey] = useState<string>("")
@@ -17,6 +18,11 @@ export default function OpenAISetup() {
   const workspace_id = useParams().workspace_id
   const session_id = useParams().session_id
   const navigate = useNavigate()
+
+  useEffect(() => {
+    ph().capture("experiences/onboarding/v1/openai_setup")
+  }, [])
+  
 
   async function handleAPIKey() {
     if (api_key.match(/sk-/)) {
@@ -42,6 +48,7 @@ export default function OpenAISetup() {
         navigate(`/conductor/${workspace_id}/${session_id}`, { replace: true })
 
         setOnboardingDone(true)
+        ph().capture("experiences/onboarding/v1/_completed")
       } else {
         setBtnText("⚠️ Invalid API key")
         setTimeout(() => {

@@ -7,7 +7,7 @@ import { initLoaders } from "@/data/loaders"
 import AppStateActions from "@/data/actions/app"
 import UserActions from "@/data/actions/user"
 import { UserT } from "@/data/loaders/user"
-import { error } from "@/components/libraries/logging"
+import { error, ph } from "@/components/libraries/logging"
 
 const API = {
   updateSessions: async function (state: SessionsT) {
@@ -88,7 +88,7 @@ const API = {
     updated_messages = updated_messages.filter((m) => m.id !== "temp")
 
     await messages_state.set(updated_messages)
-
+    ph().capture("sessions/message_added")
     return vmessage.data
   },
   addSession: async ({
@@ -135,6 +135,7 @@ const API = {
       },
     }
     await API.updateSessions(sessions)
+    ph().capture("sessions/create")
     return new_session
   },
   deleteSession: async ({

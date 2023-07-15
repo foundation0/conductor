@@ -11,6 +11,7 @@ import { z } from "zod"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import pDebounce from "p-debounce"
+import { ph } from "../libraries/logging"
 
 export const WorkspaceCreateR = {
   path: "create",
@@ -30,6 +31,7 @@ export const GroupR = {
           workspace_id: formData.get("workspace_id") as string,
         })
         response.ok = true
+        ph().capture("workspaces/groups/create")
         break
       case "post":
         // Update group
@@ -61,6 +63,7 @@ export const FolderR = {
           workspace_id: formData.get("workspace_id") as string,
         })
         response.ok = true
+        ph().capture("workspaces/folder/create")
         break
       case "post":
         // Update folder
@@ -90,6 +93,7 @@ export const WorkspaceR = {
         if (typeof name === "string" && name) {
           const nw = await UserActions.addWorkspace({ name })
           if (!nw) return { ok: false }
+          ph().capture("workspaces/create")
           return redirect(`/conductor/${nw.id}/${_.get(nw, "groups[0].folders[0].sessions[0].id") || ""}`)
         }
         return { ok: false }

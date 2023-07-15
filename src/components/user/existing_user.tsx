@@ -7,6 +7,7 @@ import _ from "lodash"
 import { HiPlus } from "react-icons/hi"
 import PromptIcon from "@/assets/prompt.svg"
 import eventEmitter from "@/components/libraries/events"
+import { ph } from "../libraries/logging"
 
 export function AddExistingUser() {
   let navigate = useNavigate()
@@ -25,6 +26,7 @@ export function AddExistingUser() {
     let password = formData.get("password") as string
 
     auth.signin({ username, password }, () => {
+      ph().capture("auth/_success")
       navigate(from, { replace: true })
     })
   }

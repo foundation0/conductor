@@ -4,6 +4,7 @@ import _ from "lodash"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 import eventEmitter from "@/components/libraries/events"
+import { ph } from "@/components/libraries/logging"
 
 const API = {
   add: async ({ session_id, msg_id, type, data }: { session_id: string; msg_id: string; type: string; data: any }) => {
@@ -20,6 +21,7 @@ const API = {
     notepads[session_id] = notepads[session_id] || { session_id, clips: [] }
     notepads[session_id].clips.push(clip)
     eventEmitter.emit("item_added_to_notepad")
+    ph().capture("notepad/item_added")
     await NotepadState.set(notepads)
   },
   updateNotepad: async ({ session_id, notepad }: { session_id: string; notepad: z.infer<typeof NotepadS> }) => {

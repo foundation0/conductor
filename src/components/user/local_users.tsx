@@ -13,6 +13,7 @@ import { HiOutlineTrash } from "react-icons/hi"
 import UsersActions from "@/data/actions/users"
 import eventEmitter from "@/components/libraries/events"
 import { FaUserPlus } from "react-icons/fa"
+import { ph } from "../libraries/logging"
 
 export function LocalUsersPage() {
   let { users_state } = useLoaderData() as { users_state: UsersT }
@@ -51,6 +52,7 @@ export function LocalUsersPage() {
     let password = formData.get("password") as string
 
     auth.signin({ username: active_user.username, password }, () => {
+      ph().capture("auth/_success")
       navigate(from, { replace: true })
     })
   }

@@ -1,4 +1,10 @@
+import { ph } from "@/components/libraries/logging"
+import { useEffect } from "react"
+
 export default function WorkspaceOrganizer() {
+  useEffect(() => {
+    ph().capture("experiences/onboarding/v1/workspace_organizer")
+  }, [])
   return (
     <div className="flex flex-col gap-3 text-left">
       <p className="flex text-xl font-semibold items-center">Session organizer</p>
