@@ -1,4 +1,4 @@
-# Prompt Beta: "ChatGPT™ for professionals"
+# Prompt Conductor Beta: "ChatGPT™ for professionals"
 
 <div align="center">
   <a href="https://beta.promptc0.com" target="_blank">
@@ -20,9 +20,11 @@
 
 ChatGPT™ is fantastic but its interface is not designed for professionals with multiple on-going conversations.
 
-This is why we built Prompt: A privacy-first multi-modal* interface for AI-powered professionals.
+This is why we built Prompt Conductor: A privacy-first multi-modal\* interface for AI-powered professionals.
 
 Prompt is 100% open-source, decentralized*, community-driven software. Prompt has been designed as a modular platform* that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
+
+> Conductor is Prompt's desktop user interface, designed for professionals who want to get things done using AI. Later this year, we will release Prompt's yet unnamed mobile interface, designed for individuals who want to bring AI into their everyday life. Both are built on Prompt platform, decentralized and privacy-first computing network that allows anyone to train and run AI modules.
 
 ## Key Features 🎯
 
@@ -31,7 +33,7 @@ Prompt is 100% open-source, decentralized*, community-driven software. Prompt ha
 🔒 Privacy-first & local-first: everything e2e encrypted  
 🤖 Supports focused AI personas to improve results  
 🛠️ Compatible with any model, Prompt is model-neutral  
-🌐 Always 100% open-source  
+🌐 Always 100% open-source
 
 **\*Upcoming features**
 
@@ -40,7 +42,7 @@ Prompt is 100% open-source, decentralized*, community-driven software. Prompt ha
 🤝 Go multiplayer, invite others to work with you  
 📱 Mobile app  
 🧩 Extend almost any aspect of Prompt with user-built modules  
-🌌 Prompt goes fully decentralized  
+🌌 Prompt goes fully decentralized
 
 ## Watch Prompt in action 🎥
 
@@ -48,9 +50,9 @@ Coming soon 🚧
 
 ## Get started 🚀
 
-Go to [beta.promptc0.com](https://beta.promptc0.com), create an account and you are good to go. 
+Go to [beta.promptc0.com](https://beta.promptc0.com), create an account and you are good to go.
 
-> Prompt is free and open-source, but you'll need OpenAI API key for the beta. Prompt's unified model engine is still in the works, so beta works directly through OpenAI's API. 
+> Prompt is free and open-source, but you'll need OpenAI API key for the beta. Prompt's unified model engine is still in the works, so beta works directly through OpenAI's API.
 
 Or clone this repo and run it locally:
 
