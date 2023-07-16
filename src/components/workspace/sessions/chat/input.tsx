@@ -3,6 +3,7 @@ import _ from "lodash"
 import { MessageRowT } from "@/components/workspace/sessions/chat"
 import { Switch, Match } from "react-solid-flow"
 import MessageIcon from "@/assets/icons/message.svg"
+import { useParams } from "react-router-dom"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
 
@@ -38,8 +39,12 @@ export default function Input({
 
   // if session is switched
   useEffect(() => {
-    if (PROMPT_CACHE[session_id]) setMessage(PROMPT_CACHE[session_id])
-    else setMessage("")
+    if (PROMPT_CACHE[session_id]) {
+      setMessage(PROMPT_CACHE[session_id])
+    } else {
+      setMessage("")
+    }
+    setTimeout(optimizeInputHeight, 50)
     inputRef?.current?.focus()
     // updateSession()
   }, [session_id])
