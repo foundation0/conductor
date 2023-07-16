@@ -14,6 +14,7 @@ export default function Input({
   is_new_branch,
   genController,
   disabled,
+  input_text,
 }: {
   session_id: string
   messages: MessageRowT[] | undefined
@@ -22,10 +23,18 @@ export default function Input({
   is_new_branch: boolean | string
   genController: any
   disabled: boolean
+  input_text?: string
 }) {
   const [message, setMessage] = useState<string>("")
   const [rows, setRows] = useState<number>(1)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
+
+  useEffect(() => {
+    if (input_text) {
+      setMessage(input_text)
+      setTimeout(optimizeInputHeight, 100)
+    }
+  }, [input_text])
 
   // if session is switched
   useEffect(() => {
@@ -49,6 +58,22 @@ export default function Input({
       }, 100)
   }, [gen_in_progress])
 
+  function optimizeInputHeight() {
+    // optimize textarea height
+    const textarea: any = document.getElementById("input")
+    const lineHeight = parseInt(getComputedStyle(textarea).lineHeight)
+    const padding = parseInt(getComputedStyle(textarea).paddingTop) + parseInt(getComputedStyle(textarea).paddingBottom)
+    const border =
+      parseInt(getComputedStyle(textarea).borderTopWidth) + parseInt(getComputedStyle(textarea).borderBottomWidth)
+    const contentHeight = textarea.scrollHeight - padding - border
+    const area_rows = Math.floor(contentHeight / lineHeight)
+
+    if (rows != area_rows) {
+      setRows(area_rows < 20 ? area_rows : 20)
+    } else if (textarea.value.split("\n").length !== rows)
+      setRows(textarea.value.split("\n").length < 20 ? textarea.value.split("\n").length : 20)
+  }
+
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.altKey) {
       inputRef?.current?.blur()
@@ -64,19 +89,7 @@ export default function Input({
       return
     }
 
-    // optimize textarea height
-    const textarea: any = event.target
-    const lineHeight = parseInt(getComputedStyle(textarea).lineHeight)
-    const padding = parseInt(getComputedStyle(textarea).paddingTop) + parseInt(getComputedStyle(textarea).paddingBottom)
-    const border =
-      parseInt(getComputedStyle(textarea).borderTopWidth) + parseInt(getComputedStyle(textarea).borderBottomWidth)
-    const contentHeight = textarea.scrollHeight - padding - border
-    const area_rows = Math.floor(contentHeight / lineHeight)
-
-    if (rows != area_rows) {
-      setRows(area_rows < 20 ? area_rows : 20)
-    } else if (textarea.value.split("\n").length !== rows)
-      setRows(textarea.value.split("\n").length < 20 ? textarea.value.split("\n").length : 20)
+    optimizeInputHeight()
   }
 
   function sendMessage() {

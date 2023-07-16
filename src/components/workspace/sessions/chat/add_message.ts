@@ -48,8 +48,8 @@ export async function addMessage({
     appendOrUpdateProcessedMessage: Function
     addRawMessage: Function
   }
-}) {
-  if (!api_key) return
+}): Promise<boolean | undefined> {
+  if (!api_key) return false
   if (!module) throw new Error("No module")
   // const CostEstimator = new ComlinkWorker(new URL('../../modules/openai-cost-estimator/index.ts', import.meta.url), {/* normal Worker options*/})
   // console.log(await CostEstimator.main())
@@ -70,7 +70,7 @@ export async function addMessage({
       resend = true
     } else if (!parent_msg && _.size(raw_messages) > 0) {
       console.log("no parent")
-      return
+      return false
     }
   }
 
@@ -86,16 +86,16 @@ export async function addMessage({
       messages: _.map(processed_messages, (m) => m[1]),
       module,
     })
-    if (!memory) return
+    if (!memory || memory === true) {
+      setGenInProgress(false)
+      setMsgUpdateTs(new Date().getTime())
+      return false
+    }
     const variant = _.find(module?.specs.meta.variants, { id: session?.settings.module.variant })
     if ((memory?.token_count || 0) > variant.context_len) {
       setGenInProgress(false)
-      return error({
-        message: `Prompt too long (~${memory?.token_count / 5} words) for the model's context window (~${
-          variant.context_len / 5
-        } words)`,
-        data: { model: session?.settings.module.variant },
-      })
+      setMsgUpdateTs(new Date().getTime())
+      return false
     }
 
     // @ts-ignore
@@ -191,8 +191,9 @@ export async function addMessage({
         if (!costs)
           return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
         console.log(`Output tokens: ${costs.tokens}, USD: $${costs.usd}`)
+        return true
       } else if (!has_error && !response && !stream_response) {
-        error({ message: "no response from the module", data: { module_id: module.specs.id } })
+        return error({ message: "no response from the module", data: { module_id: module.specs.id } })
       }
     }
   }

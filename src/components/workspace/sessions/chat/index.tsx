@@ -53,6 +53,7 @@ export default function Chat() {
   const [genController, setGenController] = useState<any>(undefined)
   const [msgs_in_mem, setMsgsInMem] = useState<string[]>([])
   const [msg_update_ts, setMsgUpdateTs] = useState<number>(0)
+  const [input_text, setInputText] = useState<string>("")
 
   // setup participants
   const [participants, setParticipants] = useState<{ [key: string]: React.ReactElement }>({
@@ -200,7 +201,6 @@ export default function Chat() {
         navigate(`/conductor/${workspace_id}/${session_id}`)
       }
     }
-    // setMsgUpdateTs(new Date().getTime())
   }
 
   useEffect(() => {
@@ -401,7 +401,25 @@ export default function Chat() {
     setRawMessages([...(raw_messages || []), message])
   }
   async function send({ message }: { message: string }) {
-    addMessage({
+    // Add temp message to processed messages to show it in the UI faster - will get overwritten automatically once raw_messages are updated
+    if (!branch_msg_id) {
+      const tmp_id = nanoid(10)
+      const temp_msg = {
+        _v: 1,
+        id: tmp_id,
+        type: "human",
+        hash: "123",
+        text: message,
+        source: "user",
+        active: true,
+        parent_id: branch_parent_id || "first",
+      }
+
+      setProcessedMessages([...(processed_messages || []), [[], temp_msg as TextMessageT, []]])
+      setGenInProgress(true)
+    }
+
+    const msg_ok = await addMessage({
       session,
       session_id,
       api_key,
@@ -422,6 +440,10 @@ export default function Chat() {
         addRawMessage,
       },
     })
+    if (!msg_ok) {
+      updateMessages()
+      setInputText(message)
+    }
     if (branch_msg_id) setBranchMsgId("")
   }
 
@@ -531,6 +553,7 @@ export default function Chat() {
             is_new_branch={branch_parent_id}
             disabled={!api_key}
             genController={genController}
+            input_text={input_text}
           />
         </div>
       </div>
