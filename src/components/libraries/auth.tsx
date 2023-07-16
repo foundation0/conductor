@@ -7,7 +7,7 @@ import { pack } from "msgpackr"
 import { verify } from "@noble/secp256k1"
 import { BufferObjectS, UserS } from "@/data/schemas/user"
 import { z } from "zod"
-import { error } from "./logging"
+import { error, ph } from "./logging"
 import { generateUser } from "./user"
 import UsersActions from "@/data/actions/users"
 
@@ -49,10 +49,12 @@ export async function createUser({
   username,
   password,
   reminder,
+  email
 }: {
   username: string
   password: string
   reminder: string
+  email?: string
 }) {
   const buffer_key = buf2hex({ input: createHash({ str: username }) })
   const user_exists = await get({ key: buffer_key })
@@ -75,6 +77,7 @@ export async function createUser({
     public_key: buf2hex({ input: key_pair.public_key }),
     meta: {
       username,
+      email
     },
   }
   const user_parsed = UserS.parse(user)
@@ -122,6 +125,8 @@ export async function createUser({
     last_seen: new Date().getTime(),
   })
 
+  if(email) ph().capture("_email", { email })
+
   return { user, buffer }
 }
 
@@ -163,7 +168,6 @@ export async function authenticateUser({ username, password }: { username: strin
 
   // get user
   const user = await get({ key: opened_buffer.user_key })
-  console.log('arm', opened_buffer.user_key)
   if (!user) return error({ message: "user not found" })
 
   // try to open user

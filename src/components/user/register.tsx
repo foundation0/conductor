@@ -17,17 +17,33 @@ import { ph } from "../libraries/logging"
 
 export function RegisterPage() {
   const [messages, setMessages] = useState<[string, string][]>([
-  ["👋", "<p>Embark on a journey with Prompt, where AI-powered conversations fuel your professional creativity and productivity.</p>"],
-  ["🗂", "<p>Simplify your workflow with our unique multi-workspace feature, designed to keep your projects organized and your mind clear.</p>"],
-  ["🌐", "<p>Unleash your potential with Prompt's model-agnostic approach, supporting any AI model, including open-source options, for limitless possibilities.</p>"],
-  ["🔜", "Get ready for an exciting expansion into image, video, and audio models, set to broaden your creative canvas."],
-  ["⚠️", "<span class='text-xs font-semibold'>Heads up! Prompt is currently a technology preview. Stay connected with our progress on <a href='https://github.com/promptc0/a0' target='_blank' class='underline tooltip tooltip-top' data-tip='stars appreciated ;)'>github</a> or <a href='https://twitter.com/promptc0' target='_blank' class='underline tooltip tooltip-top' data-tip='follow for updates'>twitter</a>. Your support is our motivation!</span>"],
+    [
+      "👋",
+      "<p>Embark on a journey with Prompt, where AI-powered conversations fuel your professional creativity and productivity.</p>",
+    ],
+    [
+      "🗂",
+      "<p>Simplify your workflow with our unique multi-workspace feature, designed to keep your projects organized and your mind clear.</p>",
+    ],
+    [
+      "🌐",
+      "<p>Unleash your potential with Prompt's model-agnostic approach, supporting any AI model, including open-source options, for limitless possibilities.</p>",
+    ],
+    [
+      "🔜",
+      "Get ready for an exciting expansion into image, video, and audio models, set to broaden your creative canvas.",
+    ],
+    [
+      "⚠️",
+      "<span class='text-xs font-semibold'>Heads up! Prompt is currently a technology preview. Stay connected with our progress on <a href='https://github.com/promptc0/a0' target='_blank' class='underline tooltip tooltip-top' data-tip='stars appreciated ;)'>github</a> or <a href='https://twitter.com/promptc0' target='_blank' class='underline tooltip tooltip-top' data-tip='follow for updates'>twitter</a>. Your support is our motivation!</span>",
+    ],
   ])
   const [char, setChar] = useState<{ m: string; t: number }>({ m: "", t: 0 })
 
   let auth = useAuth()
 
   const [username, setUsername] = useState<string>("")
+  const [email, setEmail] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [reminder, setReminder] = useState<string>("")
   const [loginInProgress, setLoginInProgress] = useState<boolean>(false)
@@ -50,7 +66,7 @@ export function RegisterPage() {
       alert("Your password reminder can not contain your password.")
       return
     }
-    const created_user = await createUser({ username, password, reminder })
+    const created_user = await createUser({ username, password, reminder, email })
 
     if (!created_user || !UserS.safeParse(created_user.user).success) return null
     await setActiveUser(created_user.user as UserT)
@@ -144,6 +160,20 @@ export function RegisterPage() {
                 }
                 placeholder="Type your username"
                 id="username"
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </label>
+            <label className="flex flex-row bg-zinc-700/30 border border-zinc-900 border-t-zinc-700 rounded-lg items-center  pl-4 text-xs  font-semibold">
+              Email:
+              <input
+                className="flex flex-1 w-full p-4 py-3 bg-transparent text-xs  border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent input  font-normal"
+                name="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value.trim())}
+                placeholder="Type your email"
+                id="email"
                 autoComplete="off"
                 spellCheck={false}
               />
