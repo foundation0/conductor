@@ -202,6 +202,34 @@ export default function Settings(props: any) {
                   </div>
                 </div>
               </div>
+              <div className="w-full">
+                <div className="flex flex-row w-full gap-4 h-8">
+                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Email</div>
+                  <div
+                    className="flex flex-grow text-end text-sm justify-center items-center mr-2"
+                    onClick={() => {
+                      setFieldEditId("email")
+                      return false
+                    }}
+                  >
+                    <EasyEdit
+                      type="text"
+                      onSave={(data: any) => {
+                        setFieldEditId("")
+                        handleEdit({ value: data, name: `meta.email` })
+                      }}
+                      onCancel={() => setFieldEditId("")}
+                      onBlur={() => setFieldEditId("")}
+                      cancelOnBlur={true}
+                      saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
+                      cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                      onHoverCssClass={`cursor-pointer`}
+                      value={user_state.meta?.email || "click to add"}
+                      editComponent={<EditComponent />}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
