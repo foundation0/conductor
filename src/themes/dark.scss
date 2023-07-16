@@ -9,7 +9,7 @@
 
   .p-btn-primary {
     @layer lex;
-    @apply bg-[#0B99FF] hover: bg-[#38abfd] border border-zinc-900 border-t-zinc-700 inset-y-0 right-0 font-medium rounded-lg text-sm text-[#fff] p-4 py-3 justify-start items-start text-left;
+    @apply bg-[#0B99FF] hover:bg-[#38abfd] border border-zinc-900 border-t-zinc-700 inset-y-0 right-0 font-medium rounded-lg text-sm text-[#fff] p-4 py-3 justify-start items-start text-left;
 
     &.disabled {}
   }
