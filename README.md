@@ -35,7 +35,7 @@ Prompt is 100% open-source, decentralized*, community-driven software. Prompt ha
 🛠️ Compatible with any model, Prompt is model-neutral  
 🌐 Always 100% open-source
 
-**\*Upcoming features**
+**\*Upcoming features 🆕**
 
 🗣️ Talk with AIs  
 🔮 Support for documents, images, audio, video and 3D  
