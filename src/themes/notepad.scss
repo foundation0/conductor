@@ -18,4 +18,9 @@
       text-wrap: wrap;
     }
   }
+
+  li,
+  p {
+    @apply mb-1 whitespace-pre-wrap list-inside list-decimal #{!important};
+  }
 }

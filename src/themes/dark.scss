@@ -15,6 +15,12 @@
   }
 }
 
+.avatar {
+  img {
+    image-rendering: auto;
+  }
+}
+
 button:disabled {
   opacity: 0.5 !important;
 }
