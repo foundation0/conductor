@@ -50,7 +50,7 @@ Coming soon 🚧
 
 Go to [beta.promptc0.com](https://beta.promptc0.com), create an account and you are good to go. 
 
-Prompt is free and open-source, but you'll need OpenAI API key for the beta. Prompt's unified model engine is still in the works, so beta works directly through OpenAI's API. 
+> Prompt is free and open-source, but you'll need OpenAI API key for the beta. Prompt's unified model engine is still in the works, so beta works directly through OpenAI's API. 
 
 Or clone this repo and run it locally:
 
