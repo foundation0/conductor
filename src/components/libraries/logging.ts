@@ -3,7 +3,7 @@ import Posthog from "posthog-js"
 
 let posthog: any = null
 
-export async function error({ message, data, type }: { message: string; data?: any; type?: string }): Promise<boolean> {
+export async function error({ message, data, type }: { message: string; data?: any; type?: string }): Promise<false> {
   // const lid = await AppStateActions.addLogItem({
   //   type: "error",
   //   message,

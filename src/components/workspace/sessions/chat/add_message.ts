@@ -86,7 +86,7 @@ export async function addMessage({
       messages: _.map(processed_messages, (m) => m[1]),
       module,
     })
-    if (!memory || memory === true) {
+    if (!memory) {
       setGenInProgress(false)
       setMsgUpdateTs(new Date().getTime())
       return false

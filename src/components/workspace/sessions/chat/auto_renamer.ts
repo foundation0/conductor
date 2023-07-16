@@ -37,6 +37,7 @@ export async function autoRename({
     messages,
     module,
   })
+  if (!memory) return error({ message: "error compiling memory", data: { module_id: module.specs.id } })
   console.info(`Message tokens: ${memory?.token_count}, USD: $${memory?.usd_cost}`)
   const response = await module?.main(
     {

@@ -56,7 +56,7 @@ const OutputS = z.object({
 export type InputT = z.infer<typeof InputS>
 export type OutputT = z.infer<typeof OutputS>
 
-export async function main(input: InputT): Promise<OutputT | void> {
+export async function main(input: InputT): Promise<OutputT | false> {
   const { model, messages, response, costs } = InputS.parse(input)
 
   if (!messages && !response) {
