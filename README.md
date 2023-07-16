@@ -1,4 +1,4 @@
-# Prompt Beta: "ChatGPT for professionals"
+# Prompt Beta: "ChatGPT™ for professionals"
 
 <div align="center">
   <a href="https://beta.promptc0.com" target="_blank">
@@ -18,11 +18,11 @@
   </a>
 </div>
 
-ChatGPT is fantastic but its interface is not designed for professionals with multiple on-going conversations.
+ChatGPT™ is fantastic but its interface is not designed for professionals with multiple on-going conversations.
 
-This is why we built Prompt: A privacy-first, open-source AI interface for AI-powered professionals.
+This is why we built Prompt: A privacy-first multi-modal* interface for AI-powered professionals.
 
-Prompt is 100% open-source, community-driven software. Prompt has been designed as a modular platform that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
+Prompt is 100% open-source, decentralized*, community-driven software. Prompt has been designed as a modular platform* that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
 
 ## Key Features 🎯
 
@@ -33,7 +33,7 @@ Prompt is 100% open-source, community-driven software. Prompt has been designed 
 🛠️ Compatible with any model, Prompt is model-neutral  
 🌐 Always 100% open-source  
 
-**Upcoming features**
+**\*Upcoming features**
 
 🗣️ Talk with AIs  
 🔮 Support for documents, images, audio, video and 3D  
