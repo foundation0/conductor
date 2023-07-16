@@ -52,8 +52,11 @@ export function RegisterPage() {
   const navigate = useNavigate()
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    setLoginInProgress(true)
     event.preventDefault()
+    if (!username || !email || !password || !reminder) {
+      return alert("Please fill in all fields")
+    }
+    setLoginInProgress(true)
     if (reminder.length < 10) {
       if (
         !confirm(
@@ -227,17 +230,13 @@ export function RegisterPage() {
                 </span>
               </div>
             </label>
-            <button
-              type="submit"
-              disabled={username.length === 0 || password.length === 0 || reminder.length === 0}
-              className="bg-zinc-700/50 hover:bg-zinc-700/80 border border-zinc-900 border-t-zinc-700 lex inset-y-0 right-0 font-medium rounded-lg text-sm text-zinc-400 hover:text-zinc-200 p-4 py-3 justify-start items-start text-left"
-            >
+            <button type="submit" className="p-btn-primary">
               Create account{" "}
               {loginInProgress ? (
                 <div className="float-right w-5 h-5 flex justify-center items-center" role="status">
                   <svg
                     aria-hidden="true"
-                    className="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                    className="inline w-4 h-4 mr-2 text-white animate-spin fill-[#0B99FF]"
                     viewBox="0 0 100 101"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"

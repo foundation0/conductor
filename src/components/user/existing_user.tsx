@@ -153,11 +153,7 @@ export function AddExistingUser() {
                 autoComplete="off"
               />
             </label>
-            <button
-              type="submit"
-              disabled={username.length === 0 || password.length === 0}
-              className="bg-zinc-700/50 hover:bg-zinc-700/80 border border-zinc-900 border-t-zinc-700 lex inset-y-0 right-0 font-medium rounded-lg text-sm text-zinc-400 hover:text-zinc-200 p-4 py-3 justify-center items-center text-left"
-            >
+            <button type="submit" disabled={username.length === 0 || password.length === 0} className="p-btn-primary">
               Login{" "}
               {loginInProgress ? (
                 <div className="float-right w-5 h-5 flex justify-center items-center" role="status">
