@@ -82,6 +82,9 @@ export default function Input({
     // if event is focus, return
     if (event.type === "focus") return
 
+    // if key is any arrow key, return
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return
+
     if (message.trim() === "") setRows(1)
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault()
