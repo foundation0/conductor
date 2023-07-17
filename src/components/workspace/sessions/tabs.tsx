@@ -41,7 +41,6 @@ export default function Tabs({
     })
   }, [])
 
-
   // Generate visible tabs
   const generateVisibleTabs = () => {
     const active_workspace = user_state.workspaces.find((ws) => ws.id === workspace_id) as z.infer<typeof WorkspaceS>
@@ -63,33 +62,25 @@ export default function Tabs({
         if (!s) return false
         return (
           <Link
-            className={`flex border-0 border-r border-zinc-800 tab m-0 px-3 h-full ${
-              session_id === s.id ? "tab-active bg-zinc-900" : " bg-zinc-800 hover:bg-zinc-900"
+            className={`flex flex-row min-w-[71px] max-w-[300px] flex-nowrap flex-shrink border-0 border-r border-zinc-800 tab m-0 px-3 h-full text-xs font-semibold items-center tooltip tooltip-bottom ph-no-capture ${
+              session_id === s.id
+                ? "tab-active bg-zinc-900 text-zinc-200"
+                : " bg-zinc-800 hover:bg-zinc-900 text-zinc-600 hover:text-zinc-300"
             }`}
             key={s.id}
             to={`/conductor/${workspace_id}/${s.id}`}
+            data-tip={s.name}
           >
-            <div className="flex flex-row items-center gap-4 hover:text-zinc-200">
-              <div
-                className={`text-xs font-semibold flex items-center ph-no-capture ${
-                  s.id === session_id ? " text-zinc-200" : "text-zinc-600"
-                }`}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  // TODO: add context menu
-                }}
-              >
-                <div className="flex">
-                  <RiHashtag className={`w-3.5 h-3.5 pr-1 `} />
-                </div>
-                <div className="flex truncate" data-original-text={s.name}>
-                  {s.name}
-                </div>
-              </div>
-              
-              {workspace_open_sessions.length > 1 ? (
+            <div className="flex flex-shrink-0">
+              <RiHashtag className={`w-3.5 h-3.5 pr-1 `} />
+            </div>
+            <div className="truncate" data-original-text={s.name}>
+              {s.name}
+            </div>
+            {workspace_open_sessions.length > 1 ? (
+              <div className="flex flex-1 justify-end">
                 <div
-                  className="flex text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit"
+                  className="flex ml-3 text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit"
                   onClick={async (e) => {
                     e.preventDefault()
                     if (!session_id) return
@@ -100,14 +91,15 @@ export default function Tabs({
                 >
                   <RxPlus />
                 </div>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
           </Link>
         )
       })
       .filter(Boolean)
 
     setOpenTabs(o)
+    setTimeout(resizeHandler, 100)
   }
 
   useEffect(() => {
@@ -187,13 +179,36 @@ export default function Tabs({
     navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
   })
 
+  const containerRef = useRef<HTMLDivElement>(null)
+  const prevParentWidth = useRef<number | null>(null)
+
+  const resizeHandler = () => {
+    const e = document.getElementById("View")
+    if (e && containerRef.current) {
+      const parentWidth = e.offsetWidth
+      const tabs_actions_e = document.getElementById("TabsActions")
+      if (!tabs_actions_e) return
+      const tabs_width = parentWidth - tabs_actions_e?.offsetWidth
+      const tabs_count = document.querySelectorAll("#OpenTabs a").length + 1
+      Array.from(document.querySelectorAll("#OpenTabs a")).forEach((child: Element) => {
+        const relativeWidth = tabs_width / tabs_count
+        ;(child as HTMLElement).style.width = `${relativeWidth}px`
+      })
+    }
+  }
+  useEffect(() => {
+    resizeHandler()
+    window.addEventListener("resize", resizeHandler)
+    return () => {
+      window.removeEventListener("resize", resizeHandler)
+    }
+  }, [])
+
   return (
     <>
-      <div id="OpenTabs" className="tabs flex flex-row flex-shrink items-center">
-        {open_tabs}
-      </div>
       <div
-        className="h-full flex items-center p-4 leading-none cursor-pointer text-zinc-500 hover:text-zinc-200"
+        className="h-full flex items-center justify-start p-4 leading-none cursor-pointer text-zinc-500 hover:text-zinc-200 tooltip tooltip-right"
+        data-tip="Create new session"
         onClick={async () => {
           // get folder_id based on active session_id
           const group = _.find(
@@ -220,21 +235,26 @@ export default function Tabs({
       >
         <RxPlus />
       </div>
-      <div className="flex-grow flex flex-row gap-3 pr-3 justify-end items-center ">
-        <div className="tooltip tooltip-left" data-tip="Show/hide notepad">
-          <BiNotepad
-            className={` hover:text-zinc-200 cursor-pointer ${
-              item_added_to_notepad ? "animate-pulse text-zinc-200" : "text-zinc-500"
-            }`}
-            onClick={() => setShowNotepad()}
-          />
-        </div>
-        {/* <div className="tooltip tooltip-left" data-tip="Show/hide session members">
+      <div id="OpenTabs" className="tabs flex flex-row flex-1 items-center" ref={containerRef}>
+        {open_tabs}
+      </div>
+      <div id="TabsActions" className="flex flex-row justify-end">
+        <div className=" flex flex-row flex-1 gap-3 pr-3 justify-end items-center ">
+          <div className="tooltip tooltip-left" data-tip="Show/hide notepad">
+            <BiNotepad
+              className={` hover:text-zinc-200 cursor-pointer ${
+                item_added_to_notepad ? "animate-pulse text-zinc-200" : "text-zinc-500"
+              }`}
+              onClick={() => setShowNotepad()}
+            />
+          </div>
+          {/* <div className="tooltip tooltip-left" data-tip="Show/hide session members">
           <HiUsers className="cursor-pointer" onClick={() => setShowMembers()} />
         </div>
         <div className="tooltip tooltip-left" data-tip="Search for help">
           <MdOutlineLiveHelp className="cursor-pointer" />
         </div> */}
+        </div>
       </div>
     </>
   )
