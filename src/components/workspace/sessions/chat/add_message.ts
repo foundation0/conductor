@@ -166,6 +166,14 @@ export async function addMessage({
         }
       )
 
+      SessionsActions.addCost({
+        session_id,
+        msgs: _.uniq([...memory?.included_ids, m.id]) as [string, ...string[]],
+        cost_usd: memory.usd_cost,
+        tokens: memory.token_count,
+        module: session.settings.module,
+      })
+
       if (response || stream_response) {
         const aim: TextMessageT = await SessionsActions.addMessage({
           session_id,
@@ -191,6 +199,14 @@ export async function addMessage({
         if (!costs)
           return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
         console.log(`Output tokens: ${costs.tokens}, USD: $${costs.usd}`)
+        SessionsActions.addCost({
+          session_id,
+          msgs: _.uniq([...memory?.included_ids, aim.id]) as [string, ...string[]],
+          cost_usd: costs.usd,
+          tokens: costs.tokens,
+          module: session.settings.module,
+        })
+
         return true
       } else if (!has_error && !response && !stream_response) {
         return error({ message: "no response from the module", data: { module_id: module.specs.id } })

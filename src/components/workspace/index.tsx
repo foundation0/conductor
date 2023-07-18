@@ -25,13 +25,19 @@ import {
   WorkspaceSidebar,
   OpenAISetup,
 } from "@/components/experiences/onboarding/v1"
-import UserActions from "@/data/actions/user"
+import AppstateActions from "@/data/actions/app"
+import { Resizable } from "react-resizable"
+import "react-resizable/css/styles.css"
+import eventEmitter from "@/components/libraries/events"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
 export default function Workspace() {
   const { app_state, user_state } = useLoaderData() as LoaderT
   const [run_onboarding, setRunOnboarding] = useState(false)
+  const { setPreference, getPreference } = AppstateActions
+  const [organizer_width, setOrganizerWidth] = useState(250)
+
   const workspace_id = useParams().workspace_id
   const navigate = useNavigate()
 
@@ -134,22 +140,6 @@ export default function Workspace() {
     },
   ]
 
-  const handleJoyrideCallback = (data: any) => {
-    const { action, index, status, type } = data
-    ACTIONS
-    if ([EVENTS.STEP_AFTER, EVENTS.TARGET_NOT_FOUND].includes(type)) {
-      // Update state to advance the tour
-      // this.setState({ stepIndex: index + (action === ACTIONS.PREV ? -1 : 1) });
-    } else if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      // Need to set our running state to false, so we can restart if we click start again.
-      // this.setState({ run: false });
-    }
-
-    // console.groupCollapsed(type);
-    // console.log(data); //eslint-disable-line no-console
-    // console.groupEnd();
-  }
-
   useEffect(() => {
     if (!user_state?.experiences?.find((e) => e.id === "onboarding/v1")) {
       setRunOnboarding(true)
@@ -161,9 +151,24 @@ export default function Workspace() {
     */
   }, [])
 
+  useEffect(() => {
+    getPreference({ key: "organizer-width" }).then((width) => {
+      if (width) {
+        const w = _.toNumber(width)
+        setOrganizerWidth(w)
+      }
+    })
+  }, [])
+
+  const onResize = (event: any, { size }: any) => {
+    setOrganizerWidth(size.width)
+    eventEmitter.emit("layout_resize")
+    // setPreference({ key: 'organizer-width', value: size.width });
+  }
+
   return (
     <div className="flex flex-1 bg-zinc-900 ">
-      <Joyride steps={steps} run={run_onboarding} continuous={true} callback={handleJoyrideCallback} />
+      <Joyride steps={steps} run={run_onboarding} continuous={true} />
       <div id="Modes" className="relative bg-zinc-800/90 border-r border-l border-zinc-700/50">
         <div className="absolute -right-1.5 top-1/2 z-10">
           <div
@@ -178,52 +183,66 @@ export default function Workspace() {
             )}
           </div>
         </div>
-        <div className={`h-full ${sidebar_minimized ? "w-0 hidden" : "w-60 min-w-min max-w-lg"}`}>
-          <div id="WorkspaceSidebar">
-            <div id="Workspace" className="flex flex-row bg-zinc-900 px-4 h-10">
-              <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300">
-                {_.find(user_state.workspaces, { id: workspace_id })?.name}
+        <Resizable
+          width={organizer_width}
+          height={1000}
+          onResize={onResize}
+          resizeHandles={["e"]}
+          handleSize={[1000, 1000]}
+          onResizeStop={() => {
+            setPreference({ key: "organizer-width", value: organizer_width })
+          }}
+        >
+          <div
+            className={`h-full ${sidebar_minimized ? "w-0 hidden" : "w-60 min-w-[200px] max-w-lg"}`}
+            style={{ width: `${organizer_width}px` }}
+          >
+            <div id="WorkspaceSidebar">
+              <div id="Workspace" className="flex flex-row bg-zinc-900 px-4 h-10">
+                <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300">
+                  {_.find(user_state.workspaces, { id: workspace_id })?.name}
+                </div>
+                <Link className="flex items-center" to={`/conductor/${workspace_id}/settings`}>
+                  <MdSettingsSuggest className="w-4 h-4 text-zinc-400" />
+                </Link>
               </div>
-              <Link className="flex items-center" to={`/conductor/${workspace_id}/settings`}>
-                <MdSettingsSuggest className="w-4 h-4 text-zinc-400" />
-              </Link>
-            </div>
-            <div id="SidebarView" className="tabs flex flex-row h-12 justify-center items-center">
-              {sidebar_tabs.map((tab) => (
-                <div
-                  key={tab.id}
-                  className={`flex flex-1 tab px-2 ${
-                    active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
-                  }`}
-                  onClick={tab.onClick}
-                >
+              <div id="SidebarView" className="tabs flex flex-row h-12 justify-center items-center">
+                {sidebar_tabs.map((tab) => (
                   <div
-                    className={`flex w-7 h-7 rounded justify-center items-center saturate-0 ${
-                      active_sidebar_tab === tab.id
-                        ? " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 "
-                        : "text-zinc-500 "
-                    } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 hover:saturate-100 hover:contrast-100`}
+                    key={tab.id}
+                    className={`flex flex-1 tab px-2 ${
+                      active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
+                    }`}
+                    onClick={tab.onClick}
                   >
-                    {tab.icon}
+                    <div
+                      className={`flex w-7 h-7 rounded justify-center items-center saturate-0 ${
+                        active_sidebar_tab === tab.id
+                          ? " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 "
+                          : "text-zinc-500 "
+                      } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 hover:saturate-100 hover:contrast-100`}
+                    >
+                      {tab.icon}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+            <div className={`px-2`}>
+              <Switch fallback={""}>
+                <Match when={active_sidebar_tab === "sessions"}>
+                  <Organizer app_state={app_state} user_state={user_state} />
+                </Match>
+                <Match when={["data", "members", "market"].indexOf(active_sidebar_tab) !== -1}>
+                  <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
+                    <Lottie animationData={WorkingOnIt}></Lottie>
+                    <div className="text-md text-center">Coming soon&trade;</div>
+                  </div>
+                </Match>
+              </Switch>
             </div>
           </div>
-          <div className={`px-2`}>
-            <Switch fallback={""}>
-              <Match when={active_sidebar_tab === "sessions"}>
-                <Organizer app_state={app_state} user_state={user_state} />
-              </Match>
-              <Match when={["data", "members", "market"].indexOf(active_sidebar_tab) !== -1}>
-                <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
-                  <Lottie animationData={WorkingOnIt}></Lottie>
-                  <div className="text-md text-center">Coming soon&trade;</div>
-                </div>
-              </Match>
-            </Switch>
-          </div>
-        </div>
+        </Resizable>
       </div>
       <div id="View" className="flex flex-1 bg-zinc-850">
         <Outlet />

@@ -1,18 +1,40 @@
-import _ from "lodash"
+import _, { debounce, throttle } from "lodash"
 import Session from "./session"
 import Tabs from "./tabs"
 import { useParams } from "react-router-dom"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Members from "@/components/workspace/members"
 import Notepad from "@/components/workspace/notepad"
+import AppstateActions from "@/data/actions/app"
+import { Resizable } from "react-resizable"
+import "react-resizable/css/styles.css"
+import eventEmitter from "@/components/libraries/events"
+import { Match, Switch } from "react-solid-flow"
 
 export default function Workspace() {
   const session_id = useParams().session_id
+  const { setPreference, getPreference } = AppstateActions
+  const [open_sidebar, setOpenSidebar] = useState<string>("")
+  const [notepadWidth, setNotepadWidth] = useState(400)
 
-  const [open_sidebar, setOpenSidebar] = useState<boolean | string>(false)
+  useEffect(() => {
+    getPreference({ key: "notepad-width" }).then((width) => {
+      if (width) {
+        const w = _.toNumber(width)
+        setNotepadWidth(w)
+      }
+    })
+  }, [])
+
+  const onResize = (event: any, { size }: any) => {
+    setNotepadWidth(size.width)
+    eventEmitter.emit("layout_resize")
+    // setPreference({ key: 'notepad-width', value: size.width });
+  }
 
   function setSidebar(sidebar: string) {
-    if (open_sidebar === sidebar) return setOpenSidebar(false)
+    setTimeout(() => eventEmitter.emit("layout_resize"), 200)
+    if (open_sidebar === sidebar) return setOpenSidebar("")
     setOpenSidebar(sidebar)
   }
 
@@ -20,18 +42,37 @@ export default function Workspace() {
     <div className="flex flex-1">
       <div id="ContentTabs" className="flex flex-1 grow flex-col overflow-hidden">
         <div id="Tabs" className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950">
-          <Tabs setShowNotepad={() => setSidebar("notepad")} setShowMembers={() => setSidebar("members")} />
+          <Tabs setShowNotepad={() => setSidebar("Notepad")} setShowMembers={() => setSidebar("Members")} />
         </div>
         <div id="ContentViews" className="flex flex-1">
           {session_id ? <Session session_id={session_id} /> : null}
         </div>
       </div>
-      <div id="Notepad" className={`flex w-[400px] ${open_sidebar === "notepad" ? "" : "hidden"}`}>
-        <Notepad />
-      </div>
-      <div id="Members" className={`flex flex-shrink ${open_sidebar === "members" ? "" : "hidden"}`}>
-        <Members />
-      </div>
+      <Resizable
+        width={notepadWidth}
+        height={1000}
+        onResize={onResize}
+        resizeHandles={["w"]}
+        handleSize={[1000, 1000]}
+        onResizeStop={() => {
+          setPreference({ key: "notepad-width", value: notepadWidth })
+        }}
+      >
+        <div
+          id={open_sidebar || "SidebarHidden"}
+          className={`flex ${open_sidebar !== "" ? "" : "hidden"}`}
+          style={{ width: `${notepadWidth}px` }}
+        >
+          <Switch>
+            <Match when={open_sidebar === "Notepad"}>
+              <Notepad />
+            </Match>
+            <Match when={open_sidebar === "Members"}>
+              <Members />
+            </Match>
+          </Switch>
+        </div>
+      </Resizable>
     </div>
   )
 }

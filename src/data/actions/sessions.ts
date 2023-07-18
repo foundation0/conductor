@@ -1,6 +1,6 @@
 import { TextMessageT, SessionsT } from "@/data/loaders/sessions"
 import _ from "lodash"
-import { SessionsS, TextMessageS } from "@/data/schemas/sessions"
+import { CostS, SessionsS, TextMessageS } from "@/data/schemas/sessions"
 import { nanoid } from "nanoid"
 import { AppStateT } from "@/data/loaders/app"
 import { initLoaders } from "@/data/loaders"
@@ -8,6 +8,7 @@ import AppStateActions from "@/data/actions/app"
 import UserActions from "@/data/actions/user"
 import { UserT } from "@/data/loaders/user"
 import { error, ph } from "@/components/libraries/logging"
+import { z } from "zod"
 
 const API = {
   updateSessions: async function (state: SessionsT) {
@@ -90,6 +91,22 @@ const API = {
     await messages_state.set(updated_messages)
     ph().capture("sessions/message_added")
     return vmessage.data
+  },
+  // use CostS
+  addCost: async function ({
+    session_id,
+    msgs,
+    cost_usd,
+    tokens,
+    module,
+  }: Partial<z.infer<typeof CostS>> & { session_id: string }) {
+    const { SessionState } = await initLoaders()
+    const sessions = SessionState.get()
+    const session = sessions.active[session_id]
+    if (!session) throw new Error("Session not found")
+    if (!session.ledger) session.ledger = []
+    session.ledger.push({ _v: 1, created_at: new Date(), msgs, cost_usd, tokens, module })
+    await API.updateSessions(sessions)
   },
   clearMessages: async function ({ session_id }: { session_id: string }) {
     const { MessagesState } = await initLoaders()

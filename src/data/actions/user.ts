@@ -249,7 +249,7 @@ const API = {
   addWorkspace: async function ({ name }: { name: string }) {
     const { UserState, AppState } = await initLoaders()
     const user_state = await UserState.get()
-    const addWorkspaceToAppState = AppStateActions._addWorkspaceToAppState
+    const addWorkspaceToAppState = AppStateActions.addWorkspaceToAppState
 
     const id = getId()
     const group_id = nanoid(10)

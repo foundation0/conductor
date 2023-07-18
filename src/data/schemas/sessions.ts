@@ -17,6 +17,18 @@ export const TextMessageS = z.object({
   hash: z.string().optional(), // optional for now
 })
 
+export const CostS = z.object({
+  _v: z.number().default(1),
+  created_at: z.date().catch(() => new Date()),
+  msgs: z.array(z.string()).nonempty(),
+  cost_usd: z.number().nonnegative(),
+  tokens: z.number().nonnegative(),
+  module: z.object({
+    id: z.string(),
+    variant: z.string().optional(),
+  }),
+})
+
 export const ChatS = z.object({
   _v: z.number().default(1),
   _updated: z.number().optional(),
@@ -32,6 +44,7 @@ export const ChatS = z.object({
       variant: z.string(),
     }),
   }),
+  ledger: z.array(CostS).optional(),
   // deprecated
   messages: z.array(TextMessageS).optional().describe("deprecated"),
 })

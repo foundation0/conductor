@@ -28,7 +28,7 @@ const API = {
     await AppState.set(updated_state)
     return true
   },
-  _addWorkspaceToAppState: async function ({ workspace }: { workspace: z.infer<typeof WorkspaceS> }) {
+  addWorkspaceToAppState: async function ({ workspace }: { workspace: z.infer<typeof WorkspaceS> }) {
     const { AppState } = await initLoaders()
 
     // get first group, folder, and session
@@ -168,6 +168,23 @@ const API = {
       // router.navigate({ from: '/conductor', to: `/conductor/:session_id`})
     }
     return active_session
+  },
+  getPreference: async function ({ key }: { key: string }) {
+    const { AppState } = await initLoaders()
+    const app_state: AppStateT = AppState.get()
+    return app_state.preferences?.[key]
+  },
+  setPreference: async function ({ key, value }: { key: string; value: any }) {
+    const { AppState } = await initLoaders()
+    const app_state: AppStateT = AppState.get()
+    await AppState.set({
+      ...app_state,
+      preferences: {
+        ...app_state.preferences,
+        [key]: value,
+      },
+    })
+    return true
   },
   addLogItem: async function ({ message, type, data }: Partial<z.infer<typeof LogItemS>>) {
     const li = LogItemS.safeParse({

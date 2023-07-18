@@ -3,11 +3,13 @@ import _ from "lodash"
 import { MessageRowT } from "@/components/workspace/sessions/chat"
 import { Switch, Match } from "react-solid-flow"
 // import MessageIcon from "@/assets/icons/message.svg"
-import { Navigate, useNavigate, useParams } from "react-router-dom"
+import { Navigate, useLoaderData, useNavigate, useParams } from "react-router-dom"
 import { createRegexRenderer, RichTextarea } from "rich-textarea"
 import RewindIcon from "@/assets/icons/rewind.svg"
 import MessageIcon from "@/assets/icons/send.svg"
 import SessionActions from "@/data/actions/sessions"
+import PieIcon from "@/assets/icons/pie.svg"
+import { ChatT } from "@/data/loaders/sessions"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
 
@@ -21,6 +23,7 @@ export default function Input({
   disabled,
   input_text,
   setMsgUpdateTs,
+  session,
 }: {
   session_id: string
   messages: MessageRowT[] | undefined
@@ -31,6 +34,7 @@ export default function Input({
   disabled: boolean
   input_text?: string
   setMsgUpdateTs: Function
+  session: ChatT
 }) {
   const [message, setMessage] = useState<string>("")
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -74,7 +78,7 @@ export default function Input({
   }
 
   const button_class =
-    "flex inset-y-0 right-0 m-1 text-white focus:outline-none font-medium rounded-lg text-sm px-4 py-2 saturate-100 hover:saturate-100 animate"
+    "flex inset-y-0 right-0 m-1 text-white focus:outline-none font-medium rounded-lg text-sm pr-4 py-2 saturate-100 hover:saturate-100 animate"
 
   return (
     <div className="flex flex-1 justify-center items-center">
@@ -93,6 +97,7 @@ export default function Input({
           }`}
         >
           <RichTextarea
+            tabIndex={1}
             id="input"
             style={{ width: "100%", resize: "none" }}
             onFocus={(e) => {
@@ -152,22 +157,35 @@ export default function Input({
               </button>
             </Match>
             <Match when={!gen_in_progress && (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)}>
-              <button
-                className="tooltip tooltip-top"
-                data-tip="Clear message history"
-                onClick={async (e) => {
-                  e.preventDefault()
-                  if (confirm("Are you sure you want to clear the message history? You can't undo this.")) {
-                    await SessionActions.clearMessages({ session_id })
-                    setMsgUpdateTs(new Date().getTime())
-                  }
-                }}
-              >
-                <img src={RewindIcon} className="w-5 h-5 saturate-0" />
-              </button>
-              <button type="submit" className={button_class + " tooltip tooltip-top"} data-tip="Send message">
-                <img src={MessageIcon} className="w-6 h-6" />
-              </button>
+              <div className="flex flex-row gap-2">
+                <button
+                  className="tooltip tooltip-top"
+                  data-tip={`Total cost: $${_.sumBy(session.ledger, (l) => l.cost_usd).toFixed(
+                    2
+                  )}\nTotal tokens used: ${_.sumBy(session.ledger, (l) => l.tokens).toFixed(0)}`}
+                  onClick={async (e) => {
+                    e.preventDefault()
+                  }}
+                >
+                  <img src={PieIcon} className="w-5 h-5 saturate-0 hover:saturate-100" />
+                </button>
+                <button
+                  className="tooltip tooltip-top"
+                  data-tip="Clear message history"
+                  onClick={async (e) => {
+                    e.preventDefault()
+                    if (confirm("Are you sure you want to clear the message history? You can't undo this.")) {
+                      await SessionActions.clearMessages({ session_id })
+                      setMsgUpdateTs(new Date().getTime())
+                    }
+                  }}
+                >
+                  <img src={RewindIcon} className="w-5 h-5 saturate-0 hover:saturate-100" />
+                </button>
+                <button type="submit" className={button_class + " tooltip tooltip-top"} data-tip="Send message">
+                  <img src={MessageIcon} className="w-6 h-6" />
+                </button>
+              </div>
             </Match>
             <Match when={!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch}>
               <button type="submit" className={button_class + " text-xs"}>

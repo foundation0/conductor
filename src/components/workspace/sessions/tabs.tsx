@@ -39,6 +39,10 @@ export default function Tabs({
         setItemAddedToNotepad(false)
       }, 2000)
     })
+
+    eventEmitter.on("layout_resize", () => {
+      resizeHandler()
+    })
   }, [])
 
   // Generate visible tabs
@@ -181,7 +185,7 @@ export default function Tabs({
   const prevParentWidth = useRef<number | null>(null)
 
   const resizeHandler = () => {
-    const e = document.getElementById("View")
+    const e = document.getElementById("Tabs")
     if (e && containerRef.current) {
       const parentWidth = e.offsetWidth
       const tabs_actions_e = document.getElementById("TabsActions")

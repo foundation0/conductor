@@ -555,6 +555,7 @@ export default function Chat() {
             genController={genController}
             input_text={input_text}
             setMsgUpdateTs={setMsgUpdateTs}
+            session={session}
           />
         </div>
       </div>

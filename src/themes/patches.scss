@@ -138,10 +138,12 @@ dialog {
   }
 }
 
+/* react auto scroll */
 .react-auto-scroll__scroll-container {
   overflow-x: hidden !important;
 }
 
+/* dally keyboard shortcuts */
 .kbd {
   border-radius: 0.2rem !important;
 
@@ -149,4 +151,13 @@ dialog {
     font-size: 0.7rem !important;
     padding: 0rem 0.4rem !important;
   }
+}
+
+/* react-resizable */
+.react-resizable-handle {
+  background-image: none !important;
+  height: 100% !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  transform: none !important;
 }

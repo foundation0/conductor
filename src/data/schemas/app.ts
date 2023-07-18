@@ -43,4 +43,5 @@ export const AppStateS = z.object({
   open_folders: z.array(OpenFolderS),
   open_sessions: z.array(OpenSessionS),
   logs: z.array(LogItemS).optional(),
+  preferences: z.record(z.any()).optional(),
 })
