@@ -91,6 +91,11 @@ const API = {
     ph().capture("sessions/message_added")
     return vmessage.data
   },
+  clearMessages: async function ({ session_id }: { session_id: string }) {
+    const { MessagesState } = await initLoaders()
+    const messages_state = await MessagesState({ session_id })
+    await messages_state.set([], null, true)
+  },
   addSession: async ({
     workspace_id,
     group_id,

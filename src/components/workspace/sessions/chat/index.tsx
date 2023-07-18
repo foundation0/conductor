@@ -554,6 +554,7 @@ export default function Chat() {
             disabled={!api_key}
             genController={genController}
             input_text={input_text}
+            setMsgUpdateTs={setMsgUpdateTs}
           />
         </div>
       </div>

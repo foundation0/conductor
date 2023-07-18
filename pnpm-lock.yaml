@@ -125,6 +125,9 @@ dependencies:
   react-wrap-balancer:
     specifier: ^1.0.0
     version: 1.0.0(react@18.2.0)
+  rich-textarea:
+    specifier: ^0.21.1
+    version: 0.21.1(react@18.2.0)
   sass:
     specifier: ^1.63.6
     version: 1.63.6
@@ -2244,6 +2247,12 @@ packages:
     resolution: {integrity: sha512-fpWrvyVHEKyeEvbKZTVOeZF3VSKKWtJxFIxX/jaVPf+cLbGUSitjb49pHLqPV2BUNNZ0LcoeEGfE/YCpyDYHIw==}
     dev: false
 
+  /babel-runtime@4.7.4:
+    resolution: {integrity: sha512-0gnK56hiHkbUCwqtaiK15MAsnNxI8T7aOBYUyoAYyNxWs86ExL0NNTDhn0eDO/AIhJf0oXMgV5+1wfSLQ/FMyw==}
+    dependencies:
+      core-js: 0.6.1
+    dev: false
+
   /bail@2.0.2:
     resolution: {integrity: sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw==}
     dev: false
@@ -2601,6 +2610,11 @@ packages:
   /convert-source-map@1.9.0:
     resolution: {integrity: sha512-ASFBup0Mz1uyiIjANan1jzLQami9z1PoYSZCiiYW2FczPbenXc45FZdBZLzOT+r6+iciuEModtmCti+hjaAk0A==}
     dev: true
+
+  /core-js@0.6.1:
+    resolution: {integrity: sha512-ANdRS9QdyvvVCqMD7gvDhgI5T+/t5FELQB1ZLN94oCDXTJLwt4Q1o6Nbc1wnVrhl6QPyJ5mv0k8hMCdAFLNbLg==}
+    deprecated: core-js@<3.23.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Some versions have web compatibility issues. Please, upgrade your dependencies to the actual version of core-js.
+    dev: false
 
   /cosmiconfig@7.1.0:
     resolution: {integrity: sha512-AdmX6xUzdNASswsFtmwSt7Vj8po9IuqXm0UXz7QKPuEUmPB4XyjGfaAr2PSuELMwkRMVH1EpIkX5bTZGRB3eCA==}
@@ -4932,6 +4946,12 @@ packages:
       ret: 0.1.15
     dev: false
 
+  /range-at-index@1.0.4:
+    resolution: {integrity: sha512-Aob2FK5jL0cCKvIzA0tuRrdsSXTvxLY5p9dr7GrLY31NwKtUk5EhgHwcKi0kbUacJukGVRglLi6MEqBHB4NHMA==}
+    dependencies:
+      babel-runtime: 4.7.4
+    dev: false
+
   /rc@1.2.8:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
@@ -5309,6 +5329,15 @@ packages:
   /reusify@1.0.4:
     resolution: {integrity: sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
+
+  /rich-textarea@0.21.1(react@18.2.0):
+    resolution: {integrity: sha512-Hd+3lNFyxAomYkDKuA2N/PWJlyWlXrgboHzg3BRpnyUb+fMl2t5lB0JpkK9SuXOGg2S7O/QNAY5TaqSWY00UiQ==}
+    peerDependencies:
+      react: '>=16.14.0'
+    dependencies:
+      range-at-index: 1.0.4
+      react: 18.2.0
+    dev: false
 
   /rollup@3.26.2:
     resolution: {integrity: sha512-6umBIGVz93er97pMgQO08LuH3m6PUb3jlDUUGFsNJB6VgTCUaDFpupf5JfU30529m/UKOgmiX+uY6Sx8cOYpLA==}

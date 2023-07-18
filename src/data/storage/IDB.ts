@@ -59,7 +59,11 @@ export const store = async <TData>({
   initial: Function
   _debug?: TData
   ztype: ZodTypeAny
-}): Promise<{ get: () => TData; set: (data: TData, no_storage?: boolean) => void; destroy: () => void } | null> => {
+}): Promise<{
+  get: () => TData
+  set: (data: TData, no_storage?: boolean, replace?: boolean) => void
+  destroy: () => void
+} | null> => {
   // Log the creation of the store
   info({ message: `setting up store for ${name}` })
   // Get the active user and create a master password hash
@@ -149,12 +153,12 @@ export const store = async <TData>({
     // Return functions to get and set the store data
     return {
       get: (): TData => s,
-      set: async (data: TData, no_storage?: boolean) => {
+      set: async (data: TData, no_storage?: boolean, replace?: boolean) => {
         // Log the update of the store
         info({ message: `updating store for ${name}` })
         if (!data) return
         // Merge the current state with the new data and validate it against the schema
-        const updated_state = mergeState(s, data)
+        const updated_state = !replace ? mergeState(s, data) : data
         // @ts-ignore
         if (ztype._def.shape?._updated || ztype._cached?.keys?.includes("_updated")) {
           // @ts-ignore

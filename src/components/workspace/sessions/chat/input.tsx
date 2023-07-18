@@ -2,8 +2,12 @@ import { useEffect, useState, useRef } from "react"
 import _ from "lodash"
 import { MessageRowT } from "@/components/workspace/sessions/chat"
 import { Switch, Match } from "react-solid-flow"
-import MessageIcon from "@/assets/icons/message.svg"
-import { useParams } from "react-router-dom"
+// import MessageIcon from "@/assets/icons/message.svg"
+import { Navigate, useNavigate, useParams } from "react-router-dom"
+import { createRegexRenderer, RichTextarea } from "rich-textarea"
+import RewindIcon from "@/assets/icons/rewind.svg"
+import MessageIcon from "@/assets/icons/send.svg"
+import SessionActions from "@/data/actions/sessions"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
 
@@ -16,6 +20,7 @@ export default function Input({
   genController,
   disabled,
   input_text,
+  setMsgUpdateTs,
 }: {
   session_id: string
   messages: MessageRowT[] | undefined
@@ -25,15 +30,16 @@ export default function Input({
   genController: any
   disabled: boolean
   input_text?: string
+  setMsgUpdateTs: Function
 }) {
   const [message, setMessage] = useState<string>("")
-  const [rows, setRows] = useState<number>(1)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
+  const workspace_id = useParams().workspace_id as string
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (input_text) {
       setMessage(input_text)
-      setTimeout(optimizeInputHeight, 100)
     }
   }, [input_text])
 
@@ -44,9 +50,7 @@ export default function Input({
     } else {
       setMessage("")
     }
-    setTimeout(optimizeInputHeight, 50)
     inputRef?.current?.focus()
-    // updateSession()
   }, [session_id])
 
   // when message is updated
@@ -63,53 +67,14 @@ export default function Input({
       }, 100)
   }, [gen_in_progress])
 
-  function optimizeInputHeight() {
-    // optimize textarea height
-    const textarea: any = document.getElementById("input")
-    if(!textarea) return
-    const lineHeight = parseInt(getComputedStyle(textarea).lineHeight)
-    const padding = parseInt(getComputedStyle(textarea).paddingTop) + parseInt(getComputedStyle(textarea).paddingBottom)
-    const border =
-      parseInt(getComputedStyle(textarea).borderTopWidth) + parseInt(getComputedStyle(textarea).borderBottomWidth)
-    const contentHeight = textarea.scrollHeight - padding - border
-    const area_rows = Math.floor(contentHeight / lineHeight)
-
-    if (rows != area_rows) {
-      setRows(area_rows < 20 ? area_rows : 20)
-    } else if (textarea.value.split("\n").length !== rows)
-      setRows(textarea.value.split("\n").length < 20 ? textarea.value.split("\n").length : 20)
-  }
-
-  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.altKey) {
-      inputRef?.current?.blur()
-      return
-    }
-    // if event is focus, return
-    if (event.type === "focus") return
-
-    // if key is any arrow key, return
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return
-
-    if (message.trim() === "") setRows(1)
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault()
-      sendMessage()
-      return
-    }
-
-    optimizeInputHeight()
-  }
-
   function sendMessage() {
     if (gen_in_progress) return
     send({ message })
     setMessage("")
-    setRows(1)
   }
 
   const button_class =
-    "flex inset-y-0 right-0 m-1 text-white focus:outline-none font-medium rounded-lg text-sm px-4 py-2 saturate-50 hover:saturate-100 animate"
+    "flex inset-y-0 right-0 m-1 text-white focus:outline-none font-medium rounded-lg text-sm px-4 py-2 saturate-100 hover:saturate-100 animate"
 
   return (
     <div className="flex flex-1 justify-center items-center">
@@ -117,7 +82,6 @@ export default function Input({
         className={!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch ? "" : `w-full`}
         onSubmit={async (e) => {
           e.preventDefault()
-          // if (message === "") return
           sendMessage()
         }}
       >
@@ -128,10 +92,36 @@ export default function Input({
               : ""
           }`}
         >
-          <textarea
-            ref={inputRef}
-            rows={rows}
+          <RichTextarea
             id="input"
+            style={{ width: "100%", resize: "none" }}
+            onFocus={(e) => {
+              e.target.focus()
+            }}
+            onChange={(e: any) => {
+              setMessage(e.target.value)
+            }}
+            value={message}
+            autoComplete="off"
+            rows={1}
+            onKeyDown={(e) => {
+              const key = e.code + (e.shiftKey ? "Shift" : "") + (e.ctrlKey ? "Ctrl" : "") + (e.altKey ? "Alt" : "")
+              switch (key) {
+                case "Enter":
+                  e.preventDefault()
+                  sendMessage()
+                  break
+
+                default:
+                  break
+              }
+            }}
+            autoHeight
+            disabled={
+              disabled ||
+              gen_in_progress ||
+              (_.last(messages)?.[1].type === "human" && _.last(messages)?.[1].hash !== "1337")
+            }
             className={`flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture ${
               !gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch ? "hidden" : ""
             }`}
@@ -142,24 +132,8 @@ export default function Input({
                 ? "thinking..."
                 : "Type a message"
             }
-            required
-            onFocus={(e) => {
-              e.target.focus()
-            }}
-            onChange={(e: any) => {
-              setMessage(e.target.value)
-              handleKeyDown(e)
-            }}
-            value={message}
-            autoComplete="off"
-            style={{ resize: "none", height: "auto" }}
-            onKeyDown={handleKeyDown}
-            disabled={
-              disabled ||
-              gen_in_progress ||
-              (_.last(messages)?.[1].type === "human" && _.last(messages)?.[1].hash !== "1337")
-            }
           />
+
           <Switch>
             <Match when={!gen_in_progress && _.last(messages)?.[1].hash === "1337"}>
               <button type="submit" className={button_class}>
@@ -178,7 +152,20 @@ export default function Input({
               </button>
             </Match>
             <Match when={!gen_in_progress && (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)}>
-              <button type="submit" className={button_class}>
+              <button
+                className="tooltip tooltip-top"
+                data-tip="Clear message history"
+                onClick={async (e) => {
+                  e.preventDefault()
+                  if (confirm("Are you sure you want to clear the message history? You can't undo this.")) {
+                    await SessionActions.clearMessages({ session_id })
+                    setMsgUpdateTs(new Date().getTime())
+                  }
+                }}
+              >
+                <img src={RewindIcon} className="w-5 h-5 saturate-0" />
+              </button>
+              <button type="submit" className={button_class + " tooltip tooltip-top"} data-tip="Send message">
                 <img src={MessageIcon} className="w-6 h-6" />
               </button>
             </Match>
