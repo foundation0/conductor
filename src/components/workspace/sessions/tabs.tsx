@@ -2,7 +2,7 @@ import { OpenSessionS } from "@/data/schemas/app"
 import { FolderS, GroupS, WorkspaceS } from "@/data/schemas/workspace"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { z } from "zod"
-import _ from "lodash"
+import _, { create } from "lodash"
 import { RxPlus } from "react-icons/rx"
 import { MdInbox } from "react-icons/md"
 import { RiHashtag } from "react-icons/ri"
@@ -62,7 +62,7 @@ export default function Tabs({
         if (!s) return false
         return (
           <Link
-            className={`flex flex-row min-w-[71px] max-w-[300px] flex-nowrap flex-shrink border-0 border-r border-zinc-800 tab m-0 px-3 h-full text-xs font-semibold items-center tooltip tooltip-bottom ph-no-capture ${
+            className={`flex flex-row min-w-[71px] max-w-[200px] flex-nowrap flex-shrink border-0 border-r border-zinc-800 tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom ph-no-capture ${
               session_id === s.id
                 ? "tab-active bg-zinc-900 text-zinc-200"
                 : " bg-zinc-800 hover:bg-zinc-900 text-zinc-600 hover:text-zinc-300"
@@ -77,22 +77,20 @@ export default function Tabs({
             <div className="truncate" data-original-text={s.name}>
               {s.name}
             </div>
-            {workspace_open_sessions.length > 1 ? (
-              <div className="flex flex-1 justify-end">
-                <div
-                  className="flex ml-3 text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit"
-                  onClick={async (e) => {
-                    e.preventDefault()
-                    if (!session_id) return
-                    const new_tab = await AppStateActions.removeOpenSession({ session_id: s.id })
-                    if (session_id === s.id) navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
-                    else navigate(`/conductor/${workspace_id}/${session_id}`)
-                  }}
-                >
-                  <RxPlus />
-                </div>
+            <div className="flex flex-1 justify-end">
+              <div
+                className="flex ml-3 text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit"
+                onClick={async (e) => {
+                  e.preventDefault()
+                  if (!session_id) return
+                  const new_tab = await AppStateActions.removeOpenSession({ session_id: s.id })
+                  if (session_id === s.id) navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
+                  else navigate(`/conductor/${workspace_id}/${session_id}`)
+                }}
+              >
+                <RxPlus />
               </div>
-            ) : null}
+            </div>
           </Link>
         )
       })
@@ -204,34 +202,34 @@ export default function Tabs({
     }
   }, [])
 
+  async function createNewSession() {
+    // get folder_id based on active session_id
+    const group = _.find(
+      user_state.workspaces.flatMap((ws) => ws.groups),
+      (g) => g.folders.find((f) => f?.sessions?.find((s) => s.id === session_id))
+    ) as z.infer<typeof GroupS>
+
+    const folder = group.folders.find((f) => f?.sessions?.find((s) => s.id === session_id)) as z.infer<typeof FolderS>
+
+    fetcher.submit(
+      {
+        workspace_id: workspace_id || "",
+        group_id: group?.id || "",
+        folder_id: folder?.id || "",
+      },
+      {
+        method: "PUT",
+        action: `/conductor/workspace/session`,
+      }
+    )
+  }
+
   return (
     <>
       <div
         className="h-full flex items-center justify-start p-4 leading-none cursor-pointer text-zinc-500 hover:text-zinc-200 tooltip tooltip-right"
         data-tip="Create new session"
-        onClick={async () => {
-          // get folder_id based on active session_id
-          const group = _.find(
-            user_state.workspaces.flatMap((ws) => ws.groups),
-            (g) => g.folders.find((f) => f?.sessions?.find((s) => s.id === session_id))
-          ) as z.infer<typeof GroupS>
-
-          const folder = group.folders.find((f) => f?.sessions?.find((s) => s.id === session_id)) as z.infer<
-            typeof FolderS
-          >
-
-          fetcher.submit(
-            {
-              workspace_id: workspace_id || "",
-              group_id: group?.id || "",
-              folder_id: folder?.id || "",
-            },
-            {
-              method: "PUT",
-              action: `/conductor/workspace/session`,
-            }
-          )
-        }}
+        onClick={() => createNewSession()}
       >
         <RxPlus />
       </div>

@@ -51,6 +51,25 @@ export default function Workspace() {
     }
   }, [workspace_id])
 
+  // if there is no session selected, select the first one from the first group's first folder
+  const session_id = useParams().session_id
+  useEffect(() => {
+    if (!session_id) {
+      // use lodash chaining to get the first session id
+      const first_session_id = _.chain(user_state.workspaces)
+        .find({ id: workspace_id })
+        .get("groups")
+        .find({ id: user_state.workspaces[0].groups[0].id })
+        .get("folders")
+        .find({ id: user_state.workspaces[0].groups[0].folders[0].id })
+        .get("sessions")
+        .first()
+        .get("id")
+        .value()
+      navigate(`/conductor/${workspace_id}/${first_session_id}`)
+    }
+  }, [workspace_id])
+
   const [active_sidebar_tab, setActiveSidebarTab] = useState("sessions")
   const sidebar_tab_class = "h-5 w-5 hover:text-zinc-200 contrast-150"
   const sidebar_tabs = [

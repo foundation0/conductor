@@ -66,6 +66,7 @@ export default function Input({
   function optimizeInputHeight() {
     // optimize textarea height
     const textarea: any = document.getElementById("input")
+    if(!textarea) return
     const lineHeight = parseInt(getComputedStyle(textarea).lineHeight)
     const padding = parseInt(getComputedStyle(textarea).paddingTop) + parseInt(getComputedStyle(textarea).paddingBottom)
     const border =
