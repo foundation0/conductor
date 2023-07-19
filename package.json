@@ -1,7 +1,7 @@
 {
   "name": "prompt",
   "private": true,
-  "version": "0.12.0",
+  "version": "0.12.1",
   "type": "module",
   "license": "SSPL-1.0",
   "scripts": {
