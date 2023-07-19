@@ -110,13 +110,16 @@ export default function Input({
             autoComplete="off"
             rows={1}
             onKeyDown={(e) => {
+              if (e.altKey) {
+                e.preventDefault()
+                document.getElementById("input")?.blur()
+              }
               const key = e.code + (e.shiftKey ? "Shift" : "") + (e.ctrlKey ? "Ctrl" : "") + (e.altKey ? "Alt" : "")
               switch (key) {
                 case "Enter":
                   e.preventDefault()
                   sendMessage()
                   break
-
                 default:
                   break
               }
