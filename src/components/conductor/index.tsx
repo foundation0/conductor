@@ -83,7 +83,7 @@ export default function Conductor() {
                   <div className="mt-6 text-center text-md font-semibold text-zinc-400 mb-2">
                     Continue where you left off
                   </div>
-                  {active_sessions_elements}
+                  <div className="flex flex-col gap-2">{active_sessions_elements}</div>
                 </>
               )}
             </div>
