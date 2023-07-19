@@ -74,6 +74,7 @@
 .branch {
   p {
     max-width: 250px;
+    min-height: 1rem;
     text-wrap: nowrap !important;
     text-overflow: ellipsis;
     overflow: hidden;

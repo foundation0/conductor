@@ -65,14 +65,19 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
   }
   // console.log(new Date().getTime(), selection_open, is_hovering)
   return (
-    <div onMouseEnter={() => handleMouseHover(true)} onMouseLeave={() => handleMouseHover(false)} className="">
+    <div
+      id={`msg-${message.id}`}
+      onMouseEnter={() => handleMouseHover(true)}
+      onMouseLeave={() => handleMouseHover(false)}
+      className=""
+    >
       <Selection.Root>
         <Selection.Trigger className="flex ph-no-capture">
           <div
-            className={`chat flex flex-col max-w-screen-lg border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-center items-start relative ${
+            className={`chat flex flex-col max-w-screen-lg border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-start items-start relative ${
               isActive
                 ? " text-white"
-                : "bg-zinc-800 text-zinc-100 text-xs h-fit hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden"
+                : "bg-zinc-800 text-zinc-100 text-xs truncate hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden"
             } ${message.type === "ai" ? "bg-zinc-800" : "border-zinc-800 bg-zinc-800 text-zinc-300"}
           ${className} ${message.hash === "1337" ? "italic text-xs opacity-100" : ""}`}
             onClick={() => {
@@ -187,7 +192,9 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                 },
               }}
               rehypePlugins={[]}
-            >{`${message.text} ${message.id === "temp" ? "▮" : ""}`}</ReactMarkdown>
+            >{`${isActive ? message.text : message.text.slice(0, 50) + "..."} ${
+              message.id === "temp" ? "▮" : ""
+            }`}</ReactMarkdown>
           </div>
         </Selection.Trigger>
         <Selection.Portal>
