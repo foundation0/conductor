@@ -29,7 +29,7 @@ export async function autoRename({
   let has_error = false
   const prompt = {
     instructions: "",
-    user: "Based on the above conversation, describe this conversation with maximum three words. Answer only, no chat, no verbose.",
+    user: "Based on the conversation, what three-word title best encapsulates its content? Answer only, no chat, no verbose.",
   }
   const memory = await compileSlidingWindowMemory({
     model: "gpt-3.5-turbo",
