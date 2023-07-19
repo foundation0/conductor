@@ -194,11 +194,16 @@ export default function Workspace() {
           }}
         >
           <div
-            className={`h-full ${sidebar_minimized ? "w-0 hidden" : "w-60 min-w-[200px] max-w-lg flex flex-1 flex-col "}`}
+            className={`h-full ${
+              sidebar_minimized ? "w-0 hidden" : "w-60 min-w-[200px] max-w-lg flex flex-1 flex-col "
+            }`}
             style={{ width: `${organizer_width}px` }}
           >
             <div id="WorkspaceSidebar" className="flex flex-col gap-1">
-              <div id="Workspace" className="flex flex-row bg-zinc-800 px-4 h-10 rounded-md border border-zinc-900/50 border-t-transparent">
+              <div
+                id="Workspace"
+                className="flex flex-row bg-zinc-800 px-4 h-10 rounded-md border border-zinc-900/50 border-t-transparent"
+              >
                 <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300 rounded-md">
                   {_.find(user_state.workspaces, { id: workspace_id })?.name}
                 </div>
@@ -206,7 +211,10 @@ export default function Workspace() {
                   <MdSettingsSuggest className="w-4 h-4 text-zinc-400" />
                 </Link>
               </div>
-              <div id="SidebarView" className="tabs flex flex-row py-3 bg-zinc-800 h-12justify-center items-center rounded-t-md border border-zinc-900/50 border-b-transparent">
+              <div
+                id="SidebarView"
+                className="tabs flex flex-row py-3 bg-zinc-800 h-12justify-center items-center rounded-t-md border border-zinc-900/50 border-b-transparent"
+              >
                 {sidebar_tabs.map((tab) => (
                   <div
                     key={tab.id}
@@ -228,7 +236,10 @@ export default function Workspace() {
                 ))}
               </div>
             </div>
-            <div id="WorkspaceSidebarContent" className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`} style={{ width: `${organizer_width}px` }}>
+            <div
+              id="WorkspaceSidebarContent"
+              className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
+            >
               <Switch fallback={""}>
                 <Match when={active_sidebar_tab === "sessions"}>
                   <Organizer app_state={app_state} user_state={user_state} />
