@@ -344,10 +344,10 @@ export default function Chat() {
     if (no_update) return updated_messages
 
     const container_e = document.querySelector(".react-auto-scroll__scroll-container") as HTMLElement
-    const offset = container_e.offsetTop
+    const offset = container_e.scrollTop
     setRawMessages(updated_messages)
     await SessionsActions.updateMessages({ session_id, messages: updated_messages })
-    container_e?.scrollTo({ top: offset, behavior: "instant" })
+    container_e?.scrollTo({ top: offset })
     fieldFocus({ selector: "#input" })
   }
 

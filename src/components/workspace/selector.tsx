@@ -1,7 +1,7 @@
 import { HiPlus } from "react-icons/hi"
 import { For } from "react-solid-flow"
 import PromptIcon from "@/assets/prompt.svg"
-import { useLoaderData, useParams } from "react-router-dom"
+import { Location, useLoaderData, useLocation, useParams } from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import AppStateActions from "@/data/actions/app"
@@ -14,6 +14,7 @@ import { BsDiscord } from "react-icons/bs"
 export default function WorkspaceSelector() {
   const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
   if (!app_state || !user_state) return null
+  const location: Location = useLocation()
 
   const workspace_id = useParams().workspace_id
   useEffect(() => {
@@ -82,18 +83,33 @@ export default function WorkspaceSelector() {
               </Link>
             </div>
           </div>
-          <div id="GlobalActions" className="flex flex-col">
+          <div id="GlobalActions" className="flex flex-col justify-center items-center gap-2 mb-2">
             <div className="flex rounded-full h-12 w-12 justify-center items-center">
               <div className="tooltip tooltip-right" data-tip="Questions? Problems? Ideas? Join Prompt Discord!">
-                <Link to={`https://discord.gg/PFMtbdrvXw`} target="_blank">
-                  <BsDiscord className="w-5 h-5 text-zinc-400 hover:text-zinc-200" />
+                <Link
+                  to={`https://discord.gg/PFMtbdrvXw`}
+                  target="_blank"
+                  className="flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850  hover:border-zinc-500 text-zinc-400 hover:text-zinc-200"
+                >
+                  <BsDiscord className="w-4 h-4 " />
                 </Link>
               </div>
             </div>
-            <div className="avatar rounded-full h-12 w-12 justify-center items-center">
-              <Link to={`/conductor/settings`}>
-                <MdSettings className="w-5 h-5 text-zinc-400 hover:text-zinc-200" />
-              </Link>
+            <div className="flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl overflow-hidden cursor-pointer   hover:bg-zinc-850   text-zinc-400 hover:text-zinc-200">
+              <div className="tooltip tooltip-right" data-tip="Global settings and your profile">
+                <Link to={`/conductor/settings`}>
+                  {_.get(user_state, "meta.profile_photos[0]") ? (
+                    <img
+                      src={_.get(user_state, "meta.profile_photos[0]")}
+                      className={`${
+                        location.pathname === "/conductor/settings" ? "opacity-100" : "opacity-50"
+                      } hover:opacity-100`}
+                    />
+                  ) : (
+                    <MdSettings className="w-4 h-4 " />
+                  )}
+                </Link>
+              </div>
             </div>
           </div>
         </div>
