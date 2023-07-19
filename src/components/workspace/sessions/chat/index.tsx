@@ -81,6 +81,11 @@ export default function Chat() {
 
   const navigate = useNavigate()
 
+  // set focus to input when session changes
+  useEffect(() => {
+    fieldFocus({ selector: "#input" })
+  }, [session_id])
+
   // keep track of input height
   useEffect(() => {
     const e_input = eInput.current
@@ -107,6 +112,7 @@ export default function Chat() {
     const module = Module(session?.settings.module.id)
     if (!module) return
     setModule(module)
+    setTimeout(() => fieldFocus({ selector: "#input" }), 200)
   }, [session?.settings.module])
 
   // change session's active module
@@ -339,6 +345,7 @@ export default function Chat() {
 
     setRawMessages(updated_messages)
     await SessionsActions.updateMessages({ session_id, messages: updated_messages })
+    fieldFocus({ selector: "#input" })
   }
 
   // create new branch
@@ -371,6 +378,7 @@ export default function Chat() {
     // hacky settimeout because react...
     setTimeout(() => {
       setRawMessages(updated_raw_messages)
+      fieldFocus({ selector: "#input" })
     }, 200)
   }
 
@@ -445,6 +453,7 @@ export default function Chat() {
       setInputText(message)
     }
     if (branch_msg_id) setBranchMsgId("")
+    setTimeout(() => fieldFocus({ selector: "#input" }), 200)
   }
 
   if (!session || !module) return null
