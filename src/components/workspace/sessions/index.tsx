@@ -40,8 +40,8 @@ export default function Workspace() {
 
   return (
     <div className="flex flex-1">
-      <div id="ContentTabs" className="flex flex-1 grow flex-col overflow-hidden">
-        <div id="Tabs" className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950">
+      <div id="ContentTabs" className="flex flex-1 gap-1 grow flex-col overflow-hidden">
+        <div id="Tabs" className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950 rounded-md">
           <Tabs setShowNotepad={() => setSidebar("Notepad")} setShowMembers={() => setSidebar("Members")} />
         </div>
         <div id="ContentViews" className="flex flex-1">
@@ -53,14 +53,13 @@ export default function Workspace() {
         height={1000}
         onResize={onResize}
         resizeHandles={["w"]}
-        handleSize={[1000, 1000]}
         onResizeStop={() => {
           setPreference({ key: "notepad-width", value: notepadWidth })
         }}
       >
         <div
           id={open_sidebar || "SidebarHidden"}
-          className={`flex ${open_sidebar !== "" ? "" : "hidden"}`}
+          className={`flex ${open_sidebar !== "" ? "rounded-md m-0.5 overflow-hidden" : "hidden"}`}
           style={{ width: `${notepadWidth}px` }}
         >
           <Switch>

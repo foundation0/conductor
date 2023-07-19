@@ -66,10 +66,10 @@ export default function Tabs({
         if (!s) return false
         return (
           <Link
-            className={`flex flex-row min-w-[71px] max-w-[200px] flex-nowrap flex-shrink border-0 border-r border-zinc-800 tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom ph-no-capture ${
+            className={`flex flex-row min-w-[71px] max-w-[200px] flex-nowrap flex-shrink border-0 border-r border-r-zinc-700/30 tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom ph-no-capture ${
               session_id === s.id
-                ? "tab-active bg-zinc-900 text-zinc-200"
-                : " bg-zinc-800 hover:bg-zinc-900 text-zinc-600 hover:text-zinc-300"
+                ? "tab-active bg-zinc-900/50 text-zinc-200"
+                : " bg-zinc-800 hover:bg-zinc-900/50 text-zinc-600 hover:text-zinc-300"
             }`}
             key={s.id}
             to={`/conductor/${workspace_id}/${s.id}`}
@@ -231,7 +231,7 @@ export default function Tabs({
   return (
     <>
       <div
-        className="h-full flex items-center justify-start p-4 leading-none cursor-pointer text-zinc-500 hover:text-zinc-200 tooltip tooltip-right"
+        className="h-full flex items-center justify-start p-4 leading-none cursor-pointer text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/50 border-r border-r-zinc-700/30 tooltip tooltip-right"
         data-tip="Create new session"
         onClick={() => createNewSession()}
       >

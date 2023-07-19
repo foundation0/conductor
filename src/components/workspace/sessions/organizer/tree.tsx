@@ -151,7 +151,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   })
 
   // keyboard shortcut for creating new session
-  useHotkeys("alt+n", () => {
+  useHotkeys("alt+t", () => {
     if (field_edit_id || !session_id) return
     const session = _.find(app_state.open_sessions, { session_id })
     fetcher.submit(
@@ -177,9 +177,9 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   })
  */
   return (
-    <div className="OrganizerTree flex flex-1 flex-col gap-8">
+    <div className="OrganizerTree flex w-full flex-col gap-8">
       {groups.map((group) => (
-        <div key={group.id} className="OrganizerGroup flex flex-1 flex-col gap-2">
+        <div key={group.id} className="OrganizerGroup flex flex-col gap-2">
           <div className="flex flex-row items-center">
             <div
               className="flex flex-1 cursor-pointer items-center text-zinc-500 text-xs font-bold ml-1 ph-no-capture"

@@ -133,7 +133,7 @@ export default function Notepad() {
   }
 
   return (
-    <div className="Notepad flex flex-col px-3 pt-2 gap-6 w-full bg-zinc-800 border-l border-zinc-700 overflow-auto overflow-x-hidden">
+    <div className="Notepad flex flex-col px-3 pt-2 gap-6 w-full bg-zinc-800  overflow-auto overflow-x-hidden">
       <div className="flex flex-row text-zinc-300 text-sm font-semibold pb-1">
         <div className="flex-grow">Notepad</div>
         <div className="flex items-center">

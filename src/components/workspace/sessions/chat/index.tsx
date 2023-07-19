@@ -458,11 +458,11 @@ export default function Chat() {
 
   if (!session || !module) return null
   return (
-    <div className="flex flex-1 flex-col pt-2 relative" ref={eContainer}>
+    <div className="flex flex-1 flex-col relative" ref={eContainer}>
       <div className="flex flex-1">
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
           {processed_messages && processed_messages?.length > 0 ? (
-            <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4">
+            <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4 pt-2">
               Active module:
               <select
                 className="flex border rounded-lg px-2 ml-2 py-1 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
@@ -517,7 +517,7 @@ export default function Chat() {
                 </div>
                 <div className="flex mt-5 flex-col justify-center items-center gap-4">
                   <div className="text-xs text-zinc-400">
-                    <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">N</kbd> new session
+                    <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">T</kbd> new session
                   </div>
                   <div className="text-xs text-zinc-400">
                     <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">R</kbd> rename session

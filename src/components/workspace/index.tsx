@@ -167,12 +167,12 @@ export default function Workspace() {
   }
 
   return (
-    <div className="flex flex-1 bg-zinc-900 ">
+    <div className="flex flex-1">
       <Joyride steps={steps} run={run_onboarding} continuous={true} />
-      <div id="Modes" className="relative bg-zinc-800/90 border-r border-l border-zinc-700/50">
+      <div id="Modes" className="relative rounded-md m-0.5">
         <div className="absolute -right-1.5 top-1/2 z-10">
           <div
-            className="cursor-pointer flex justify-center items-center h-6 w-3 bg-zinc-800/90 rounded-sm border-r  border-zinc-700/50 tooltip tooltip-right"
+            className="cursor-pointer flex justify-center items-center h-6 w-3 bg-zinc-800/90 rounded-sm border-r border-zinc-700/50 tooltip tooltip-right"
             data-tip="Maximize/minimize sidebar"
             onClick={() => setSidebarMinimized(!sidebar_minimized)}
           >
@@ -194,23 +194,23 @@ export default function Workspace() {
           }}
         >
           <div
-            className={`h-full ${sidebar_minimized ? "w-0 hidden" : "w-60 min-w-[200px] max-w-lg"}`}
+            className={`h-full ${sidebar_minimized ? "w-0 hidden" : "w-60 min-w-[200px] max-w-lg flex flex-1 flex-col "}`}
             style={{ width: `${organizer_width}px` }}
           >
-            <div id="WorkspaceSidebar">
-              <div id="Workspace" className="flex flex-row bg-zinc-900 px-4 h-10">
-                <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300">
+            <div id="WorkspaceSidebar" className="flex flex-col gap-1">
+              <div id="Workspace" className="flex flex-row bg-zinc-800 px-4 h-10 rounded-md border border-zinc-900/50 border-t-transparent">
+                <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300 rounded-md">
                   {_.find(user_state.workspaces, { id: workspace_id })?.name}
                 </div>
                 <Link className="flex items-center" to={`/conductor/${workspace_id}/settings`}>
                   <MdSettingsSuggest className="w-4 h-4 text-zinc-400" />
                 </Link>
               </div>
-              <div id="SidebarView" className="tabs flex flex-row h-12 justify-center items-center">
+              <div id="SidebarView" className="tabs flex flex-row py-3 bg-zinc-800 h-12justify-center items-center rounded-t-md border border-zinc-900/50 border-b-transparent">
                 {sidebar_tabs.map((tab) => (
                   <div
                     key={tab.id}
-                    className={`flex flex-1 tab px-2 ${
+                    className={`flex flex-1 justify-center px-2 cursor-pointer ${
                       active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
                     }`}
                     onClick={tab.onClick}
@@ -228,7 +228,7 @@ export default function Workspace() {
                 ))}
               </div>
             </div>
-            <div className={`px-2`}>
+            <div id="WorkspaceSidebarContent" className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`} style={{ width: `${organizer_width}px` }}>
               <Switch fallback={""}>
                 <Match when={active_sidebar_tab === "sessions"}>
                   <Organizer app_state={app_state} user_state={user_state} />
@@ -244,7 +244,7 @@ export default function Workspace() {
           </div>
         </Resizable>
       </div>
-      <div id="View" className="flex flex-1 bg-zinc-850">
+      <div id="View" className="flex flex-1 bg-zinc-850 m-0.5">
         <Outlet />
       </div>
     </div>
