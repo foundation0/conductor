@@ -254,7 +254,10 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                   </DropdownMenu.Portal>
                 </DropdownMenu.Root>
               </div>
-              <div className="tooltip tooltip-bottom flex items-center justify-center" data-tip="Add new folder...">
+              <div
+                className="tooltip tooltip-bottom flex items-center justify-center"
+                data-tip="Add new group or folder..."
+              >
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button className="outline-none">
@@ -410,7 +413,10 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         </DropdownMenu.Portal>
                       </DropdownMenu.Root>
                     </div>
-                    <div className="tooltip tooltip-bottom flex items-center justify-center" data-tip="Add new session">
+                    <div
+                      className="tooltip tooltip-bottom flex items-center justify-center"
+                      data-tip="Add new session (ALT+T)"
+                    >
                       <button
                         onClick={() => {
                           fetcher.submit(
@@ -439,18 +445,18 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                     <div
                       key={session.id}
                       className={`OrganizerSession flex flex-1 flex-row pl-3 h-5 py-0 mb-0.5 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-900 hover:border-t-zinc-700/70 rounded ${
-                        session.id === session_id ? "bg-zinc-900/30 border border-zinc-900  border-t-zinc-700/70" : ""
+                        session.id === session_id ? "" : ""
                       }`}
                       data-id={session.id}
                     >
                       <div className="flex items-center">
                         <RiHashtag
-                          className={`w-4 h-4 pr-1 ${session.id === session_id ? " text-zinc-100" : "text-zinc-400"}`}
+                          className={`w-4 h-4 pr-1 ${session.id === session_id ? " text-zinc-100" : "text-zinc-400 "}`}
                         />
                       </div>
                       <Link
-                        className={`flex flex-1 relative items-center cursor-pointer text-xs text-ellipsis overflow-hidden ph-no-capture ${
-                          session.id === session_id ? " text-zinc-100" : "text-zinc-400"
+                        className={`flex flex-1 relative items-center cursor-pointer text-xs font-semibold text-ellipsis overflow-hidden ph-no-capture ${
+                          session.id === session_id ? " text-zinc-100" : "text-zinc-400  hover:text-zinc-100"
                         }`}
                         to={`/conductor/${workspace_id}/${session.id}`}
                       >
@@ -529,7 +535,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                     </div>
                   ))
                 ) : (
-                  <div className="OrganizerSession flex flex-1 flex-row pl-4 italic text-xs font-semibold text-zinc-400">
+                  <div className="OrganizerSession flex flex-1 flex-row pl-4 text-xs font-semibold text-zinc-400">
                     No sessions
                   </div>
                 )

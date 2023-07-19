@@ -59,7 +59,7 @@ export default function Workspace() {
       >
         <div
           id={open_sidebar || "SidebarHidden"}
-          className={`flex ${open_sidebar !== "" ? "rounded-md m-0.5 overflow-hidden" : "hidden"}`}
+          className={`flex ${open_sidebar !== "" ? "rounded-md ml-1 mb-1 overflow-hidden" : "hidden"}`}
           style={{ width: `${notepadWidth}px` }}
         >
           <Switch>

@@ -25,7 +25,7 @@ export function LocalUsersPage() {
   let [users, setUsers] = useState<any[]>(
     _(Object.keys(users_state || {}))
       .map((k) => users_state[k])
-      .orderBy("last_login", "asc")
+      .orderBy("last_seen", "asc")
       .reverse()
       .value() || []
   )
@@ -36,7 +36,7 @@ export function LocalUsersPage() {
     setUsers(
       _(Object.keys(users_state || {}))
         .map((k) => users_state[k])
-        .orderBy("last_login", "asc")
+        .orderBy("last_seen", "asc")
         .reverse()
         .value()
     )
