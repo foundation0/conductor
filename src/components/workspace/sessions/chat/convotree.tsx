@@ -49,7 +49,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
             <div key={index} className="flex flex-col flex-grow-1">
               <div className="ml-12 text-xs font-semibold text-zinc-600">
                 {row[1].type === "human" ? "You" : row[1].source}{" "}
-                {(row[1].created_at && ago_refresh) && " - " + dayjs().from(dayjs(row[1].created_at), true) + " ago"}
+                {row[1].created_at && ago_refresh ? " - " + dayjs().from(dayjs(row[1].created_at), true) + " ago" : ""}
               </div>
               <div className="flex flex-row">
                 <div className="flex flex-shrink mr-2">
