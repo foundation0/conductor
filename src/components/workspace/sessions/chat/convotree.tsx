@@ -1,4 +1,4 @@
-import React, { ReactElement } from "react"
+import React, { ReactElement, useEffect, useState } from "react"
 import { TextMessageT } from "@/data/loaders/sessions"
 import Message from "./message"
 import _ from "lodash"
@@ -6,6 +6,7 @@ import { RiAddCircleFill } from "react-icons/ri"
 import { fieldFocus } from "@/components/libraries/field_focus"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
+import { useParams } from "react-router-dom"
 dayjs.extend(relativeTime)
 
 type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
@@ -30,6 +31,15 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   if (!rows) {
     return null
   }
+
+  const [ago_refresh, setAgoRefresh] = useState(0)
+  const session_id = useParams<{ session_id: string }>().session_id
+
+  useEffect(() => {
+    const interval = setInterval(() => setAgoRefresh(ago_refresh + 1), 60000)
+    return () => clearInterval(interval)
+  }, [session_id])
+
   if (paddingBottom < 80) paddingBottom = 80
   return (
     <div className="flex flex-row justify-center px-6" style={{ paddingBottom: `${paddingBottom}px` }}>
@@ -39,7 +49,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
             <div key={index} className="flex flex-col flex-grow-1">
               <div className="ml-12 text-xs font-semibold text-zinc-600">
                 {row[1].type === "human" ? "You" : row[1].source}{" "}
-                {row[1].created_at && " - " + dayjs().from(dayjs(row[1].created_at), true) + " ago"}
+                {(row[1].created_at && ago_refresh) && " - " + dayjs().from(dayjs(row[1].created_at), true) + " ago"}
               </div>
               <div className="flex flex-row">
                 <div className="flex flex-shrink mr-2">
