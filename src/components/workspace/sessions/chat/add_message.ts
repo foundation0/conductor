@@ -120,6 +120,7 @@ export async function addMessage({
     setGenInProgress(true)
     // setMsgUpdateTs(new Date().getTime())
     if (m) {
+      const source = `${module?.specs?.meta?.vendor?.name}/${session?.settings.module.variant}`
       let stream_response = ""
       function onData({ data }: { data: any }) {
         if (data) {
@@ -132,7 +133,7 @@ export async function addMessage({
               type: "ai",
               hash: "123",
               text: stream_response,
-              source: module?.specs?.meta?.vendor?.name || module?.specs.meta.name || "unknown",
+              source,
               parent_id: m?.id || "",
             },
           })
@@ -181,7 +182,7 @@ export async function addMessage({
             type: "ai",
             hash: "123",
             text: response || stream_response,
-            source: module?.specs?.meta?.vendor?.name || module?.specs.meta.name || "unknown",
+            source,
             parent_id: m.id,
           },
         })

@@ -74,7 +74,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       <Selection.Root>
         <Selection.Trigger className="flex ph-no-capture">
           <div
-            className={`chat flex flex-col max-w-screen-lg border-t border-t-zinc-700 py-2 px-4 text-sm rounded-lg justify-start items-start relative ${
+            className={`chat flex flex-col max-w-screen-lg border-2 border-zinc-900/80 py-2 px-4 text-sm rounded-lg justify-start items-start relative ${
               isActive
                 ? " text-white"
                 : "bg-zinc-800 text-zinc-100 text-xs truncate hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden"
@@ -87,8 +87,8 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
             }}
           >
             {is_hovering && isActive && (
-              <div className="flex gap-2 border-t border-t-zinc-700 bg-zinc-800 absolute right-2 -top-7 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded-lg mt-2">
-                <div className="tooltip-left tooltip" data-tip="Copy message to clipboard">
+              <div className="flex gap-3 border-2 border-zinc-900/70 backdrop-blur bg-zinc-900/50 absolute right-1 -top-9 text-xs overflow-visible whitespace-nowrap py-1.5 px-3 rounded-t-xl  mt-2">
+                <div className="tooltip-top tooltip" data-tip="Copy message to clipboard">
                   {used_icon_id === message.id + "all/copy" ? (
                     <MdCheck />
                   ) : (

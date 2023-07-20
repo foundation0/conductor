@@ -9,6 +9,8 @@ export const LLMVariantS = z.object({
   context_len: z.number().optional(),
   cost_input: z.number().optional(),
   cost_output: z.number().optional(),
+  color: z.string().default("transparent").optional(),
+  template: z.string().optional(),
   cost: z.number().optional().describe("deprecated"), // deprecated
 })
 

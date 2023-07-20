@@ -153,20 +153,33 @@ export default function Chat() {
     }
     if (!processed_messages) return
     if (!module) return
+
     processed_messages.forEach((ms) => {
       const m = ms[1]
-      if (m.source !== "human" && module.specs.meta.vendor?.name === m.source) {
+      if (m.source !== "human" && module.specs.meta.vendor?.name === m.source.split("/")[0]) {
+        const user_variant_settings = _.find(user_state.modules.installed, {
+          id: module.specs.id,
+        })?.meta?.variants?.find((v: any) => v.id === m.source.split("/")[1])
         p[m.source] = module.specs.meta.icon ? (
-          <img src={module.specs.meta.icon} className="w-3 h-3 bg-zinc-200" />
+          <img
+            src={module.specs.meta.icon}
+            className={`border-2 rounded-full w-3 h-3 bg-zinc-200`}
+            style={{ borderColor: user_variant_settings?.color || "#00000000" }}
+          />
         ) : (
           <FaUser />
         )
       } else {
         p["user"] =
           _.size(user_state.meta?.profile_photos) > 0 ? (
-            <img src={_.first(user_state.meta?.profile_photos) || ""} className="h-full w-full" />
+            <img
+              src={_.first(user_state.meta?.profile_photos) || ""}
+              className="border-2 border-zinc-900/50 rounded-full w-3 h-3"
+            />
           ) : (
-            <div>{user_state.meta?.username?.[0].toUpperCase()}</div>
+            <div className="border-2 border-zinc-900/50 rounded-full w-3 h-3">
+              {user_state.meta?.username?.[0].toUpperCase()}
+            </div>
           )
       }
     })
@@ -358,6 +371,7 @@ export default function Chat() {
     const new_branch_msg: TextMessageT = {
       _v: 1,
       id: nanoid(10),
+      created_at: new Date().toISOString(),
       version: "1.0",
       type: "human",
       text: "type new message below...",

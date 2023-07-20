@@ -8,6 +8,7 @@ export const TextMessageS = z.object({
     .nonempty()
     .catch(() => nanoid(8)),
   version: z.literal("1.0").catch("1.0"),
+  created_at: z.string().catch(() => new Date().toUTCString()),
   type: z.enum(["human", "ai", "system"]),
   text: z.string().nonempty(),
   source: z.string().nonempty(),

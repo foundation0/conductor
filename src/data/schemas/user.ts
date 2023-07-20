@@ -2,7 +2,7 @@ import z from "zod"
 import { ModuleS } from "./modules"
 import { WorkspaceS } from "./workspace"
 import { validateBinary } from "./binary"
-
+import { AssociatedDatS, PersonaModuleS } from "./personas"
 export const UserS = z.object({
   _v: z.number().default(1),
   _updated: z.number().optional(),
@@ -38,6 +38,12 @@ export const UserS = z.object({
       })
     )
     .optional(),
+  personas: z.array(z.object({
+    id: z.string().nonempty(),
+    status: z.enum(["active", "inactive"]),
+    module: PersonaModuleS.optional(),
+    data: z.array(AssociatedDatS).optional(),
+  })).optional(),
 })
 
 export const PublicUserS = z.object({
