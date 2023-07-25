@@ -24,6 +24,7 @@ export const specs: z.infer<typeof ModuleS> = {
   _v: 1,
   id: "openai-cost-estimator",
   meta: {
+    author: "0x000",
     name: "OpenAI Cost Estimator",
     type: "utility",
     vendor: { name: "OpenAI" },

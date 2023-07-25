@@ -11,48 +11,66 @@ import { ConversationChain } from "langchain/chains"
 import { BufferMemory, BufferWindowMemory } from "langchain/memory"
 import { TextMessageS } from "@/data/schemas/sessions"
 import _ from "lodash"
-import Icon from "./icon.svg"
-import { ph } from "@/components/libraries/logging"
+// @ts-ignore
+import Icon from "./icon.svg?dataurl"
 
 export const specs: z.infer<typeof ModuleS> = {
   _v: 1,
+  _updated: 1,
   id: "openai",
   meta: {
+    author: "0x000",
+    description:
+      "OpenAI is a for-profit artificial intelligence company, focused on creating proprietary AI models available via APIs.",
     name: "ChatGPT",
     type: "LLM",
     vendor: { name: "OpenAI" },
     variants: [
       {
-        id: "gpt-4",
-        context_len: 8192,
-        cost_input: 0.03,
-        cost_output: 0.06,
-      },
-      {
         id: "gpt-3.5-turbo",
+        type: "language",
         context_len: 4096,
         cost_input: 0.0015,
         cost_output: 0.002,
+        color: "#28a08c",
+      },
+      {
+        id: "gpt-3.5-turbo-16k",
+        type: "language",
+        context_len: 16384,
+        cost_input: 0.003,
+        cost_output: 0.004,
+        color: "#28a08c",
+      },
+      {
+        id: "gpt-4",
+        type: "language",
+        context_len: 8192,
+        cost_input: 0.03,
+        cost_output: 0.06,
+        color: "#ac67ff",
       },
       {
         id: "gpt-4-32k",
+        type: "language",
         active: false,
         context_len: 32768,
         cost_input: 0.06,
         cost_output: 0.12,
-      },
-      {
-        id: "gpt-3.5-turbo-16k",
-        context_len: 16384,
-        cost_input: 0.003,
-        cost_output: 0.004,
+        color: "#ac67ff",
       },
     ],
     icon: Icon,
   },
   settings: {
-    api_url: "https://api.openai.com/",
     api_key: "",
+    max_tokens: 2000,
+    temperature: 0,
+    top_p: 1,
+    n: 0,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+    stop: "",
   },
   streaming: true,
 }
@@ -65,10 +83,17 @@ const InputS = z.object({
     user: z.string(),
   }),
   history: z.array(TextMessageS),
-  max_tokens: z.number().optional(),
-  temperature: z.number().optional(),
-  top_p: z.number().optional(),
-  n: z.number().optional(),
+  settings: z
+    .object({
+      max_tokens: z.number().min(0).optional(),
+      temperature: z.number().min(0).max(2).optional(),
+      top_p: z.number().min(0).max(1).optional(),
+      frequency_penalty: z.number().min(0).max(1).optional(),
+      presence_penalty: z.number().min(0).max(1).optional(),
+      n: z.number().optional(),
+      stop: z.string().optional(),
+    })
+    .optional(),
 })
 
 export const OutputS = z.string()
@@ -77,19 +102,15 @@ type InputT = z.infer<typeof InputS>
 type OutputT = z.infer<typeof OutputS>
 
 export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>): Promise<OutputT> => {
-  const { model, prompt, max_tokens, temperature, top_p, n, api_key, history } = InputS.parse(input)
+  const { model, prompt, settings, api_key, history } = InputS.parse(input)
   const { setGenController, onData, onClose, onError } = StreamingS.parse(callbacks)
 
   const llm = new ChatOpenAI({
-    temperature: temperature || 0,
+    temperature: settings?.temperature || 0,
     openAIApiKey: api_key,
     streaming: true,
     modelName: model || "gpt-3.5-turbo",
-    modelKwargs: {
-      max_tokens: max_tokens || null,
-      top_p: top_p || 1,
-      n: n || 1,
-    },
+    modelKwargs: settings || {},
   })
 
   const controller = new AbortController()
@@ -137,7 +158,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
             message: err.response.data.error.message,
             status: err.response.status,
           }
-          if(error.message === 'Cancel: canceled') return
+          if (error.message === "Cancel: canceled") return
           if (typeof onError === "function") onError(error)
         },
       },
@@ -151,6 +172,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
         status: error?.status || 500,
         data: error,
       }
+      if (error.message === "Cancel: canceled") return ""
       onError(err)
     }
   }

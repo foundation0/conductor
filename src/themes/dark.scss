@@ -13,6 +13,17 @@
 
     &.disabled {}
   }
+
+  .p-btn-secondary {
+    @layer lex;
+    @apply flex flex-row bg-zinc-800/30 hover:bg-zinc-900/70 border border-dashed border-zinc-700 border-t-zinc-600/70 rounded-md p-3 cursor-pointer text-zinc-500 hover:text-zinc-200 text-sm font-medium;
+
+    &.disabled {}
+  }
+
+  .gradient-bg {
+    @apply bg-zinc-900 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30;
+  }
 }
 
 .avatar {
@@ -75,4 +86,5 @@ button:disabled {
   z-index: 9999;
   font-weight: 500;
   background-color: #1b1b1b;
+  text-align: left;
 }

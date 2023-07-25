@@ -10,7 +10,7 @@ import { useParams } from "react-router-dom"
 type GroupT = z.infer<typeof GroupS>
 
 export default function Organizer({ app_state, user_state }: { app_state: AppStateT; user_state: UserT }) {
-  const workspace_id = useParams().workspace_id || ""
+  const workspace_id = useParams().workspace_id as string
   const [groups, setGroups] = useState<GroupT[]>([])
 
   const updateGroups = () => {
@@ -20,7 +20,7 @@ export default function Organizer({ app_state, user_state }: { app_state: AppSta
   }
 
   useEffect(updateGroups, [
-    JSON.stringify([app_state.active_sessions[workspace_id], user_state.workspaces, app_state.open_sessions]),
+    JSON.stringify([workspace_id, app_state.active_sessions[workspace_id], user_state.workspaces, app_state.open_sessions]),
   ])
 
   if (Object.keys(groups).length === 0) return <div className="flex flex-1">No groups</div>

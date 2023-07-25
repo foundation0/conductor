@@ -3,6 +3,7 @@
 @import "./chat.scss";
 @import "./notepad.scss";
 @import "./floater.scss";
+@import "./react-select.scss";
 
 @tailwind base;
 @tailwind components;
@@ -12,7 +13,7 @@ html,
 body,
 #main,
 #root {
-  height: 100%;
+height: 100%;
   position: absolute;
   top: 0;
   left: 0;

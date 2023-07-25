@@ -1,12 +1,15 @@
 import { z } from "zod"
 import { nanoid } from "nanoid"
+import { generateSchemaTransformer } from "@/components/libraries/utilities"
 
-export const DataS = z.object({
+export const DataS = generateSchemaTransformer({
+  schemas: [z.object({
   _v: z.number().default(1),
   id: z.string().nonempty().catch(() => nanoid(10)),
-})
+})]})
 
-export const DocumentS = z.object({
+export const DocumentS = generateSchemaTransformer({
+  schemas: [z.object({
   _v: z.literal(1),
   type: z.string().default('document'),
   meta: z.object({
@@ -17,9 +20,10 @@ export const DocumentS = z.object({
   data: z.object({
     content: z.string(),
   }),
-})
+})]})
 
-export const DataTypeS = z.object({
+export const DataTypeS = generateSchemaTransformer({
+  schemas: [z.object({
   _v: z.literal(1),
   type: z.string()
-})
+})]})

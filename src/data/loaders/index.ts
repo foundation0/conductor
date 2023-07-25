@@ -4,10 +4,9 @@ import { state as SessionState } from "@/data/loaders/sessions"
 import { state as NotepadState } from "@/data/loaders/notepad"
 import { state as UsersState } from "@/data/loaders/users"
 import { state as MessagesState } from "@/data/loaders/messages"
+import { state as AIState } from "@/data/loaders/ai"
 import { getActiveUser } from "@/components/libraries/active_user"
 import _ from "lodash"
-import { sleep } from "@/components/libraries/utilities"
-import { AppStateT } from "@/data/loaders/app"
 
 const noopAPI = { get: () => null, set: () => null }
 
@@ -27,6 +26,7 @@ export async function initLoaders() {
       SessionState: noopAPI,
       NotepadState: noopAPI,
       MessagesState: noopAPI,
+      AIState: noopAPI,
       UsersState: APICache?.users_state || (await UsersState()),
     }
     APICache = { ...APICache, users_state: API.UsersState }
@@ -38,39 +38,42 @@ export async function initLoaders() {
     const session_state = APICache?.session_state || (await SessionState())
     const notepad_state = APICache?.notepad_state || (await NotepadState())
     const users_state = APICache?.users_state || (await UsersState())
+    const ai_state = APICache?.ai_state || (await AIState())
 
     // set cache
-    APICache = { ...APICache, user_state, app_state, session_state, notepad_state, users_state }
+    APICache = { ...APICache, user_state, app_state, session_state, notepad_state, users_state, ai_state }
 
     API = {
       _status: "authenticated",
       AppState: app_state,
       UserState: user_state,
       SessionState: session_state,
+      NotepadState: notepad_state,
+      UsersState: users_state,
+      AIState: ai_state,
       MessagesState: async ({ session_id }: { session_id: string }) => {
         if (SessionCache[session_id]) return SessionCache[session_id]
         const s = await MessagesState({ session_id })
         SessionCache[session_id] = s
         return s
       },
-      NotepadState: notepad_state,
-      UsersState: users_state,
     }
   }
   return API
 }
 
 export const loader = async () => {
-  const { AppState, UserState, SessionState, NotepadState, MessagesState, UsersState } = await initLoaders()
+  const { AppState, UserState, SessionState, NotepadState, MessagesState, UsersState, AIState } = await initLoaders()
   const users_state = await UsersState.get()
-  const app_state: AppStateT = await AppState.get()
+  const app_state = await AppState.get()
   const user_state = await UserState.get()
   const sessions_state = await SessionState.get()
   const notepad_state = await NotepadState.get()
+  const ai_state = await AIState.get()
   const messages_state = _.get(app_state, `active_sessions[${app_state?.active_workspace_id}].session_id`)
     ? await MessagesState({
         session_id: _.get(app_state, `active_sessions[${app_state?.active_workspace_id}].session_id`),
       })
     : []
-  return { app_state, user_state, sessions_state, notepad_state, messages_state, MessagesState, users_state }
+  return { app_state, user_state, sessions_state, notepad_state, messages_state, MessagesState, users_state, ai_state }
 }

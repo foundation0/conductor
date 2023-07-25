@@ -1,0 +1,36 @@
+.react-select-container {
+  @apply text-xs border-0 rounded ;
+  @apply text-zinc-200;
+  .react-select__control {
+    @apply bg-zinc-900 border-0 cursor-pointer ;
+    .react-select__value-container {
+      .react-select__single-value {
+        @apply text-zinc-200 #{!important};
+      }
+    }
+    .react-select__indicators {
+      .react-select__indicator-separator  {
+        @apply bg-zinc-700/50;
+      }
+      .react-select__indicator  {
+        @apply text-zinc-700 w-7;
+      }
+    }
+  }
+  .react-select__menu {
+    @apply bg-zinc-900;
+    
+    .react-select__menu-list {
+      @apply text-zinc-200;
+      .react-select__option {
+        @apply text-zinc-200 cursor-pointer ;
+        &:hover {
+          @apply bg-zinc-800;
+        }
+        &--is-focused {
+          @apply bg-zinc-800;
+        }
+      }
+    }
+  }
+}

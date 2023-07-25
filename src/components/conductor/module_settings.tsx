@@ -60,7 +60,7 @@ export function ModuleSettings({
 
   function removeVariant({ variant_id }: { variant_id: string }) {
     const variants = _.filter(module.meta.variants, (v: any) => v.id !== variant_id)
-    handleEdit({ value: variants, name: `modules.installed.${index}.meta.variants` })
+    handleEdit({ module_id: module.id, value: variants, name: `meta.variants` })
   }
 
   let schema_keys: { key: string; type: string }[] = []
@@ -90,7 +90,7 @@ export function ModuleSettings({
               type="text"
               onSave={(data: any) => {
                 setFieldEditId("")
-                handleEdit({ value: data, name: `modules.installed.${index}.meta.description` })
+                handleEdit({ module_id: module.id, value: data, name: `meta.description` })
               }}
               onCancel={() => setFieldEditId("")}
               onBlur={() => setFieldEditId("")}
@@ -118,7 +118,7 @@ export function ModuleSettings({
               type="text"
               onSave={(data: any) => {
                 setFieldEditId("")
-                handleEdit({ value: data, name: `modules.installed.${index}.settings.api_key` })
+                handleEdit({ module_id: module.id, value: data, name: `settings.api_key` })
               }}
               onCancel={() => setFieldEditId("")}
               onBlur={() => setFieldEditId("")}
@@ -154,7 +154,7 @@ export function ModuleSettings({
                   type="text"
                   onSave={(data: any) => {
                     setFieldEditId("")
-                    handleEdit({ value: data, name: `modules.installed.${index}.settings.${key}` })
+                    handleEdit({ module_id: module.id, value: data, name: `settings.${key}` })
                   }}
                   onCancel={() => setFieldEditId("")}
                   onBlur={() => setFieldEditId("")}
@@ -162,7 +162,7 @@ export function ModuleSettings({
                   saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
                   cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
                   onHoverCssClass={`cursor-pointer`}
-                  value={module.settings[key] || "click to add api key"}
+                  value={(module.settings[key] !== "" && module.settings[key] !== undefined) ? module.settings[key] : "click to set"}
                   editComponent={<EditComponent />}
                 />
               </div>
@@ -217,7 +217,7 @@ export function ModuleSettings({
                       schema_keys.map((schema: any) => {
                         const { key, type } = schema
                         const v_index = _.findIndex(module.meta.variants, (v: any) => v.id === variant.id)
-                        const edit_key = `modules.installed.${index}.meta.variants.${v_index}.${key}`
+                        const edit_key = `meta.variants.${v_index}.${key}`
                         return (
                           <div
                             key={`${module.id}-${variant.id}-${key}`}
@@ -240,7 +240,7 @@ export function ModuleSettings({
                                   type="text"
                                   onSave={(data: any) => {
                                     setFieldEditId("")
-                                    handleEdit({ value: data, name: edit_key })
+                                    handleEdit({ module_id: module.id, value: data, name: edit_key })
                                   }}
                                   onCancel={() => setFieldEditId("")}
                                   onBlur={() => setFieldEditId("")}
@@ -257,6 +257,7 @@ export function ModuleSettings({
                                     type="checkbox"
                                     onChange={() => {
                                       handleEdit({
+                                        module_id: module.id,
                                         value: !_.get(module, `meta.variants.${v_index}.${key}`),
                                         name: edit_key,
                                       })
@@ -293,7 +294,7 @@ export function ModuleSettings({
                 schema_keys.map((schema: any) => {
                   const { key, type } = schema
                   const variant_index = _.size(module.meta.variants)
-                  const edit_key = `modules.installed.${index}.meta.variants.${variant_index}.${key}`
+                  const edit_key = `meta.variants.${variant_index}.${key}`
                   if (key !== "id") return null
                   return (
                     <div
@@ -321,7 +322,7 @@ export function ModuleSettings({
                               setExpandedModels(expanded_models.filter((id) => id !== "new-variant"))
                               setFieldEditId("")
                               setTimeout(() => {
-                                handleEdit({ value: data, name: edit_key })
+                                handleEdit({ module_id: module.id, value: data, name: edit_key })
                                 navigate(`/conductor/settings`)
                               }, 100)
                             }}

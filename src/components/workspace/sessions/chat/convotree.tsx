@@ -1,4 +1,4 @@
-import React, { ReactElement, useEffect, useState } from "react"
+import React, { JSXElementConstructor, ReactElement, useEffect, useState } from "react"
 import { TextMessageT } from "@/data/loaders/sessions"
 import Message from "./message"
 import _ from "lodash"
@@ -6,14 +6,15 @@ import { RiAddCircleFill } from "react-icons/ri"
 import { fieldFocus } from "@/components/libraries/field_focus"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import { useParams } from "react-router-dom"
+import { useLoaderData, useParams } from "react-router-dom"
+import { AIsT } from "@/data/schemas/ai"
 dayjs.extend(relativeTime)
 
 type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 
 type ConversationTreeProps = {
-  onNewBranchClick: (parent_id: string) => void
-  onBranchClick: (msg_id: string) => void
+  onNewBranchClick?: (parent_id: string) => void
+  onBranchClick?: (msg_id: string) => void
   rows: MessageRowT[] | undefined
   participants: { [key: string]: ReactElement }
   paddingBottom: number
@@ -32,7 +33,8 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
     return null
   }
 
-  const [ago_refresh, setAgoRefresh] = useState(0)
+  const { ai_state } = useLoaderData() as { ai_state: AIsT }
+  const [ago_refresh, setAgoRefresh] = useState(1)
   const session_id = useParams<{ session_id: string }>().session_id
 
   useEffect(() => {
@@ -45,10 +47,19 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
     <div className="flex flex-row justify-center px-6" style={{ paddingBottom: `${paddingBottom}px` }}>
       <div className="flex flex-col gap-6 min-w-[500px] w-full max-w-screen-lg">
         {rows.map((row, index) => {
+          let sender = ""
+          let ai_image: ReactElement<any, string | JSXElementConstructor<any>> = <></>
+          if (row[1].type === "human") sender = "You"
+          else {
+            const s = row[1].source.replace("ai:", "").split("/")
+            const ai_name = _.find(ai_state, { id: s[2] })?.persona.name
+            sender = ai_name ? `${ai_name} (${s[1]})` : `${s[0]} ${s[1] ? `(${s[1]})` : ""}`
+            ai_image = participants[s[2] || s[0]]
+          }
           return (
             <div key={index} className="flex flex-col flex-grow-1">
               <div className="ml-12 text-xs font-semibold text-zinc-600">
-                {row[1].type === "human" ? "You" : row[1].source}{" "}
+                {sender}
                 {row[1].created_at && ago_refresh ? " - " + dayjs().from(dayjs(row[1].created_at), true) + " ago" : ""}
               </div>
               <div className="flex flex-row">
@@ -57,7 +68,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                     <div className="avatar placeholder">
                       <div className=" text-zinc-200 w-8 h-8 flex ">
                         <span className="text-sm w-full h-full flex justify-center items-center">
-                          {row[1].type === "human" ? participants["user"] : participants[row[1].source || "AI"]}
+                          {row[1].type === "human" ? participants["user"] : ai_image}
                         </span>
                       </div>
                     </div>
@@ -76,11 +87,11 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                         : "opacity-100"
                     }
                   />
-                  {row[1].parent_id !== "first" && row[1].type === "human" ? (
+                  {row[1].parent_id !== "first" && row[1].type === "human" && onNewBranchClick ? (
                     <div
                       className="p-0 ml-1 mr-4 cursor-pointer flex h-full justify-center items-center"
                       onClick={() => {
-                        onNewBranchClick(row[1].parent_id)
+                        if (onNewBranchClick) onNewBranchClick(row[1].parent_id)
                         fieldFocus({ selector: "#input" })
                       }}
                     >
@@ -94,14 +105,14 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                   className={`flex flex-nowrap flex-col items-start gap-2 branch ${row[2].length > 0 ? "w-1/3" : ""}`}
                 >
                   {row[2].map((msg) => {
-                    if (msg.hash === "1337") return null
+                    if (msg.hash === "1337" || !onBranchClick) return null
                     return (
                       <div key={msg.id} className="tooltip tooltip-top" data-tip={msg.text}>
                         <Message
                           message={msg}
                           isActive={false}
                           onClick={() => {
-                            onBranchClick(msg.id)
+                            if (onBranchClick) onBranchClick(msg.id)
                             fieldFocus({ selector: "#input" })
                           }}
                         />

@@ -7,6 +7,8 @@ import { error } from "@/components/libraries/logging"
 import { UserT } from "@/data/loaders/user"
 import { MessageRowT } from "."
 import { nanoid } from "nanoid"
+import { AIT } from "@/data/schemas/ai"
+import { AIToInstruction } from "@/components/libraries/ai"
 
 export async function addMessage({
   session,
@@ -19,6 +21,7 @@ export async function addMessage({
   message_id,
   raw_messages,
   user_state,
+  ai,
   callbacks: {
     setGenInProgress,
     setMsgUpdateTs,
@@ -39,6 +42,7 @@ export async function addMessage({
   message_id?: string
   raw_messages: TextMessageT[]
   user_state: UserT
+  ai: AIT,
   callbacks: {
     setGenInProgress: Function
     setMsgUpdateTs: Function
@@ -80,7 +84,7 @@ export async function addMessage({
     const memory = await compileSlidingWindowMemory({
       model: session?.settings.module.variant,
       prompt: {
-        instructions: "you are a helpful assistant",
+        instructions: AIToInstruction({ ai }) || "you are a helpful assistant",
         user: message,
       },
       messages: _.map(processed_messages, (m) => m[1]),
@@ -109,7 +113,7 @@ export async function addMessage({
           type: "human",
           hash: "123",
           text: message,
-          source: "user",
+          source: `user:${user_state.id}`,
           active: true,
           parent_id,
         },
@@ -120,7 +124,7 @@ export async function addMessage({
     setGenInProgress(true)
     // setMsgUpdateTs(new Date().getTime())
     if (m) {
-      const source = `${module?.specs?.meta?.vendor?.name}/${session?.settings.module.variant}`
+      const source = `ai:${module?.specs?.meta?.vendor?.name}/${session?.settings.module.variant}/${ai?.id}`
       let stream_response = ""
       function onData({ data }: { data: any }) {
         if (data) {
@@ -142,7 +146,7 @@ export async function addMessage({
       }
       let has_error = false
       const prompt = {
-        instructions: "you are a helpful assistant",
+        instructions: AIToInstruction({ ai }) || "you are a helpful assistant",
         user: m.text,
       }
 

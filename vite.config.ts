@@ -6,6 +6,7 @@ import wasm from "vite-plugin-wasm"
 import topLevelAwait from "vite-plugin-top-level-await"
 import { comlink } from "vite-plugin-comlink"
 import { faviconsPlugin } from "@darkobits/vite-plugin-favicons"
+import { dataURLLoader } from './utils/blobToDataURL'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -25,6 +26,7 @@ export default defineConfig({
       },
     }),
     svgr(),
+    dataURLLoader,
     comlink(),
     wasm(),
     topLevelAwait(),

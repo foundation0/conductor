@@ -3,7 +3,7 @@ import Posthog from "posthog-js"
 
 let posthog: any = null
 
-export async function error({ message, data, type }: { message: string; data?: any; type?: string }): Promise<false> {
+export function error({ message, data, type }: { message: string; data?: any; type?: string }): false {
   // const lid = await AppStateActions.addLogItem({
   //   type: "error",
   //   message,
@@ -23,9 +23,11 @@ export async function info({ message, data }: { message: string; data?: any; typ
 
 export function ph() {
   // production
-  if (!posthog) {
+  if (!posthog && !localStorage?.getItem("debug")) {
     //__APP_VERSION__ &&
     posthog = Posthog.init("phc_zm6kOtEDAWZTS41cSLFFFMKilxkWgf4K78Hs1tboeNp", { api_host: "https://eu.posthog.com" })
+  } else {
+    return { capture: () => {}, reset: () => {} }
   }
   return posthog
 }

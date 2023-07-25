@@ -1,6 +1,6 @@
-export const fieldFocus = ({ selector }: { selector: string }) => {
+export const fieldFocus = ({ selector, delay = 200 }: { selector: string; delay?: number }) => {
   if (typeof window === "object") {
     const field = document.querySelector(selector) as HTMLInputElement
-    setTimeout(() => field?.focus(), 200)
+    setTimeout(() => field?.focus(), delay)
   }
 }

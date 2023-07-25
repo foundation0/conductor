@@ -1,8 +1,8 @@
 import Input from "@/components/workspace/sessions/chat/input"
 import { SessionsT, TextMessageT } from "@/data/loaders/sessions"
-import _ from "lodash"
+import _, { get, set } from "lodash"
 import AutoScroll from "@brianmcallister/react-auto-scroll"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import { nanoid } from "nanoid"
 import { buildMessageTree } from "@/components/libraries/compute_message_chain"
@@ -22,23 +22,34 @@ import { addMessage } from "./add_message"
 import PromptIcon from "@/assets/prompt.svg"
 import { autoRename } from "./auto_renamer"
 import UserActions from "@/data/actions/user"
+import { AIsT } from "@/data/schemas/ai"
+import generate_ai_options from "@/components/libraries/generate_ai_options"
+import { error } from "@/components/libraries/logging"
+import Select from "react-select"
+import { getAvatar } from "@/components/libraries/ai"
+import { RiAddCircleFill } from "react-icons/ri"
 
 const padding = 50
 
 export type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 
 export default function Chat() {
-  const { sessions_state, user_state, MessagesState } = useLoaderData() as {
+  const { sessions_state, user_state, MessagesState, ai_state } = useLoaderData() as {
     sessions_state: SessionsT
     user_state: UserT
+    ai_state: AIsT
     MessagesState: Function
   }
+
+  const navigate = useNavigate()
+
   // setup stores
   const workspace_id = useParams().workspace_id as string
   const session_id = useParams().session_id as string
   const [workspace, setWorkspace] = useState<z.infer<typeof WorkspaceS>>(
     user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
   )
+  const [installed_ais, setInstalledAIs] = useState<AIsT>(ai_state)
 
   // setup session
   const [session, setSession] = useState(sessions_state.active[session_id] || null)
@@ -79,7 +90,26 @@ export default function Chat() {
   const [api_key, setApiKey] = useState<string>("")
   const [module, setModule] = useState<{ specs: z.infer<typeof ModuleS>; main: Function } | undefined>(undefined)
 
-  const navigate = useNavigate()
+  // change session's active module
+  const handleModuleChange = async ({ value }: { value: string }) => {
+    const new_llm_module = value.split("/")
+    if (!new_llm_module) return error({ message: "Module not found" })
+    // update session default module
+    const new_session = _.cloneDeep(session)
+    new_session.settings.module = { id: new_llm_module[0], variant: new_llm_module[1] }
+
+    // update session in sessions
+    const new_sessions = _.cloneDeep(sessions_state)
+    new_sessions.active[session_id] = new_session
+    await SessionsActions.updateSessions(new_sessions)
+
+    navigate(`/conductor/${workspace_id}/${session_id}`)
+
+    // set focus to #input
+    setTimeout(() => {
+      fieldFocus({ selector: "#input" })
+    }, 200)
+  }
 
   // set focus to input when session changes
   useEffect(() => {
@@ -115,13 +145,20 @@ export default function Chat() {
     setTimeout(() => fieldFocus({ selector: "#input" }), 200)
   }, [session?.settings.module])
 
-  // change session's active module
-  const handleModuleChange = async ({ value }: { value: string }) => {
-    const new_llm_module = JSON.parse(value)
+  // change session's active ai
+  const handleAIChange = async ({ value }: { value: string }) => {
+    // check that ai is installed
+    const ai = _.find(ai_state, { id: value })
+    if (!ai) return error({ message: "AI not found" })
 
-    // update session default module
+    // update session default ai
     const new_session = _.cloneDeep(session)
-    new_session.settings.module = new_llm_module
+    new_session.settings.ai = ai.id
+
+    // update session llm if not locked
+    if (!session.settings.module.locked) {
+      new_session.settings.module = { id: ai.default_llm_module.id, variant: ai.default_llm_module.variant_id || "" }
+    }
 
     // update session in sessions
     const new_sessions = _.cloneDeep(sessions_state)
@@ -156,16 +193,29 @@ export default function Chat() {
 
     processed_messages.forEach((ms) => {
       const m = ms[1]
-      if (m.source !== "human" && module.specs.meta.vendor?.name === m.source.split("/")[0]) {
+      if (!m.source.match(/user/) && module.specs.meta.vendor?.name === m.source.replace("ai:", "").split("/")[0]) {
         const user_variant_settings = _.find(user_state.modules.installed, {
           id: module.specs.id,
         })?.meta?.variants?.find((v: any) => v.id === m.source.split("/")[1])
-        p[m.source] = module.specs.meta.icon ? (
+        const ai = _.find(ai_state, { id: m.source.split("/")[2] })
+        let icon = ai?.meta.avatar || (
           <img
-            src={module.specs.meta.icon}
-            className={`border-2 rounded-full w-3 h-3 bg-zinc-200`}
-            style={{ borderColor: user_variant_settings?.color || "#00000000" }}
+            className={`border-2 border-zinc-900 rounded-full w-3 h-3`}
+            /* style={{ borderColor: user_variant_settings?.color || "#00000000" }} */
+            src={getAvatar({ seed: _.find(ai_state, { id: m.source.split("/")[2] })?.meta?.name || "" })}
           />
+        )
+
+        p[ai?.id || module.specs.id] = icon ? (
+          typeof icon === "string" ? (
+            <img
+              src={icon}
+              className={`border-2 rounded-full w-3 h-3 bg-zinc-200`}
+              style={{ borderColor: user_variant_settings?.color || "#00000000" }}
+            />
+          ) : (
+            icon
+          )
         ) : (
           <FaUser />
         )
@@ -188,8 +238,24 @@ export default function Chat() {
 
   // Update local session state when sessions[session_id] changes
   const updateSession = async () => {
-    const { AppState, SessionState, UserState } = await initLoaders()
+    const { AppState, SessionState, UserState, AIState } = await initLoaders()
     const user_state = await UserState.get()
+    const ai_state = await AIState.get()
+    const sessions_state = await SessionState.get()
+    const session = sessions_state.active[session_id]
+    setSession(session)
+    setInstalledAIs(ai_state)
+    // deal with legacy sessions without AIs
+    if (!session.settings.ai) {
+      // add default ai
+      const new_session = _.cloneDeep(session)
+      new_session.settings.ai = "c1"
+      setSession(new_session)
+      // update session in sessions
+      const new_sessions = _.cloneDeep(sessions_state)
+      new_sessions.active[session_id] = new_session
+      await SessionsActions.updateSessions(new_sessions)
+    }
     const workspace = user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
     const s = await SessionState.get()
     const ss = await MessagesState({ session_id })
@@ -425,7 +491,11 @@ export default function Chat() {
   function addRawMessage({ message }: { message: TextMessageT }) {
     setRawMessages([...(raw_messages || []), message])
   }
+
   async function send({ message }: { message: string }) {
+    const ai = _.find(ai_state, { id: session?.settings.ai || "c1" })
+    if (!ai) return error({ message: "AI not found" })
+
     // Add temp message to processed messages to show it in the UI faster - will get overwritten automatically once raw_messages are updated
     if (!branch_msg_id) {
       const tmp_id = nanoid(10)
@@ -435,7 +505,7 @@ export default function Chat() {
         type: "human",
         hash: "123",
         text: message,
-        source: "user",
+        source: `user:${user_state.id}`,
         active: true,
         parent_id: branch_parent_id || "first",
       }
@@ -455,6 +525,7 @@ export default function Chat() {
       message_id: branch_msg_id || "",
       raw_messages: raw_messages || [],
       user_state,
+      ai,
       callbacks: {
         setGenInProgress,
         setMsgUpdateTs,
@@ -473,6 +544,81 @@ export default function Chat() {
     setTimeout(() => fieldFocus({ selector: "#input" }), 200)
   }
 
+  // create AI selector popover
+  const AISelector = () => {
+    const mod = _.find(user_state.modules.installed, { id: session.settings.module.id })
+    const variant = _.find(mod?.meta?.variants, { id: session.settings.module.variant })
+    const active_llm_module_text = `${mod?.meta.vendor.name} / ${variant?.id} ${
+      variant?.context_len && `(~${_.round(variant?.context_len / 5, 0)} words limit per message)`
+    }`
+    return (
+      <div
+        id="popoverContent"
+        className="z-10 inline-block text-sm gradient-bg border-2 border-zinc-700 shadow-md rounded-lg"
+      >
+        <div className="px-3 py-2 rounded-t-lg">
+          <h3 className="font-semibold text-center">Choose your AI...</h3>
+        </div>
+        <div className="flex flex-col gap-2 px-3 py-2">
+          <div className="flex flex-row flex-1 items-center">
+            <div className="flex flex-1 text-sm font-semibold text-zinc-500">Available AIs</div>
+            <Link
+              className="text-xs font-medium tooltip tooltip-top"
+              data-tip="Create new AI"
+              to={`/conductor/ai/create`}
+            >
+              <RiAddCircleFill className="w-4 h-4 text-zinc-500 hover:text-zinc-300" />
+            </Link>
+          </div>
+          <Select
+            className="react-select-container"
+            classNamePrefix="react-select"
+            onChange={(e: any) => {
+              handleAIChange({
+                value: e.value,
+              })
+            }}
+            value={{
+              label: `${
+                _.find(installed_ais, { id: session.settings.ai })?.persona.name ||
+                _.first(installed_ais)?.persona.name ||
+                "click to select"
+              }`,
+              value: `${session.settings.ai}`,
+            }}
+            placeholder="Choose AI..."
+            options={generate_ai_options({
+              user_state,
+              ai_state: installed_ais,
+              selected: `${session.settings.ai}`,
+              return_as_object: true,
+            })}
+          ></Select>
+          <div className="text-sm font-semibold text-zinc-500">Available language models</div>
+          <Select
+            className="react-select-container"
+            classNamePrefix="react-select"
+            onChange={(e: any) => {
+              handleModuleChange({
+                value: e.value,
+              })
+            }}
+            value={{
+              label: `${active_llm_module_text}`,
+              value: `${session.settings.module.id}/${session.settings.module.variant}`,
+            }}
+            placeholder="Choose LLM model..."
+            options={generate_llm_module_options({
+              user_state,
+              selected: `${session.settings.module.id}/${session.settings.module.variant}`,
+              return_as_object: true,
+            })}
+          ></Select>
+        </div>
+      </div>
+    )
+  }
+
   if (!session || !module) return null
   return (
     <div className="flex flex-1 flex-col relative" ref={eContainer}>
@@ -480,25 +626,41 @@ export default function Chat() {
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
           {processed_messages && processed_messages?.length > 0 ? (
             <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4 pt-2">
-              Active module:
-              <select
-                className="flex border rounded-lg px-2 ml-2 py-1 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
-                value={
-                  session.settings.module.variant
-                    ? `{"id": "${session.settings.module.id}", "variant": "${session.settings.module.variant}"}`
-                    : "click to select"
-                }
-                onChange={(data) => {
-                  handleModuleChange({
-                    value: data.target.value,
-                  })
-                }}
-              >
-                {generate_llm_module_options({
-                  user_state,
-                  selected: `{"id": "${session.settings.module.id}", "variant": "${session.settings.module.variant}"}`,
-                })}
-              </select>
+              <div className="dropdown w-[300px]">
+                <label
+                  tabIndex={0}
+                  className="flex px-3 py-2 text-white font-semibold border-2 border-zinc-900/80 bg-zinc-800 rounded-xl cursor-pointer"
+                >
+                  <div className="flex flex-row gap-2">
+                    <div className="flex flex-col items-center justify-center">
+                      <img
+                        src={getAvatar({ seed: _.find(ai_state, { id: session.settings.ai })?.meta?.name || "" })}
+                        className={`border-0 rounded-full w-8 aspect-square `}
+                        /* style={{
+                          borderColor:
+                            _.find(
+                              user_state.modules.installed,
+                              (m) => m.id === session.settings.module.id
+                            )?.meta?.variants?.find((v) => v.id === session.settings.module.variant)?.color ||
+                            "#00000000",
+                        }} */
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex flex-row">
+                        {_.find(installed_ais, { id: session.settings.ai })?.persona.name}
+                      </div>
+                      <div className="flex flex-row text-[10px] font-thin">{session.settings.module.variant}</div>
+                    </div>
+                  </div>
+                </label>
+                <div
+                  tabIndex={0}
+                  className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content w-[300px]"
+                >
+                  <AISelector />
+                </div>
+              </div>
             </div>
           ) : null}
           <div className="Messages flex flex-1 flex-col" style={{ height }}>
@@ -516,21 +678,41 @@ export default function Chat() {
                 <img src={PromptIcon} className="w-52 h-52 mb-4 opacity-5" />
                 <div className="flex text-zinc-500 font-semibold text-sm pb-2">Select AI to chat with...</div>
                 <div className="flex">
-                  <select
-                    className="flex border rounded-lg p-2 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
-                    defaultValue={
-                      workspace.defaults?.llm_module?.id
-                        ? `{"id": "${workspace.defaults?.llm_module?.id}", "variant": "${workspace.defaults?.llm_module?.variant}"}`
-                        : "click to select"
-                    }
-                    onChange={(data) => {
-                      handleModuleChange({
-                        value: data.target.value,
-                      })
-                    }}
-                  >
-                    {generate_llm_module_options({ user_state })}
-                  </select>
+                  <div className="dropdown w-[300px]">
+                    <label
+                      tabIndex={0}
+                      className="flex px-3 py-2 text-white font-semibold border-2 border-zinc-900/80 bg-zinc-800 rounded-xl cursor-pointer"
+                    >
+                      <div className="flex flex-row gap-2">
+                        <div className="flex flex-col items-center justify-center">
+                          <img
+                            src={getAvatar({ seed: _.find(ai_state, { id: session.settings.ai })?.meta?.name || "" })}
+                            className={`border-0 rounded-full w-8 aspect-square `}
+                            /* style={{
+                              borderColor:
+                                _.find(
+                                  user_state.modules.installed,
+                                  (m) => m.id === session.settings.module.id
+                                )?.meta?.variants?.find((v) => v.id === session.settings.module.variant)?.color ||
+                                "#00000000",
+                            }} */
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex flex-row">
+                            {_.find(installed_ais, { id: session.settings.ai })?.persona.name}
+                          </div>
+                          <div className="flex flex-row text-[10px] font-thin">{session.settings.module.variant}</div>
+                        </div>
+                      </div>
+                    </label>
+                    <div
+                      tabIndex={0}
+                      className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content w-[300px]"
+                    >
+                      <AISelector />
+                    </div>
+                  </div>
                 </div>
                 <div className="flex mt-5 flex-col justify-center items-center gap-4">
                   <div className="text-xs text-zinc-400">

@@ -10,6 +10,9 @@ import { Link } from "react-router-dom"
 import { RiHashtag } from "react-icons/ri"
 import { useAuth } from "../hooks/useAuth"
 import { setActiveUser } from "../libraries/active_user"
+import { ModuleList } from "@/modules"
+import { ModuleT } from "@/data/schemas/modules"
+import UserActions from "@/data/actions/user"
 
 export default function Conductor() {
   const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
@@ -17,6 +20,28 @@ export default function Conductor() {
   const location = useLocation()
   const auth = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    // upgrade user's modules
+    const built_in_modules = ModuleList()
+    const module_specs = built_in_modules.map((m) => m.specs)
+    let updated_modules: ModuleT[] = _.merge([], module_specs, user_state.modules.installed)
+
+    // in all cases, update icon and author
+    updated_modules = updated_modules.map((m) => {
+      m.meta.icon = module_specs.find((bm) => bm.id === m.id)?.meta.icon || m.meta.icon
+      m.meta.author = module_specs.find((bm) => bm.id === m.id)?.meta.author || m.meta.author
+      return m
+    })
+
+    // if user has no c1 installed, install it
+    let ais = [...(user_state.ais || [])]
+    if (!ais?.find((ai) => ai.id === "c1")) {
+      ais.push({ id: "c1", status: "active" })
+    }
+
+    UserActions.updateUser({ modules: { installed: updated_modules }, ais })
+  }, [])
 
   useEffect(() => {
     if (auth?.user) {
@@ -66,7 +91,7 @@ export default function Conductor() {
   return (
     <main id="Conductor" className={`flex flex-row flex-1 m-0 p-0 dark h-full bg-[#111]/60 mt-0.5`}>
       <WorkspaceSelector />
-      <div id="WorkspaceView" className="flex flex-1 m-0.5">
+      <div id="WorkspaceView" className="flex flex-1 m-0.5 overflow-y-auto">
         {location.pathname !== "/conductor/" ? (
           <Outlet />
         ) : (

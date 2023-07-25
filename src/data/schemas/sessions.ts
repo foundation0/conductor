@@ -11,8 +11,8 @@ export const TextMessageS = z.object({
   created_at: z.string().catch(() => new Date().toUTCString()),
   type: z.enum(["human", "ai", "system"]),
   text: z.string().nonempty(),
-  source: z.string().nonempty(),
   active: z.boolean().optional(),
+  source: z.string().nonempty(),
   parent_id: z.string().catch("first"),
   signature: z.string().optional(), // optional for now
   hash: z.string().optional(), // optional for now
@@ -43,7 +43,9 @@ export const ChatS = z.object({
     module: z.object({
       id: z.string(),
       variant: z.string(),
+      locked: z.boolean().optional(),
     }),
+    ai: z.string().optional(),
   }),
   ledger: z.array(CostS).optional(),
   // deprecated

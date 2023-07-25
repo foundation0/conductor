@@ -4,9 +4,13 @@ import _ from "lodash"
 export default function generate_llm_module_options({
   user_state,
   selected,
+  include_limits = true,
+  return_as_object = false,
 }: {
   user_state: UserT
   selected?: string
+  include_limits?: boolean
+  return_as_object?: boolean
 }) {
   const objects = user_state.modules.installed.filter((mod) => mod.meta.type === "LLM")
   // expand modules into array of objects based on variants
@@ -21,6 +25,7 @@ export default function generate_llm_module_options({
         const variantIds = _.map(variants, "id")
 
         _.forEach(variantIds, (id: any, i: number) => {
+          if(variants[i].active === false) return
           acc.push({
             id: id_model,
             has_api_key: api_key ? true : false,
@@ -38,7 +43,15 @@ export default function generate_llm_module_options({
 
   // Sort by vendor and id
   result = _.sortBy(result, ["id", "variant"])
-
+  if (return_as_object)
+    return result.map((mod: any) => {
+      return {
+        value: `${mod.id}/${mod.variant}`,
+        label: `${mod.id} / ${mod.variant} ${
+          mod.context_len && include_limits ? `(~${_.round(mod.context_len / 5, 0)} words limit per message)` : ""
+        }`,
+      }
+    })
   return result.map((mod: any) => {
     return (
       <option
@@ -48,7 +61,7 @@ export default function generate_llm_module_options({
         /* selected={selected === `{"id": "${mod.id}", "variant": "${mod.variant}"}`} */
       >
         {`${mod.id} / ${mod.variant} ${
-          mod.context_len ? `(~${_.round(mod.context_len / 5, 0)} words limit per message)` : ""
+          mod.context_len && include_limits ? `(~${_.round(mod.context_len / 5, 0)} words limit per message)` : ""
         }`}
         {!mod.has_api_key ? " (no api key)" : ""}
       </option>

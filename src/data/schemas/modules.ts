@@ -1,7 +1,9 @@
 import { z } from "zod"
+import { RangeS } from "./common"
 
 export const LLMVariantS = z.object({
   id: z.string(),
+  type: z.enum(["language", "image", "audio", "video", "3D", "graph"]).default("language"),
   active: z
     .boolean()
     .optional()
@@ -19,6 +21,7 @@ export const ModuleS = z.object({
   _updated: z.number().optional(),
   id: z.string(),
   meta: z.object({
+    author: z.string().catch(() => "0x000"),
     name: z.string(),
     type: z.string(),
     vendor: z.object({
@@ -33,6 +36,7 @@ export const ModuleS = z.object({
   streaming: z.boolean().catch(() => false),
   cost: z.number().optional(),
 })
+export type ModuleT = z.infer<typeof ModuleS>
 
 const ModuleHooksS = z.object({
   before: z.array(z.function()).optional(),

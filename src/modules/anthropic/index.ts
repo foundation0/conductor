@@ -19,17 +19,20 @@ export const specs: z.infer<typeof ModuleS> = {
   meta: {
     name: "Claude",
     type: "LLM",
+    author: "0x000",
     vendor: { name: "Anthropic" },
     variants: [
       {
         id: "claude-1",
         context_len: 4096,
         cost: 0.02,
+        type: "language",
       },
       {
         id: "claude-1-100k",
         context_len: 100000,
         cost: 0.002,
+        type: "language",
       },
     ],
     icon: Icon,
