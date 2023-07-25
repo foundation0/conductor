@@ -21,7 +21,7 @@ export function AIToInstruction({ ai }: { ai: AIT }) {
   ${ai.persona.traits ? `Character's traits (FOLLOW ALWAYS, IMPORTANT): ${ai.persona.traits.map((t) => t.skill).join(", ")}` : ""}
 
   ### EXAMPLE RESPONSES FOR THE CHARACTER ###
-  ${ai.persona.response_examples ? `${ai.persona.response_examples.map((e) => `User:\n${e.message}\nYour character:\n${e.response}\n\n`).join(", ")}` : ""}
+  ${ai.persona.response_examples ? `${ai.persona.response_examples.map((e) => `User:\n${e?.message}\nYour character:\n${e?.response}\n\n`).join(", ")}` : ""}
 
   ### INSTRUCTIONS ENDS ###
 

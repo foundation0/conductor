@@ -20,7 +20,7 @@ import { getAvatar } from "../libraries/ai"
 export default function CreatePersona() {
   const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
   const [creation_in_process, setCreationInProgress] = useState<boolean>(false)
-  const [selected_llm, setSelectedLLM] = useState<string | null>("")
+  const [selected_llm, setSelectedLLM] = useState<string | null>("openai/gpt-4")
 
   const [values_show, setValuesShow] = useState({
     description: true,
@@ -30,7 +30,7 @@ export default function CreatePersona() {
     traits: false,
     responsibilities: false,
     limitations: false,
-    response_examples: true,
+    response_examples: false,
   })
 
   const edit_ai_id = useParams().edit_ai_id
@@ -116,7 +116,7 @@ export default function CreatePersona() {
 
   const AI = useCallback(
     ({ value_name }: { value_name?: string }) => (
-      <div className="flex flex-1 justify-end">
+      <div className="flex flex-1 justify-end hidden">
         <div
           className="tooltip tooltip-top"
           data-tip={`Generate ${value_name?.toLowerCase() || "value"} based on\nthe rest of the AI's data`}
@@ -145,16 +145,17 @@ export default function CreatePersona() {
     if (per.success) {
       return { persona: per.data?.persona, default_llm_module }
     } else {
-      return error({ message: "Failed to create persona", data: per.error })
+      const missing_values = `Please fill in the following fields: ${per.error.issues.map((e) => e.path?.[1]).join(", ") || ""}`
+      return error({ message: missing_values, data: per.error })
     }
   }, [JSON.stringify([values, selected_llm])])
 
   const createPersona = async () => {
     setCreationInProgress(true)
     const dat = processValues()
-    if (!dat) return
+    if (!dat) return setCreationInProgress(false)
     const ai = await AIActions.add({ persona: dat.persona, default_llm_module: dat.default_llm_module })
-    if (!ai) return
+    if (!ai) return setCreationInProgress(false)
     await UserActions.updateUser({ ...user_state, ais: [...(user_state.ais || []), { id: ai?.id, status: "active" }] })
     setCreationInProgress(false)
     navigate(`/conductor/settings`)
@@ -163,9 +164,9 @@ export default function CreatePersona() {
   const editPersona = async () => {
     setCreationInProgress(true)
     const dat = processValues()
-    if (!dat) return
+    if (!dat) return setCreationInProgress(false)
     const ai = _.find(ai_state, (ai) => ai.id === edit_ai_id)
-    if (!ai) return
+    if (!ai) return setCreationInProgress(false)
     const updated = _.cloneDeep(ai)
     updated.default_llm_module = dat.default_llm_module
     updated.persona = dat.persona
@@ -251,7 +252,7 @@ export default function CreatePersona() {
                 isSearchable={true}
                 className="react-select-container"
                 classNamePrefix="react-select"
-                value={{ id: selected_llm, value: selected_llm, label: selected_llm }}
+                value={{ id: selected_llm || "openai", value: selected_llm || "gpt-4", label: selected_llm || "openai / gpt-4" }}
                 onChange={(e: any) => {
                   console.log(e)
                   setSelectedLLM(e.value)
@@ -278,7 +279,7 @@ export default function CreatePersona() {
                 <RichTextarea
                   rows={2}
                   autoHeight
-                  placeholder="Describe who the AI is in a few sentences. (e.g. 'Raymond is a world class researcher at the University of Oxford who is passionate about health and fitness')"
+                  placeholder={`Describe who the AI is in a few sentences. (e.g. '${values['name'] || 'Researcher Raymond'} is a world class researcher at the University of Oxford who is passionate about health and fitness')`}
                   style={{ width: "100%", resize: "none" }}
                   value={values["description"]}
                   onChange={(e) => setValues({ ...values, description: e.target.value })}
@@ -297,7 +298,7 @@ export default function CreatePersona() {
                   </div>
                   Audience{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    improves results
+                    optional but improves results
                   </span>
                   {/* <AI value_name="Audience" /> */}
                 </div>
@@ -327,7 +328,7 @@ export default function CreatePersona() {
                   </div>
                   Background{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    improves results
+                    optional but improves results
                   </span>
                   <AI value_name="Background" />
                 </div>
@@ -337,7 +338,7 @@ export default function CreatePersona() {
                   <RichTextarea
                     rows={2}
                     autoHeight
-                    placeholder="What is AI's background? (e.g. 'Raymond has a PhD in biochemistry and has published over 100 papers in the field of health and fitness')"
+                    placeholder={`What is AI's background? (e.g. ''${values['name'] || 'Researcher Raymond'} has a PhD in biochemistry and has published over 100 papers in the field of health and fitness')`}
                     style={{ width: "100%", resize: "none" }}
                     value={values["background"] || ""}
                     onChange={(e) => setValues({ ...values, background: e.target.value })}
@@ -357,7 +358,7 @@ export default function CreatePersona() {
                   </div>
                   Communication style{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    improves results
+                    optional but improves results
                   </span>
                   <AI value_name="Communication style" />
                 </div>
@@ -369,7 +370,7 @@ export default function CreatePersona() {
                       <RichTextarea
                         rows={2}
                         autoHeight
-                        placeholder="What's AI's communication style? (e.g. 'Raymond is very informal, friendly, patient, and simplifies scientific jargon to laymen terms')"
+                        placeholder={`What's AI's communication style? (e.g. ''${values['name'] || 'Researcher Raymond'} is very informal, friendly, patient, and simplifies scientific jargon to laymen terms')`}
                         style={{ width: "100%", resize: "none" }}
                         value={values["styles"]?.[index] || ""}
                         onChange={(e) =>
@@ -395,7 +396,7 @@ export default function CreatePersona() {
                 </div>
                 Traits and skills{" "}
                 <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                  improves results
+                  optional but improves results
                 </span>{" "}
                 <AI value_name="Traits and skills" />
               </div>
@@ -468,7 +469,7 @@ export default function CreatePersona() {
                   </div>
                   Responsibilities{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    improves results
+                    optional but improves results
                   </span>
                   <AI value_name="Responsibilities" />
                 </div>
@@ -481,7 +482,7 @@ export default function CreatePersona() {
                         <RichTextarea
                           rows={1}
                           autoHeight
-                          placeholder="What should the AI always do? (e.g. 'Raymond should always write succinctly and truthfully')"
+                          placeholder={`What should the AI always do? (e.g. ''${values['name'] || 'Researcher Raymond'} should always write succinctly and truthfully')`}
                           style={{ width: "100%", resize: "none" }}
                           value={values["responsibilities"]?.[index] || ""}
                           onChange={(e) => {
@@ -542,7 +543,7 @@ export default function CreatePersona() {
                   </div>
                   Limitations{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    improves results
+                    optional but improves results
                   </span>
                   <AI value_name="Limitations" />
                 </div>
@@ -555,7 +556,7 @@ export default function CreatePersona() {
                         <RichTextarea
                           rows={1}
                           autoHeight
-                          placeholder="What can't the AI do? (e.g. 'Raymond can't say unsubstantiated claims')"
+                          placeholder={`What can't the AI do? (e.g. ''${values['name'] || 'Researcher Raymond'} can't say unsubstantiated claims')`}
                           style={{ width: "100%", resize: "none" }}
                           value={values["limitations"]?.[index] || ""}
                           onChange={(e) =>
@@ -603,12 +604,21 @@ export default function CreatePersona() {
             </div>
             <div className={element_class}>
               <div className={headline_class}>
+              <div
+                  className={headline_class + " cursor-pointer"}
+                  onClick={() => setValuesShow({ ...values_show, response_examples: !values_show["response_examples"] })}
+                >
+                  <div className="flex flex-col mr-1 justify-center items-center">
+                    {values_show["response_examples"] ? <MdOutlineKeyboardArrowDown /> : <MdOutlineKeyboardArrowRight />}
+                  </div>
                 Response examples
-                <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-green-700 text-gray-300">
-                  required
-                </span>
+                <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
+                    optional but improves results
+                  </span>
                 <AI value_name="response examples" />
               </div>
+              </div>
+              <div className={`${!values_show["response_examples"] && "hidden"}`}>
               {values["response_examples"]?.map((example, index) => {
                 return (
                   <div className="flex flex-row flex-1 gap-4 mt-3" key={`response_examples-${index}`}>
@@ -626,7 +636,7 @@ export default function CreatePersona() {
                               response_examples: values["response_examples"]?.map((t, i) => {
                                 if (i === index && t) {
                                   return { ...t, message: e.target.value || "" }
-                                }
+                                } else return t
                               }) as { message: string; response: string }[],
                             })
                           }
@@ -648,7 +658,7 @@ export default function CreatePersona() {
                               response_examples: values["response_examples"]?.map((t, i) => {
                                 if (i === index && t) {
                                   return { ...t, response: e.target.value || "" }
-                                }
+                                } else return t
                               }) as { message: string; response: string }[],
                             })
                           }
@@ -691,6 +701,7 @@ export default function CreatePersona() {
                 <div className="flex flex-1 h-[1px] bg-zinc-700/40"></div>
               </div>
             </div>
+            </div>
             <div className="flex flex-1 gap-3 justify-end">
               {/* <button type="submit" className="p-btn-secondary" onClick={processValues}>
                 Have a test chat
@@ -700,7 +711,7 @@ export default function CreatePersona() {
                 className="p-btn-primary"
                 onClick={() => {
                   if (edit_ai_id) editPersona()
-                  else createPersona
+                  else createPersona()
                 }}
               >
                 {!edit_ai_id ? "Create persona" : "Update persona"}

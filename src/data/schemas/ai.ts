@@ -39,15 +39,15 @@ const AISs = [
     associated_data: z.array(AssociatedDatS).optional(),
     meta: z.object({
       type: z.enum(["text"]).default("text"),
-      name: z.string(),
+      name: z.string().nonempty(),
       author: z.string(),
       avatar: z.string().optional(),
       description: z.string().optional(),
       tags: z.array(z.string()).optional(),
     }),
     persona: z.object({
-      name: z.string(),
-      description: z.string(),
+      name: z.string().nonempty(),
+      description: z.string().nonempty(),
       background: z.string().optional(),
       styles: z.array(z.string()).optional(),
       audience: z.string().optional(),
@@ -57,7 +57,7 @@ const AISs = [
           z.object({
             message: z.string(),
             response: z.string(),
-          })
+          }).optional()
         )
         .optional(),
       limitations: z.array(z.string()).optional(),
