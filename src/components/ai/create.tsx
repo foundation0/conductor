@@ -156,7 +156,6 @@ export default function CreatePersona() {
     if (!dat) return setCreationInProgress(false)
     const ai = await AIActions.add({ persona: dat.persona, default_llm_module: dat.default_llm_module })
     if (!ai) return setCreationInProgress(false)
-    await UserActions.updateUser({ ...user_state, ais: [...(user_state.ais || []), { id: ai?.id, status: "active" }] })
     setCreationInProgress(false)
     navigate(`/conductor/settings`)
   }
