@@ -151,7 +151,7 @@ export default function Settings(props: any) {
               className="relative flex w-20 h-20 rounded-full bg-zinc-800/80 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-2xl font-bold text-zinc-500 mb-2"
             >
               {_.size(user_state.meta?.profile_photos) > 0 && (
-                <img src={_.first(user_state.meta?.profile_photos) || ""} className="h-full w-full" />
+                <img src={_.first(user_state.meta?.profile_photos) || ""} className="object-cover h-full" />
               )}
               <input {...getInputProps()} />
               <MdOutlineAddAPhoto className="absolute opacity-80 hover:opacity-100 text-zinc-200 w-5 h-5 cursor-pointer" />

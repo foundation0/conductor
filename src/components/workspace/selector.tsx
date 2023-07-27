@@ -65,7 +65,7 @@ export default function WorkspaceSelector() {
                       }`}
                     >
                       {workspace.icon ? (
-                        <img src={workspace.icon} className="w-full h-full text-zinc-500" />
+                        <img src={workspace.icon} className="object-cover h-full text-zinc-500" />
                       ) : (
                         workspace.name.slice(0, 1).toUpperCase()
                       )}
@@ -101,7 +101,7 @@ export default function WorkspaceSelector() {
                   {_.get(user_state, "meta.profile_photos[0]") ? (
                     <img
                       src={_.get(user_state, "meta.profile_photos[0]")}
-                      className={`${
+                      className={`object-cover h-full ${
                         location.pathname === "/conductor/settings" ? "opacity-100" : "opacity-50"
                       } hover:opacity-100`}
                     />

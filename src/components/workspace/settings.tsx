@@ -112,7 +112,7 @@ export default function Settings() {
               {...getRootProps()}
               className="relative flex w-20 h-20 rounded-xl bg-zinc-800/80 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-2xl font-bold text-zinc-500 mb-2"
             >
-              {workspace?.icon && <img src={workspace?.icon || ""} className="h-full w-full" />}
+              {workspace?.icon && <img src={workspace?.icon || ""} className="object-cover h-full" />}
               <input {...getInputProps()} />
               <MdOutlineAddAPhoto className="absolute opacity-80 hover:opacity-100 text-zinc-200 w-5 h-5 cursor-pointer" />
             </div>
