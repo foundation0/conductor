@@ -5,7 +5,10 @@
     @apply bg-zinc-900 border-0 cursor-pointer ;
     .react-select__value-container {
       .react-select__single-value {
-        @apply text-zinc-200 #{!important};
+        @apply text-zinc-200 font-semibold #{!important};
+      }
+      .react-select__placeholder {
+        @apply text-zinc-400 font-semibold #{!important};
       }
     }
     .react-select__indicators {
@@ -23,7 +26,7 @@
     .react-select__menu-list {
       @apply text-zinc-200;
       .react-select__option {
-        @apply text-zinc-200 cursor-pointer ;
+        @apply text-zinc-200 font-semibold cursor-pointer ;
         &:hover {
           @apply bg-zinc-800;
         }

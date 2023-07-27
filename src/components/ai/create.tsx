@@ -39,8 +39,15 @@ export default function CreatePersona() {
   // if edit_ai_id is found, load the AI
   useEffect(() => {
     if (edit_ai_id) {
-      if(edit_ai_id === 'c1') {
-        if(!confirm("Editing C1 can break Prompt's functionality as Prompt relies C1 to behave a certain way. Are you sure you want to edit C1?")){
+      // set all values true
+      setValuesShow(_.mapValues(values_show, () => true))
+      
+      if (edit_ai_id === "c1") {
+        if (
+          !confirm(
+            "Editing C1 can break Prompt's functionality as Prompt relies C1 to behave a certain way. Are you sure you want to edit C1?"
+          )
+        ) {
           navigate(`/conductor/settings`)
         }
       }
@@ -50,7 +57,7 @@ export default function CreatePersona() {
         setSelectedLLM(`${ai.default_llm_module.id}/${ai.default_llm_module.variant_id}`)
         navigate(`/conductor/ai/edit/${ai.id}`)
       }
-    } 
+    }
   }, [edit_ai_id])
 
   const examples = {
@@ -108,10 +115,10 @@ export default function CreatePersona() {
   }, [])
 
   const element_class =
-    "flex flex-1 flex-col rounded-xl bg-zinc-900 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30 justify-start p-4 mb-3"
+    "flex flex-1 flex-col rounded-xl bg-zinc-900 bg-gradient-to-br from-zinc-700/30 to-zinc-600/30 justify-start p-4 mb-3 border-2 border-zinc-900"
   const headline_class = "flex flex-1 text-sm font-semibold text-zinc-300"
   const input =
-    "flex flex-1 w-full p-0 mt-3 bg-zinc-700/30 p-2 border-0 rounded placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent"
+    "flex flex-1 w-full p-0 mt-3 bg-zinc-700/30 p-2  rounded placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent border-2 border-zinc-900/50"
   const textarea = "p-0 border-0 font-semibold text-xs"
 
   const AI = useCallback(
@@ -119,7 +126,9 @@ export default function CreatePersona() {
       <div className="flex flex-1 justify-end hidden">
         <div
           className="tooltip tooltip-top"
-          data-tip={`Generate ${value_name?.toLowerCase() || "value"} based on\nthe rest of the AI's data`}
+          data-tip={`Generate ${
+            value_name?.toLowerCase() || "value"
+          } based on\nthe information you have already filled in`}
         >
           <img src={AIIcon} className="w-5 h-5 saturate-0 hover:saturate-100 cursor-pointer" />
         </div>
@@ -145,7 +154,9 @@ export default function CreatePersona() {
     if (per.success) {
       return { persona: per.data?.persona, default_llm_module }
     } else {
-      const missing_values = `Please fill in the following fields: ${per.error.issues.map((e) => e.path?.[1]).join(", ") || ""}`
+      const missing_values = `Please fill in the following fields: ${
+        per.error.issues.map((e) => e.path?.[1]).join(", ") || ""
+      }`
       return error({ message: missing_values, data: per.error })
     }
   }, [JSON.stringify([values, selected_llm])])
@@ -180,7 +191,7 @@ export default function CreatePersona() {
 
   return (
     <div className="flex flex-1 flex-col items-center bg-[#111]/60 px-[10%] min-h-screen overflow-x-hidden">
-      <div className="m-auto max-w-[1200px] w-full">
+      <div className="m-auto max-w-[1200px] w-full gradient-bg p-9 rounded-xl">
         <div className="flex flex-1 flex-row">
           <div className="flex justify-start tracking-tight items-center mb-4 text-zinc-200 text-8xl font-bold ">
             AI Creator
@@ -227,7 +238,7 @@ export default function CreatePersona() {
                 </span>
                 {/* <AI value_name="Name" /> */}
               </div>
-              <div className={input + "-mt-0"}>
+              <div className={input + " -mt-0"}>
                 <RichTextarea
                   id="name"
                   rows={1}
@@ -251,9 +262,12 @@ export default function CreatePersona() {
                 isSearchable={true}
                 className="react-select-container"
                 classNamePrefix="react-select"
-                value={{ id: selected_llm || "openai", value: selected_llm || "gpt-4", label: selected_llm || "openai / gpt-4" }}
+                value={{
+                  id: selected_llm || "openai",
+                  value: selected_llm || "gpt-4",
+                  label: selected_llm || "openai / gpt-4",
+                }}
                 onChange={(e: any) => {
-                  console.log(e)
                   setSelectedLLM(e.value)
                 }}
                 options={generate_llm_module_options({
@@ -278,7 +292,9 @@ export default function CreatePersona() {
                 <RichTextarea
                   rows={2}
                   autoHeight
-                  placeholder={`Describe who the AI is in a few sentences. (e.g. '${values['name'] || 'Researcher Raymond'} is a world class researcher at the University of Oxford who is passionate about health and fitness')`}
+                  placeholder={`Describe who ${values["name"] || "Researcher Raymond"} is in a few sentences. (e.g. '${
+                    values["name"] || "Researcher Raymond"
+                  } is a world class researcher at the University of Oxford who is passionate about health and fitness')`}
                   style={{ width: "100%", resize: "none" }}
                   value={values["description"]}
                   onChange={(e) => setValues({ ...values, description: e.target.value })}
@@ -307,7 +323,9 @@ export default function CreatePersona() {
                   <RichTextarea
                     rows={2}
                     autoHeight
-                    placeholder="Who is AI talking to? (e.g. 'university students', 'health enthusiasts')"
+                    placeholder={`Who is ${
+                      values["name"] || "Researcher Raymond"
+                    } talking to? (e.g. 'university students', 'health enthusiasts')`}
                     style={{ width: "100%", resize: "none" }}
                     value={values["audience"] || ""}
                     onChange={(e) => setValues({ ...values, audience: e.target.value })}
@@ -337,7 +355,11 @@ export default function CreatePersona() {
                   <RichTextarea
                     rows={2}
                     autoHeight
-                    placeholder={`What is AI's background? (e.g. ''${values['name'] || 'Researcher Raymond'} has a PhD in biochemistry and has published over 100 papers in the field of health and fitness')`}
+                    placeholder={`What is ${
+                      (values["name"] && values["name"] + "'s") || "Researcher Raymond's"
+                    } history? This can help give AI some "flavor" to answer more accurately. (e.g. '${
+                      values["name"] || "Researcher Raymond"
+                    } has a PhD in biochemistry and has published over 100 papers in the field of health and fitness')`}
                     style={{ width: "100%", resize: "none" }}
                     value={values["background"] || ""}
                     onChange={(e) => setValues({ ...values, background: e.target.value })}
@@ -369,7 +391,11 @@ export default function CreatePersona() {
                       <RichTextarea
                         rows={2}
                         autoHeight
-                        placeholder={`What's AI's communication style? (e.g. ''${values['name'] || 'Researcher Raymond'} is very informal, friendly, patient, and simplifies scientific jargon to laymen terms')`}
+                        placeholder={`What's ${
+                          (values["name"] && values["name"] + "'s") || "Researcher Raymond's"
+                        } communication style? (e.g. '${
+                          values["name"] || "Researcher Raymond"
+                        } is very informal, friendly, patient, and simplifies scientific jargon to laymen terms')`}
                         style={{ width: "100%", resize: "none" }}
                         value={values["styles"]?.[index] || ""}
                         onChange={(e) =>
@@ -407,7 +433,9 @@ export default function CreatePersona() {
                         <RichTextarea
                           rows={1}
                           autoHeight
-                          placeholder="What are AI's traits and skills? (e.g. 'expert at reading academic papers')"
+                          placeholder={`What are ${
+                            (values["name"] && values["name"] + "'s") || "Researcher Raymond's"
+                          } traits and skills? (e.g. 'expert at reading academic papers')`}
                           style={{ width: "100%", resize: "none" }}
                           value={values["traits"]?.[index]?.skill || ""}
                           onChange={(e) =>
@@ -466,7 +494,7 @@ export default function CreatePersona() {
                   <div className="flex flex-col mr-1 justify-center items-center">
                     {values_show["responsibilities"] ? <MdOutlineKeyboardArrowDown /> : <MdOutlineKeyboardArrowRight />}
                   </div>
-                  Responsibilities{" "}
+                  Duties{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
                     optional but improves results
                   </span>
@@ -481,7 +509,9 @@ export default function CreatePersona() {
                         <RichTextarea
                           rows={1}
                           autoHeight
-                          placeholder={`What should the AI always do? (e.g. ''${values['name'] || 'Researcher Raymond'} should always write succinctly and truthfully')`}
+                          placeholder={`What should ${values["name"] || "Researcher Raymond"} always do? (e.g. '${
+                            values["name"] || "Researcher Raymond"
+                          } should always write succinctly and truthfully')`}
                           style={{ width: "100%", resize: "none" }}
                           value={values["responsibilities"]?.[index] || ""}
                           onChange={(e) => {
@@ -555,7 +585,9 @@ export default function CreatePersona() {
                         <RichTextarea
                           rows={1}
                           autoHeight
-                          placeholder={`What can't the AI do? (e.g. ''${values['name'] || 'Researcher Raymond'} can't say unsubstantiated claims')`}
+                          placeholder={`What can't ${values["name"] || "Researcher Raymond"} do? (e.g. '${
+                            values["name"] || "Researcher Raymond"
+                          } can't tell lies')`}
                           style={{ width: "100%", resize: "none" }}
                           value={values["limitations"]?.[index] || ""}
                           onChange={(e) =>
@@ -603,103 +635,111 @@ export default function CreatePersona() {
             </div>
             <div className={element_class}>
               <div className={headline_class}>
-              <div
+                <div
                   className={headline_class + " cursor-pointer"}
-                  onClick={() => setValuesShow({ ...values_show, response_examples: !values_show["response_examples"] })}
+                  onClick={() =>
+                    setValuesShow({ ...values_show, response_examples: !values_show["response_examples"] })
+                  }
                 >
                   <div className="flex flex-col mr-1 justify-center items-center">
-                    {values_show["response_examples"] ? <MdOutlineKeyboardArrowDown /> : <MdOutlineKeyboardArrowRight />}
+                    {values_show["response_examples"] ? (
+                      <MdOutlineKeyboardArrowDown />
+                    ) : (
+                      <MdOutlineKeyboardArrowRight />
+                    )}
                   </div>
-                Response examples
-                <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
+                  Response examples
+                  <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
                     optional but improves results
                   </span>
-                <AI value_name="response examples" />
-              </div>
+                  <AI value_name="response examples" />
+                </div>
               </div>
               <div className={`${!values_show["response_examples"] && "hidden"}`}>
-              {values["response_examples"]?.map((example, index) => {
-                return (
-                  <div className="flex flex-row flex-1 gap-4 mt-3" key={`response_examples-${index}`}>
-                    <div className="flex flex-col flex-1">
-                      <div className="flex flex-row text-xs font-semibold text-zinc-500 ml-1 mb-1">Message</div>
-                      <div className={input + " -mt-0 flex-grow-0"}>
-                        <RichTextarea
-                          rows={2}
-                          placeholder="When user says... (e.g. 'Explain mitochondria')"
-                          style={{ width: "100%" }}
-                          value={values["response_examples"]?.[index]?.["message"] || ""}
-                          onChange={(e) =>
-                            setValues({
-                              ...values,
-                              response_examples: values["response_examples"]?.map((t, i) => {
-                                if (i === index && t) {
-                                  return { ...t, message: e.target.value || "" }
-                                } else return t
-                              }) as { message: string; response: string }[],
-                            })
-                          }
-                          className={textarea}
-                        />
+                {values["response_examples"]?.map((example, index) => {
+                  return (
+                    <div className="flex flex-row flex-1 gap-4 mt-3" key={`response_examples-${index}`}>
+                      <div className="flex flex-col flex-1">
+                        <div className="flex flex-row text-xs font-semibold text-zinc-500 ml-1 mb-1">Message</div>
+                        <div className={input + " -mt-1 flex-grow-0"}>
+                          <RichTextarea
+                            rows={2}
+                            placeholder="When user says... (e.g. 'Explain mitochondria')"
+                            style={{ width: "100%" }}
+                            value={values["response_examples"]?.[index]?.["message"] || ""}
+                            onChange={(e) =>
+                              setValues({
+                                ...values,
+                                response_examples: values["response_examples"]?.map((t, i) => {
+                                  if (i === index && t) {
+                                    return { ...t, message: e.target.value || "" }
+                                  } else return t
+                                }) as { message: string; response: string }[],
+                              })
+                            }
+                            className={textarea}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-col flex-1">
-                      <div className="flex flex-row text-xs font-semibold text-zinc-500 ml-1 mb-1">Response</div>
-                      <div className={input + " -mt-0 flex-grow-0"}>
-                        <RichTextarea
-                          rows={2}
-                          placeholder="AI should respond... (e.g. 'Mitochondria are organelles within cells that ...')"
-                          style={{ width: "100%" }}
-                          value={values["response_examples"]?.[index]?.["response"] || ""}
-                          onChange={(e) =>
-                            setValues({
-                              ...values,
-                              response_examples: values["response_examples"]?.map((t, i) => {
-                                if (i === index && t) {
-                                  return { ...t, response: e.target.value || "" }
-                                } else return t
-                              }) as { message: string; response: string }[],
-                            })
-                          }
-                          className={textarea}
-                        />
+                      <div className="flex flex-col flex-1">
+                        <div className="flex flex-row text-xs font-semibold text-zinc-500 ml-1 mb-1">Response</div>
+                        <div className={input + " -mt-1 flex-grow-0"}>
+                          <RichTextarea
+                            rows={2}
+                            placeholder={`${
+                              values["name"] || "Researcher Raymond"
+                            } should respond... (e.g. 'Mitochondria are organelles within cells that ...')`}
+                            style={{ width: "100%" }}
+                            value={values["response_examples"]?.[index]?.["response"] || ""}
+                            onChange={(e) =>
+                              setValues({
+                                ...values,
+                                response_examples: values["response_examples"]?.map((t, i) => {
+                                  if (i === index && t) {
+                                    return { ...t, response: e.target.value || "" }
+                                  } else return t
+                                }) as { message: string; response: string }[],
+                              })
+                            }
+                            className={textarea}
+                          />
+                        </div>
                       </div>
-                    </div>
 
-                    <div
-                      className="flex flex-col mt-5 justify-center items-center tooltip tooltip-left cursor-pointer"
-                      data-tip="Delete example"
-                      onClick={() => {
-                        // delete response example
-                        setValues({
-                          ...values,
-                          response_examples: values["response_examples"]?.filter((_, i) => i !== index),
-                        })
-                      }}
-                    >
-                      <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
+                      <div
+                        className="flex flex-col mt-5 justify-center items-center tooltip tooltip-left cursor-pointer"
+                        data-tip="Delete example"
+                        onClick={() => {
+                          // delete response example
+                          setValues({
+                            ...values,
+                            response_examples: values["response_examples"]?.filter((_, i) => i !== index),
+                          })
+                        }}
+                      >
+                        <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
+                      </div>
                     </div>
+                  )
+                })}
+
+                <div className="flex flex-row flex-1 justify-center items-center mt-2 mr-7">
+                  <div className="flex flex-1 h-[1px] bg-zinc-700/40"></div>
+                  <div
+                    className="flex mx-1 text-zinc-400 hover:text-zinc-200 tooltip tooltip-top cursor-pointer"
+                    data-tip="Add another example"
+                    onClick={() => {
+                      setValues({
+                        ...values,
+                        response_examples: [...(values["response_examples"] || []), { message: "", response: "" }],
+                      })
+                    }}
+                  >
+                    <RiAddCircleFill />
                   </div>
-                )
-              })}
-
-              <div className="flex flex-row flex-1 justify-center items-center mt-2 mr-7">
-                <div className="flex flex-1 h-[1px] bg-zinc-700/40"></div>
-                <div
-                  className="flex mx-1 text-zinc-400 hover:text-zinc-200 tooltip tooltip-top cursor-pointer"
-                  data-tip="Add another example"
-                  onClick={() => {
-                    setValues({
-                      ...values,
-                      response_examples: [...(values["response_examples"] || []), { message: "", response: "" }],
-                    })
-                  }}
-                >
-                  <RiAddCircleFill />
+                  <div className="flex flex-1 h-[1px] bg-zinc-700/40"></div>
                 </div>
-                <div className="flex flex-1 h-[1px] bg-zinc-700/40"></div>
               </div>
-            </div>
             </div>
             <div className="flex flex-1 gap-3 justify-end">
               {/* <button type="submit" className="p-btn-secondary" onClick={processValues}>
@@ -713,7 +753,7 @@ export default function CreatePersona() {
                   else createPersona()
                 }}
               >
-                {!edit_ai_id ? "Create persona" : "Update persona"}
+                {!edit_ai_id ? "Create AI" : "Update AI"}
                 {creation_in_process ? (
                   <div className="float-right w-5 h-5 flex justify-center items-center" role="status">
                     <svg

@@ -374,21 +374,32 @@ export default function Settings(props: any) {
                         </div>
                         <div className="inline-flex items-center text-base font-semibold text-zinc-400">
                           {ai?.id !== "c1" && (
-                            <button
-                              className="tooltip tooltip-top"
-                              data-tip="Uninstall AI"
-                              onClick={async () => {
-                                if (ai?.id && confirm("Are you sure you want to uninstall this AI?")) {
-                                  await UserActions.updateUser({
-                                    ...user_state,
-                                    ais: _.filter(user_state.ais, (a) => a.id !== ai?.id),
-                                  })
-                                  navigate("/conductor/settings")
-                                }
-                              }}
-                            >
-                              <MdOutlineRemoveCircle className="w-4 h-4 hover:text-zinc-200" />
-                            </button>
+                            <div className="inline-flex items-center gap-3">
+                              <Link
+                                to={`/conductor/ai/edit/${ai.id}`}
+                                className="flex items-center tooltip tooltip-top"
+                                data-tip="Modify AI"
+                              >
+                                <button>
+                                  <LuSettings2 className="w-4 h-4 hover:text-zinc-200" />
+                                </button>
+                              </Link>
+                              <button
+                                className="flex items-center tooltip tooltip-top"
+                                data-tip="Uninstall AI"
+                                onClick={async () => {
+                                  if (ai?.id && confirm("Are you sure you want to uninstall this AI?")) {
+                                    await UserActions.updateUser({
+                                      ...user_state,
+                                      ais: _.filter(user_state.ais, (a) => a.id !== ai?.id),
+                                    })
+                                    navigate("/conductor/settings")
+                                  }
+                                }}
+                              >
+                                <MdOutlineRemoveCircle className="w-4 h-4 hover:text-zinc-200" />
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -418,7 +429,7 @@ export default function Settings(props: any) {
                         {ai.id !== "c1" && (
                           <div className="inline-flex gap-3 items-center justify-center text-base font-semibold text-zinc-400">
                             <button
-                              className="tooltip tooltip-top"
+                              className="flex items-center tooltip tooltip-top"
                               data-tip="Install AI"
                               onClick={async () => {
                                 if (ai?.id) {
@@ -441,7 +452,7 @@ export default function Settings(props: any) {
                             </button>
                             <Link
                               to={`/conductor/ai/edit/${ai.id}`}
-                              className="tooltip tooltip-top"
+                              className="flex items-center tooltip tooltip-top"
                               data-tip="Modify AI"
                             >
                               <button>
@@ -450,7 +461,7 @@ export default function Settings(props: any) {
                             </Link>
 
                             <button
-                              className="tooltip tooltip-top"
+                              className="flex items-center tooltip tooltip-top"
                               data-tip="Hide AI"
                               onClick={async () => {
                                 if (ai?.id && confirm("Are you sure you want to delete this AI?")) {
