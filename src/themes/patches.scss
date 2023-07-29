@@ -86,9 +86,10 @@ dialog {
   .easy-edit-wrapper {
     text-overflow: ellipsis;
     text-wrap: nowrap;
+    white-space: nowrap;
     max-width: 90%;
     overflow: hidden;
-}
+  }
 }
 
 .Clipboard {
@@ -108,6 +109,7 @@ dialog {
     border: 1px solid var(--border-zinc-700);
     text-overflow: ellipsis;
     text-wrap: nowrap;
+    white-space: nowrap;
     overflow: hidden;
   }
 
