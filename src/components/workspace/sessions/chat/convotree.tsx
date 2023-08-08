@@ -96,7 +96,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                       }}
                     >
                       <div className="tooltip tooltip-top" data-tip="Start a new branch">
-                        <RiAddCircleFill className="text-zinc-500 hover:text-zinc-100" />
+                        <RiAddCircleFill className="text-zinc-500 hover:text-zinc-100 transition-all" />
                       </div>
                     </div>
                   ) : null}

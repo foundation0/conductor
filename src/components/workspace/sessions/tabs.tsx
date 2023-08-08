@@ -66,7 +66,7 @@ export default function Tabs({
         if (!s) return false
         return (
           <Link
-            className={`flex flex-row min-w-[71px] max-w-[200px] flex-nowrap flex-shrink border-0 border-r border-r-zinc-700/30 tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom ph-no-capture ${
+            className={`flex flex-row min-w-[71px] max-w-[200px] flex-nowrap flex-shrink border-0 border-r border-r-zinc-700/30 tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom transition-all ph-no-capture ${
               session_id === s.id
                 ? "tab-active bg-zinc-900/50 text-zinc-200"
                 : " bg-zinc-800 hover:bg-zinc-900/50 text-zinc-600 hover:text-zinc-300"
@@ -83,7 +83,7 @@ export default function Tabs({
             </div>
             <div className="flex flex-1 justify-end">
               <div
-                className="flex ml-3 text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit"
+                className="flex ml-3 text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit transition-all"
                 onClick={async (e) => {
                   e.preventDefault()
                   if (!session_id) return

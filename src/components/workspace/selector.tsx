@@ -60,7 +60,7 @@ export default function WorkspaceSelector() {
                     )}
                     <Link
                       to={`/conductor/${workspace.id}/${session_id}`}
-                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl overflow-hidden font-semibold text-zinc-500 ${
+                      className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl overflow-hidden font-semibold text-zinc-500 transition-all ${
                         workspace_id === workspace.id ? "bg-zinc-800 " : "cursor-pointer opacity-50 hover:opacity-100"
                       }`}
                     >
@@ -76,7 +76,7 @@ export default function WorkspaceSelector() {
             </For>
             <div className="tooltip tooltip-right" data-tip="Create a new workspace">
               <Link
-                className="flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2 border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500"
+                className="flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2 border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500 transition-all"
                 to={`workspace/create`}
               >
                 <HiPlus className="w-3 h-3 " />
@@ -89,13 +89,13 @@ export default function WorkspaceSelector() {
                 <Link
                   to={`https://discord.gg/PFMtbdrvXw`}
                   target="_blank"
-                  className="flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850  hover:border-zinc-500 text-zinc-400 hover:text-zinc-200"
+                  className="flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850  hover:border-zinc-500 text-zinc-400 hover:text-zinc-200 transition-all"
                 >
                   <BsDiscord className="w-4 h-4 " />
                 </Link>
               </div>
             </div>
-            <div className="flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl overflow-hidden cursor-pointer   hover:bg-zinc-850   text-zinc-400 hover:text-zinc-200">
+            <div className="flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl overflow-hidden cursor-pointer   hover:bg-zinc-850   text-zinc-400 hover:text-zinc-200 transition-all">
               <div className="tooltip tooltip-right" data-tip="Global settings and your profile">
                 <Link to={`/conductor/settings`}>
                   {_.get(user_state, "meta.profile_photos[0]") ? (

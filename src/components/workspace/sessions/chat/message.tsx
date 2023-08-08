@@ -74,7 +74,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       <Selection.Root>
         <Selection.Trigger className="flex ph-no-capture">
           <div
-            className={`chat flex flex-col max-w-screen-lg border-2 border-zinc-900/80 py-2 px-4 text-sm rounded-lg justify-start items-start relative ${
+            className={`chat flex flex-col max-w-screen-lg border-2 border-zinc-900/80 py-2 px-4 text-sm rounded-lg justify-start items-start relative transition-all ${
               isActive
                 ? " text-white"
                 : "bg-zinc-800 text-zinc-100 text-xs truncate hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden"

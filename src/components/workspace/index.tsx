@@ -224,7 +224,7 @@ export default function Workspace() {
                     onClick={tab.onClick}
                   >
                     <div
-                      className={`flex w-7 h-7 rounded justify-center items-center saturate-0 ${
+                      className={`flex w-7 h-7 rounded justify-center items-center saturate-0 transition-all ${
                         active_sidebar_tab === tab.id
                           ? " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 "
                           : "text-zinc-500 "
