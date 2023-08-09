@@ -20,6 +20,10 @@ export const ModuleS = z.object({
   _v: z.number().default(1),
   _updated: z.number().optional(),
   id: z.string(),
+  active: z
+    .boolean()
+    .optional()
+    .catch(() => false),
   meta: z.object({
     author: z.string().catch(() => "0x000"),
     name: z.string(),

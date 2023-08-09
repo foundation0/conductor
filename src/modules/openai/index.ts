@@ -18,6 +18,7 @@ export const specs: z.infer<typeof ModuleS> = {
   _v: 1,
   _updated: 1,
   id: "openai",
+  active: true,
   meta: {
     author: "0x000",
     description:

@@ -24,6 +24,8 @@ import { RiAddCircleFill } from "react-icons/ri"
 import { LuSettings2 } from "react-icons/lu"
 import { BiBlock } from "react-icons/bi"
 import { MdOutlineRemoveCircle } from "react-icons/md"
+import { ModuleList } from "@/modules"
+import { Match, Switch } from "react-solid-flow"
 
 // function to detect numbers in strings
 function isNumeric(str: string) {
@@ -45,6 +47,15 @@ function parseNumber(str: string) {
   return str
 }
 
+// turn string booleans into booleans
+function parseBoolean(str: any) {
+  if (typeof str != "string") return str // we only process strings!
+  // make sure it keeps integers and floats as floats
+  if (str === "true") return true
+  if (str === "false") return false
+  return str
+}
+
 export default function Settings(props: any) {
   const navigate = useNavigate()
   let auth = useAuth()
@@ -54,7 +65,7 @@ export default function Settings(props: any) {
   const handleEdit = async ({ value, name, module_id }: { value: string; name: string; module_id?: string }) => {
     // field name is concatenated with . to denote nested fields
     let field_name = name.split(".")
-    const field_value = parseNumber(value)
+    const field_value = parseNumber(parseBoolean(value))
     if (module_id) {
       const index = _.findIndex(user_state.modules.installed, { id: module_id })
       field_name = [`modules`, `installed`, index.toString(), ...field_name]
@@ -97,10 +108,6 @@ export default function Settings(props: any) {
     }
   }, [field_edit_id])
 
-  const getPhoto = ({ id }: { id: string }) => {
-    return ""
-  }
-
   const onDrop = useCallback((acceptedFiles: any, fileRejections: any) => {
     if (fileRejections.length > 0) {
       fileRejections.map(({ file, errors }: any) => {
@@ -131,6 +138,8 @@ export default function Settings(props: any) {
       "image/png": [".png", ".jpg", ".jpeg", ".gif"],
     },
   })
+
+  const module_list = ModuleList()
 
   // @ts-ignore
   const version = __APP_VERSION__ || "// dev build"
@@ -251,6 +260,7 @@ export default function Settings(props: any) {
         <div className="flex flex-row w-full gap-2">
           {user_state?.modules.installed
             ?.filter((m) => m.meta?.type !== "utility")
+            //?.filter((m) => _.find(module_list, { id: m.id }))
             .map((module: any, index: number) => {
               return (
                 <div
@@ -259,8 +269,22 @@ export default function Settings(props: any) {
                 >
                   <div className="flex w-full mb-2 pb-2 border-b border-b-zinc-700">
                     <div className="flex items-center text-zinc-400 font-semibold">{module.meta.vendor.name}</div>
-
-                    <div className="flex flex-1 items-center justify-end">
+                    <div className="flex flex-1 items-center justify-end gap-2">
+                      <label className="relative inline-flex items-center cursor-pointer tooltip tooltip-top" data-tip="Active/inactive module">
+                        <input
+                          type="checkbox"
+                          onChange={() => {
+                            handleEdit({
+                              module_id: module.id,
+                              value: module.active ? "false" : "true",
+                              name: "active",
+                            })
+                          }}
+                          checked={module.active ? true : false}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      </label>
                       <MdSettingsSuggest
                         className="w-4 h-4 text-zinc-400 hover:text-zinc-300 cursor-pointer"
                         onClick={() => {

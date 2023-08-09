@@ -141,10 +141,11 @@ export default function Chat() {
 
   // set module
   useEffect(() => {
-    const module = Module(session?.settings.module.id)
-    if (!module) return
-    setModule(module)
-    setTimeout(() => fieldFocus({ selector: "#input" }), 200)
+    Module(session?.settings.module.id).then(module => {
+      if (!module) return
+      setModule(module)
+      setTimeout(() => fieldFocus({ selector: "#input" }), 200)
+    })
   }, [session?.settings.module])
 
   // change session's active ai
@@ -178,7 +179,7 @@ export default function Chat() {
   // set api key
   useEffect(() => {
     if (!module) return
-    const api_key = _.find(user_state.modules.installed, { id: module?.specs.id })?.settings?.api_key
+    const api_key = _.find(user_state.modules.installed, { id: module?.specs?.id })?.settings?.api_key
     if (!api_key) return
     setApiKey(api_key)
   }, [JSON.stringify([user_state.modules.installed, module])])
