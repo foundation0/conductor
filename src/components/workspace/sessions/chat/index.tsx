@@ -28,6 +28,8 @@ import { error } from "@/components/libraries/logging"
 import Select from "react-select"
 import { getAvatar } from "@/components/libraries/ai"
 import { RiAddCircleFill } from "react-icons/ri"
+import { getOS } from "@/components/libraries/utilities"
+import { KBD } from "@/components/misc/kbd"
 
 const padding = 50
 
@@ -716,17 +718,16 @@ export default function Chat() {
                 </div>
                 <div className="flex mt-5 flex-col justify-center items-center gap-4">
                   <div className="text-xs text-zinc-400">
-                    <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">T</kbd> new session
+                    <KBD fnk="alt" ck="T" desc="new session" />
                   </div>
                   <div className="text-xs text-zinc-400">
-                    <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">R</kbd> rename session
+                    <KBD fnk="alt" ck="R" desc="rename session" />
                   </div>
                   <div className="text-xs text-zinc-400">
-                    <kbd className="kbd kbd-xs">Alt</kbd> + <kbd className="kbd kbd-xs">W</kbd> close session
+                    <KBD fnk="alt" ck="W" desc="close session" />
                   </div>
                   <div className="text-xs text-zinc-400">
-                    <kbd className="kbd kbd-xs">Shift</kbd> + <kbd className="kbd kbd-xs">Alt</kbd> +{" "}
-                    <kbd className="kbd kbd-xs">D</kbd> delete session
+                    <KBD fnk="shift" fnk2="alt" ck="D" desc="delete session" />
                   </div>
                 </div>
               </div>
