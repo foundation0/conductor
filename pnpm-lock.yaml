@@ -195,14 +195,14 @@ dependencies:
     specifier: ^3.2.2
     version: 3.2.2(vite@4.4.9)
   zod:
-    specifier: ^3.22.2
-    version: 3.22.2
+    specifier: ^3.22.3
+    version: 3.22.3
   zod-to-json-schema:
     specifier: ^3.21.4
-    version: 3.21.4(zod@3.22.2)
+    version: 3.21.4(zod@3.22.3)
   zod-validation-error:
     specifier: ^1.5.0
-    version: 1.5.0(zod@3.22.2)
+    version: 1.5.0(zod@3.22.3)
 
 devDependencies:
   '@types/lodash':
@@ -4180,8 +4180,8 @@ packages:
       p-retry: 4.6.2
       uuid: 9.0.0
       yaml: 2.3.1
-      zod: 3.22.2
-      zod-to-json-schema: 3.21.4(zod@3.22.2)
+      zod: 3.22.3
+      zod-to-json-schema: 3.21.4(zod@3.22.3)
     transitivePeerDependencies:
       - debug
       - encoding
@@ -6902,23 +6902,23 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /zod-to-json-schema@3.21.4(zod@3.22.2):
+  /zod-to-json-schema@3.21.4(zod@3.22.3):
     resolution: {integrity: sha512-fjUZh4nQ1s6HMccgIeE0VP4QG/YRGPmyjO9sAh890aQKPEk3nqbfUXhMFaC+Dr5KvYBm8BCyvfpZf2jY9aGSsw==}
     peerDependencies:
       zod: ^3.21.4
     dependencies:
-      zod: 3.22.2
+      zod: 3.22.3
     dev: false
 
-  /zod-validation-error@1.5.0(zod@3.22.2):
+  /zod-validation-error@1.5.0(zod@3.22.3):
     resolution: {integrity: sha512-/7eFkAI4qV0tcxMBB/3+d2c1P6jzzZYdYSlBuAklzMuCrJu5bzJfHS0yVAS87dRHVlhftd6RFJDIvv03JgkSbw==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       zod: ^3.18.0
     dependencies:
-      zod: 3.22.2
+      zod: 3.22.3
     dev: false
 
-  /zod@3.22.2:
-    resolution: {integrity: sha512-wvWkphh5WQsJbVk1tbx1l1Ly4yg+XecD+Mq280uBGt9wa5BKSWf4Mhp6GmrkPixhMxmabYY7RbzlwVP32pbGCg==}
+  /zod@3.22.3:
+    resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
     dev: false
