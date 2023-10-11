@@ -1,15 +1,22 @@
 import Conductor from "@/components/conductor/"
 import { WorkspaceIdR, WorkspaceR } from "@/components/workspace/routes"
-import { initLoaders, loader } from "@/data/loaders"
+import { loader } from "@/data/loaders"
 import Settings from "@/components/conductor/settings"
-import { LocalUsersR, UserIdR } from "@/components/user/routes"
-import { RequireAuth } from "@/components/libraries/auth"
+import { UserIdR } from "@/components/user/routes"
+import { RequireAuth } from "@/libraries/auth"
 import { AIR } from "@/components/ai/routes"
+import { Admin } from "./admin"
 
 export const SettingsR = {
   loader,
   path: "settings",
   element: <Settings />,
+}
+
+export const AdminR = {
+  loader,
+  path: "internal::admin",
+  element: <Admin />,
 }
 
 export const ConductorR = {
@@ -20,5 +27,5 @@ export const ConductorR = {
     </RequireAuth>
   ),
   loader,
-  children: [WorkspaceR, WorkspaceIdR, SettingsR, UserIdR, AIR],
+  children: [WorkspaceR, WorkspaceIdR, SettingsR, UserIdR, AIR, AdminR],
 }

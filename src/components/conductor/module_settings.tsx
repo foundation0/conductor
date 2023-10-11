@@ -5,14 +5,12 @@ import { LLMVariantS } from "@/data/schemas/modules"
 import _ from "lodash"
 import { useState } from "react"
 import { HiPlus } from "react-icons/hi"
-import { error } from "../libraries/logging"
 import { useNavigate } from "react-router-dom"
-import { ZodSchema } from "zod"
 import { zodToJsonSchema } from "zod-to-json-schema"
+import { Match, Switch } from "react-solid-flow"
 
 function getZodKeys({ schema }: { schema: any }) {
   const json_sc: any = zodToJsonSchema(schema)
-  const keys = Object.keys(schema.shape)
   const active_keys = _.keys(json_sc.properties)
     .filter((key) => {
       return json_sc.properties[key]?.description !== "deprecated"
@@ -21,14 +19,10 @@ function getZodKeys({ schema }: { schema: any }) {
       return {
         key,
         type: json_sc.properties[key]?.type,
+        optional: _.includes(json_sc.required, key) ? false : true,
       }
     })
   return active_keys
-  /* return active_keys.map((key) => {
-    return {
-      key,
-      type: schema.shape[key]?.type,
-    } */
 }
 
 export function ModuleSettings({
@@ -103,37 +97,39 @@ export function ModuleSettings({
             />
           </div>
         </div>
-        <div className="flex flex-col w-full gap-1 mb-3" data-id={`${module.id}-apikey`}>
-          <div className="flex flex-grow items-center text-sm font-bold text-zinc-400">
-            {module.vendor} {module.name} API key
-          </div>
-          <div
-            className="flex flex-grow w-full text-sm ph-no-capture"
-            onClick={() => {
-              setFieldEditId(`${module.id}-apikey`)
-              return false
-            }}
-          >
-            <EasyEdit
-              type="text"
-              onSave={(data: any) => {
-                setFieldEditId("")
-                handleEdit({ module_id: module.id, value: data, name: `settings.api_key` })
+        {module.settings?.api_key !== undefined && (
+          <div className="flex flex-col w-full gap-1 mb-3" data-id={`${module.id}-apikey`}>
+            <div className="flex flex-grow items-center text-sm font-bold text-zinc-400">
+              {module.vendor} {module.name} API key
+            </div>
+            <div
+              className="flex flex-grow w-full text-sm ph-no-capture"
+              onClick={() => {
+                setFieldEditId(`${module.id}-apikey`)
+                return false
               }}
-              onCancel={() => setFieldEditId("")}
-              onBlur={() => setFieldEditId("")}
-              cancelOnBlur={true}
-              saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-              cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
-              onHoverCssClass={`cursor-pointer`}
-              value={module.settings.api_key || "click to add api key"}
-              editComponent={<EditComponent />}
-            />
+            >
+              <EasyEdit
+                type="text"
+                onSave={(data: any) => {
+                  setFieldEditId("")
+                  handleEdit({ module_id: module.id, value: data, name: `settings.api_key` })
+                }}
+                onCancel={() => setFieldEditId("")}
+                onBlur={() => setFieldEditId("")}
+                cancelOnBlur={true}
+                saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
+                cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                onHoverCssClass={`cursor-pointer`}
+                value={module.settings.api_key || "click to add api key"}
+                editComponent={<EditComponent />}
+              />
+            </div>
           </div>
-        </div>
+        )}
         {Object.keys(module.settings).map((key: any, index: number) => {
           if (key === "api_key") return
-
+          if (typeof module.settings[key] === "object") return
           return (
             <div
               key={`${module.id}-${key}`}
@@ -162,7 +158,11 @@ export function ModuleSettings({
                   saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
                   cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
                   onHoverCssClass={`cursor-pointer`}
-                  value={(module.settings[key] !== "" && module.settings[key] !== undefined) ? module.settings[key] : "click to set"}
+                  value={
+                    module.settings[key] !== "" && module.settings[key] !== undefined
+                      ? module.settings[key]
+                      : "click to set"
+                  }
                   editComponent={<EditComponent />}
                 />
               </div>
@@ -196,7 +196,7 @@ export function ModuleSettings({
                         ) : (
                           <MdOutlineKeyboardArrowDown className="w-5 h-5 mr-1" />
                         )}{" "}
-                        {variant.id.toUpperCase()}
+                        {variant.name.toUpperCase()}
                       </div>
                       <div
                         className="flex flex-shrink justify-end tooltip tooltip-left font-normal"
@@ -215,59 +215,102 @@ export function ModuleSettings({
 
                     {expanded_models.indexOf(variant.id) === -1 &&
                       schema_keys.map((schema: any) => {
-                        const { key, type } = schema
+                        const { key, type, optional } = schema
                         const v_index = _.findIndex(module.meta.variants, (v: any) => v.id === variant.id)
                         const edit_key = `meta.variants.${v_index}.${key}`
+                        const value = _.get(module, edit_key)
+                        if (optional && !value) return
                         return (
                           <div
                             key={`${module.id}-${variant.id}-${key}`}
-                            className="flex flex-row w-full gap-1 mb-3 px-2"
+                            className={`flex w-full gap-1 mb-3 px-2 ${type === "object" ? "flex-col" : "flex-row"}`}
                             data-id={`${module.id}-${variant.id}`}
                           >
                             <div className="flex flex-1 items-center text-sm font-bold text-zinc-400">
                               {humanizeVariableName(key)}
                             </div>
                             <div
-                              className="flex flex-1 justify-end items-end text-right w-full text-sm "
+                              className="flex flex-1 max-w-1/2 flex-col justify-end items-end text-right w-full text-sm "
                               onClick={() => {
                                 setFieldEditId(edit_key)
                                 return false
                               }}
                             >
-                              {" "}
-                              {type !== "boolean" ? (
-                                <EasyEdit
-                                  type="text"
-                                  onSave={(data: any) => {
-                                    setFieldEditId("")
-                                    handleEdit({ module_id: module.id, value: data, name: edit_key })
-                                  }}
-                                  onCancel={() => setFieldEditId("")}
-                                  onBlur={() => setFieldEditId("")}
-                                  cancelOnBlur={true}
-                                  saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                                  cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
-                                  onHoverCssClass={`cursor-pointer`}
-                                  value={_.get(module, `meta.variants.${v_index}.${key}`) || "click to add"}
-                                  editComponent={<EditComponent />}
-                                />
-                              ) : (
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    onChange={() => {
-                                      handleEdit({
-                                        module_id: module.id,
-                                        value: !_.get(module, `meta.variants.${v_index}.${key}`),
-                                        name: edit_key,
-                                      })
+                              <Switch>
+                                <Match when={type === "boolean"}>
+                                  <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      onChange={() => {
+                                        handleEdit({
+                                          module_id: module.id,
+                                          value: !_.get(module, `meta.variants.${v_index}.${key}`),
+                                          name: edit_key,
+                                        })
+                                      }}
+                                      checked={
+                                        _.get(module, `meta.variants.${v_index}.${key}`) === false ? false : true
+                                      }
+                                      className="sr-only peer"
+                                    />
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                  </label>
+                                </Match>
+                                <Match when={type === "string" || type === "number"}>
+                                  <EasyEdit
+                                    type="text"
+                                    onSave={(data: any) => {
+                                      setFieldEditId("")
+                                      handleEdit({ module_id: module.id, value: data, name: edit_key })
                                     }}
-                                    checked={_.get(module, `meta.variants.${v_index}.${key}`) === false ? false : true}
-                                    className="sr-only peer"
+                                    onCancel={() => setFieldEditId("")}
+                                    onBlur={() => setFieldEditId("")}
+                                    cancelOnBlur={true}
+                                    saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
+                                    cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                                    onHoverCssClass={`cursor-pointer`}
+                                    value={_.get(module, `meta.variants.${v_index}.${key}`) || "click to add"}
+                                    editComponent={<EditComponent />}
                                   />
-                                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                                </label>
-                              )}
+                                </Match>
+                                <Match when={type === "object"}>
+                                  {Object.keys(_.get(module, `meta.variants.${v_index}.${key}`) || {}).map(
+                                    (item: any, sub_index: number) => {
+                                      let sub_value = _.get(module, `meta.variants.${v_index}.${key}.${item}`)
+                                      if (typeof sub_value === "string") sub_value = sub_value?.replace(/\n/g, "\\n")
+
+                                      return (
+                                        <div className="flex w-full flex-row my-1" key={`sub-key-${sub_index}`}>
+                                          <div className="flex flex-1 justify-start text-xs font-semibold text-zinc-300 pl-2">
+                                            {item}
+                                          </div>
+                                          <EasyEdit
+                                            type="text"
+                                            onSave={(data: any) => {
+                                              setFieldEditId("")
+                                              handleEdit({
+                                                module_id: module.id,
+                                                value: data,
+                                                name: `meta.variants.${v_index}.${key}.${item}`,
+                                              })
+                                            }}
+                                            onCancel={() => setFieldEditId("")}
+                                            onBlur={() => setFieldEditId("")}
+                                            cancelOnBlur={true}
+                                            saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
+                                            cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                                            onHoverCssClass={`cursor-pointer`}
+                                            value={
+                                              sub_value !== undefined && sub_value !== "" ? sub_value : "click to add"
+                                            }
+                                            editComponent={<EditComponent />}
+                                          />
+                                        </div>
+                                      )
+                                    }
+                                  )}
+                                </Match>
+                              </Switch>
                             </div>
                           </div>
                         )
@@ -276,7 +319,7 @@ export function ModuleSettings({
                 )
               })
               .value()}
-            <div key={`${module.id}-add-new-variant`} className="flex w-full flex-col mb-2">
+            {/* <div key={`${module.id}-add-new-variant`} className="flex w-full flex-col mb-2">
               <div
                 className="flex flex-row items-center text-sm font-bold text-zinc-400 hover:text-zinc-300 w-full pb-2 pl-1 border-b border-b-zinc-700 mb-1 cursor-pointer"
                 onClick={() => {
@@ -340,7 +383,7 @@ export function ModuleSettings({
                     </div>
                   )
                 })}
-            </div>
+            </div> */}
           </div>
         ) : null}
 

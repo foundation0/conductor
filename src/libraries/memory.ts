@@ -1,6 +1,6 @@
 import _ from "lodash"
 import { error } from "./logging"
-import { main as CostEstimator, InputT as CostEstimatorInputT } from "@/modules/openai-cost-estimator/"
+import { main as CostEstimator } from "@/modules/openai-cost-estimator/"
 
 export async function compileSlidingWindowMemory({ model, prompt, messages, module }: any) {
   // get module variant's token count
@@ -33,7 +33,7 @@ export async function compileSlidingWindowMemory({ model, prompt, messages, modu
   }
   if (token_count > context_len)
     return error({
-      message: `Prompt (~${_.round(token_count / 5, 0)} words) too long for ${model} (${_.round(
+      message: `Message (~${_.round(token_count / 5, 0)} words) too long for ${model} (${_.round(
         context_len / 5,
         0
       )} words). Try model with longer context.`,

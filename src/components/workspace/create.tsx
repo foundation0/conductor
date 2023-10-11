@@ -1,7 +1,7 @@
 import { Form } from "react-router-dom"
 import { BiRightArrowAlt } from "react-icons/bi"
 import { useEffect, useState } from "react"
-import { fieldFocus } from "../libraries/field_focus"
+import { fieldFocus } from "@/libraries/field_focus"
 import { HiPlus } from "react-icons/hi"
 
 export default function WorkspaceCreate() {

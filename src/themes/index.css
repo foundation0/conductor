@@ -13,7 +13,8 @@ html,
 body,
 #main,
 #root {
-height: 100%;
+  font-family: "Hanken Grotesk", sans-serif;
+  height: 100%;
   position: absolute;
   top: 0;
   left: 0;
@@ -35,3 +36,4 @@ height: 100%;
   flex-grow: 1;
   min-height: 0;
 }
+

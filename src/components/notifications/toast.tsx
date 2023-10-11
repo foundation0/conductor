@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import * as Toast from "@radix-ui/react-toast"
-import eventEmitter from "@/components/libraries/events"
+import eventEmitter from "@/libraries/events"
 import _ from "lodash"
 
 const ToastNotification = () => {

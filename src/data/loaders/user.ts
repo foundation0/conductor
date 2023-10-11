@@ -1,7 +1,7 @@
 import { store } from "@/data/storage/IDB"
 import { UserS } from "@/data/schemas/user"
 import * as z from "zod"
-import { getActiveUser } from "@/components/libraries/active_user"
+import { getActiveUser } from "@/libraries/active_user"
 
 export type UserT = z.infer<typeof UserS>
 export const state = async () => await store<UserT>({

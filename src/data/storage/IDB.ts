@@ -3,10 +3,10 @@ import _ from "lodash"
 import { buf2hex, createHash, decrypt, encrypt, hex2buf, keyPair, signMessage } from "@/security/common"
 import { pack, unpack } from "msgpackr"
 import { get, set, del } from "idb-keyval"
-import { getActiveUser } from "@/components/libraries/active_user"
-import { set as setCF, get as getCF, keyHash } from "@/components/libraries/cloudflare"
+import { getActiveUser } from "@/libraries/active_user"
+import { set as setCF, get as getCF, keyHash } from "@/libraries/cloudflare"
 import { UserT } from "@/data/loaders/user"
-import { error, info } from "@/components/libraries/logging"
+import { error, info } from "@/libraries/logging"
 import config from "@/config"
 import { verify } from "@noble/secp256k1"
 
@@ -40,6 +40,16 @@ async function processForRemote({
   const signature = await signMessage(packed_vstate, key_pair.secret_key)
   const enc_data = pack({ data: enc_vstate, signature, public_key: key_pair.public_key, destroy })
   return enc_data
+}
+
+export function getRemoteKey({ key, name, active_user } : { key: string, name: string, active_user: UserT }){
+  let remote_key = ""
+  if (name !== "user") {
+    remote_key = keyHash(active_user?.master_key + key)
+  } else {
+    remote_key = keyHash(active_user?.master_key + active_user?.meta?.username)
+  }
+  return remote_key
 }
 
 // Function to create a store with encryption and decryption capabilities
@@ -100,12 +110,7 @@ export const store = async <TData>({
 
     // Create a key pair from the master key
     key_pair = keyPair({ seed: hex2buf({ input: active_user?.master_key }) })
-    if (name !== "user") {
-      remote_key = keyHash(active_user?.master_key + key)
-    } else {
-      remote_key = keyHash(active_user?.master_key + active_user?.meta?.username)
-      console.log("urm", remote_key)
-    }
+    remote_key = getRemoteKey({ name, key, active_user })
     // Get the store from the cloud storage
     cf_store = await getCF({ key: remote_key })
 

@@ -1,5 +1,6 @@
 import { store } from "@/data/storage/IDB"
 import { AIsT, AIsS } from "../schemas/ai"
+import config from "@/config"
 
 export const state = async () =>
   await store<AIsT>({
@@ -12,8 +13,8 @@ export const state = async () =>
           status: "published",
           default_llm_module: {
             _v: 1,
-            id: "openai",
-            variant_id: "gpt-3.5-turbo",
+            id: config.defaults.llm_module.id,
+            variant_id: config.defaults.llm_module.variant_id,
           },
           meta: {
             author: "0x000",

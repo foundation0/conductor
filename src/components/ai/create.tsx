@@ -3,24 +3,23 @@ import { useCallback, useEffect, useState } from "react"
 import { BiRightArrowAlt } from "react-icons/bi"
 import { useLoaderData, useNavigate, useParams } from "react-router-dom"
 import { RichTextarea } from "rich-textarea"
-import generate_llm_module_options from "@/components/libraries/generate_llm_module_options"
+import generate_llm_module_options from "@/libraries/generate_llm_module_options"
 import Select from "react-select"
 import AIIcon from "@/assets/icons/ai.svg"
-import CameraIcon from "@/assets/icons/camera.svg"
 import { RiAddCircleFill } from "react-icons/ri"
 import { MdOutlineKeyboardArrowDown, MdOutlineKeyboardArrowRight } from "react-icons/md"
-import { AIS, AIT, AIsT, LLMModuleT, PersonaT } from "@/data/schemas/ai"
-import { fieldFocus } from "../libraries/field_focus"
+import { AIS, AIT, AIsT, LLMModuleT } from "@/data/schemas/ai"
+import { fieldFocus } from "@/libraries/field_focus"
 import _ from "lodash"
-import { error } from "../libraries/logging"
+import { error } from "@/libraries/logging"
 import AIActions from "@/data/actions/ai"
-import UserActions from "@/data/actions/user"
-import { getAvatar } from "../libraries/ai"
+import { getAvatar } from "@/libraries/ai"
+import config from "@/config"
 
 export default function CreatePersona() {
   const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
   const [creation_in_process, setCreationInProgress] = useState<boolean>(false)
-  const [selected_llm, setSelectedLLM] = useState<string | null>("openai/gpt-4")
+  const [selected_llm, setSelectedLLM] = useState<string | null>(`${config.defaults.llm_module.id}/${config.defaults.llm_module.variant_id}`)
 
   const [values_show, setValuesShow] = useState({
     description: true,
@@ -41,11 +40,11 @@ export default function CreatePersona() {
     if (edit_ai_id) {
       // set all values true
       setValuesShow(_.mapValues(values_show, () => true))
-      
+
       if (edit_ai_id === "c1") {
         if (
           !confirm(
-            "Editing C1 can break Prompt's functionality as Prompt relies C1 to behave a certain way. Are you sure you want to edit C1?"
+            "Editing C1 can break Conductor's functionality as Conductor relies C1 to behave a certain way. Are you sure you want to edit C1?"
           )
         ) {
           navigate(`/conductor/settings`)
@@ -144,8 +143,8 @@ export default function CreatePersona() {
     const llm_variant = _.find(llm_module?.meta.variants, (variant) => variant.id === selected_llm.split("/")[1])
     const default_llm_module: LLMModuleT = {
       _v: 1,
-      id: llm_module?.id || "openai",
-      variant_id: llm_variant?.id || "gpt-3.5-turbo",
+      id: llm_module?.id || config.defaults.llm_module.id,
+      variant_id: llm_variant?.id || config.defaults.llm_module.variant_id,
     }
 
     const partial_AIS = AIS.pick({ persona: true })
@@ -253,7 +252,7 @@ export default function CreatePersona() {
             </div>
             <div className={element_class}>
               <div className={headline_class + " mb-3"}>
-                Default LLM model{" "}
+                Default reasoning engine{" "}
                 <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-green-700 text-gray-300">
                   required
                 </span>
@@ -263,9 +262,17 @@ export default function CreatePersona() {
                 className="react-select-container"
                 classNamePrefix="react-select"
                 value={{
-                  id: selected_llm || "openai",
-                  value: selected_llm || "gpt-4",
-                  label: selected_llm || "openai / gpt-4",
+                  id: selected_llm || config.defaults.llm_module.id,
+                  value: selected_llm || `${config.defaults.llm_module.id}/${config.defaults.llm_module.variant_id}`,
+                  label:
+                    `${
+                      _.find(user_state.modules.installed, (mod) => mod.id === selected_llm?.split("/")[0])?.meta.name
+                    } / ${
+                      _.find(
+                        user_state.modules.installed,
+                        (mod) => mod.id === selected_llm?.split("/")[0]
+                      )?.meta.variants?.find((v) => v.id === selected_llm?.split("/")[1])?.name
+                    }` || "Unified LLM Engine / GPT-4",
                 }}
                 onChange={(e: any) => {
                   setSelectedLLM(e.value)

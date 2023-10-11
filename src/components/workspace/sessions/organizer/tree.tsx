@@ -1,5 +1,5 @@
-import { GroupS, FolderS } from "@/data/schemas/workspace"
-import _, { set } from "lodash"
+import { GroupS } from "@/data/schemas/workspace"
+import _ from "lodash"
 import { z } from "zod"
 import { RxDotsHorizontal, RxPlus } from "react-icons/rx"
 import { MdCheck, MdClose, MdOutlineKeyboardArrowDown, MdOutlineKeyboardArrowRight } from "react-icons/md"
@@ -11,12 +11,13 @@ import AppStateActions from "@/data/actions/app"
 import { useEffect, useState } from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import UserActions from "@/data/actions/user"
-import { fieldFocus } from "@/components/libraries/field_focus"
+import { fieldFocus } from "@/libraries/field_focus"
 import { useHotkeys } from "react-hotkeys-hook"
 
 // @ts-ignore
 import EasyEdit from "react-easy-edit"
-import { error } from "@/components/libraries/logging"
+import { error } from "@/libraries/logging"
+import { getOS } from "@/libraries/utilities"
 
 type GroupT = z.infer<typeof GroupS>
 type LoaderT = { app_state: AppStateT; user_state: UserT }
@@ -117,13 +118,13 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   }, [field_edit_id])
 
   // keyboard shortcut for renaming a session
-  useHotkeys("alt+r", () => {
+  useHotkeys(getOS() === "macos" ? "ctrl+r" : "alt+r", () => {
     if (field_edit_id || !session_id) return
     setFieldEditId(session_id || "")
   })
 
   // keyboard shortcut for deleting a session
-  useHotkeys("shift+alt+d", () => {
+  useHotkeys(getOS() === "macos" ? "shift+ctrl+d" : "shift+alt+d", () => {
     if (field_edit_id || !session_id) return
     if (app_state.open_sessions.length === 1) {
       return error({ message: "You can't delete the last session." })
@@ -151,7 +152,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   })
 
   // keyboard shortcut for creating new session
-  useHotkeys("alt+t", () => {
+  useHotkeys(getOS() === "macos" ? "ctrl+t" : "alt+t", () => {
     if (field_edit_id || !session_id) return
     const session = _.find(app_state.open_sessions, { session_id })
     fetcher.submit(

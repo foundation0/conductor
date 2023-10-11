@@ -2,9 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import _ from "lodash"
 import { MessageRowT } from "@/components/workspace/sessions/chat"
 import { Switch, Match } from "react-solid-flow"
-// import MessageIcon from "@/assets/icons/message.svg"
-import { Navigate, useLoaderData, useNavigate, useParams } from "react-router-dom"
-import { createRegexRenderer, RichTextarea } from "rich-textarea"
+import { RichTextarea } from "rich-textarea"
 import RewindIcon from "@/assets/icons/rewind.svg"
 import MessageIcon from "@/assets/icons/send.svg"
 import SessionActions from "@/data/actions/sessions"
@@ -31,15 +29,13 @@ export default function Input({
   gen_in_progress: boolean
   is_new_branch: boolean | string
   genController: any
-  disabled: boolean
+  disabled?: boolean
   input_text?: string
   setMsgUpdateTs: Function
   session: ChatT
 }) {
   const [message, setMessage] = useState<string>("")
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
-  const workspace_id = useParams().workspace_id as string
-  const navigate = useNavigate()
 
   useEffect(() => {
     if (input_text) {
@@ -96,52 +92,53 @@ export default function Input({
               : ""
           }`}
         >
-          <RichTextarea
-            tabIndex={1}
-            id="input"
-            style={{ width: "100%", resize: "none" }}
-            onFocus={(e) => {
-              e.target.focus()
-            }}
-            onChange={(e: any) => {
-              setMessage(e.target.value)
-            }}
-            value={message}
-            autoComplete="off"
-            rows={1}
-            onKeyDown={(e) => {
-              if (e.altKey) {
-                e.preventDefault()
-                document.getElementById("input")?.blur()
-              }
-              const key = e.code + (e.shiftKey ? "Shift" : "") + (e.ctrlKey ? "Ctrl" : "") + (e.altKey ? "Alt" : "")
-              switch (key) {
-                case "Enter":
+          {!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch ? null : (
+            <RichTextarea
+              tabIndex={1}
+              id="input"
+              style={{ width: "100%", resize: "none" }}
+              onFocus={(e) => {
+                e.target.focus()
+              }}
+              onChange={(e: any) => {
+                setMessage(e.target.value)
+              }}
+              value={message}
+              autoComplete="off"
+              rows={1}
+              onKeyDown={(e) => {
+                if (e.ctrlKey) {
                   e.preventDefault()
-                  sendMessage()
-                  break
-                default:
-                  break
+                  // is element focused
+                  if (document.activeElement?.id === "input") document.getElementById("input")?.blur()
+                }
+                const key = e.code + (e.shiftKey ? "Shift" : "") + (e.ctrlKey ? "Ctrl" : "") + (e.altKey ? "Alt" : "")
+                
+                switch (key) {
+                  case "Enter":
+                    e.preventDefault()
+                    sendMessage()
+                    break
+                  default:
+                    break
+                }
+              }}
+              autoHeight
+              disabled={
+                disabled ||
+                gen_in_progress ||
+                (_.last(messages)?.[1].type === "human" && _.last(messages)?.[1].hash !== "1337")
               }
-            }}
-            autoHeight
-            disabled={
-              disabled ||
-              gen_in_progress ||
-              (_.last(messages)?.[1].type === "human" && _.last(messages)?.[1].hash !== "1337")
-            }
-            className={`flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture ${
-              !gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch ? "hidden" : ""
-            }`}
-            placeholder={
-              disabled ||
-              gen_in_progress ||
-              (_.last(messages)?.[1].type === "human" && _.last(messages)?.[1].hash !== "1337")
-                ? "thinking..."
-                : "Type a message"
-            }
-          />
-
+              className={`flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture `}
+              placeholder={
+                disabled ||
+                gen_in_progress ||
+                (_.last(messages)?.[1].type === "human" && _.last(messages)?.[1].hash !== "1337")
+                  ? "thinking..."
+                  : "Type a message"
+              }
+            />
+          )}
           <Switch>
             <Match when={!gen_in_progress && _.last(messages)?.[1].hash === "1337"}>
               <button type="submit" className={button_class}>
@@ -163,9 +160,9 @@ export default function Input({
               <div className="flex flex-row gap-2">
                 <button
                   className="tooltip tooltip-top"
-                  data-tip={`Total cost: $${_.sumBy(session.ledger, (l) => l.cost_usd).toFixed(
+                  data-tip={`Total cost: $${_.sumBy(session.receipts, (l) => l.cost_usd).toFixed(
                     2
-                  )}\nTotal tokens used: ${_.sumBy(session.ledger, (l) => l.tokens).toFixed(0)}`}
+                  )}\nTotal tokens used: ${_.sumBy(session.receipts, (l) => l.details.input.tokens + l.details.output.tokens).toFixed(0)}`}
                   onClick={async (e) => {
                     e.preventDefault()
                   }}
@@ -186,12 +183,12 @@ export default function Input({
                   <img src={RewindIcon} className="w-5 h-5 saturate-0 hover:saturate-100" />
                 </button>
                 <button type="submit" className={button_class + " tooltip tooltip-top"} data-tip="Send message">
-                  <img src={MessageIcon} className="w-6 h-6" />
+                  <img src={MessageIcon} className="w-6 h-6 rotate-90" />
                 </button>
               </div>
             </Match>
             <Match when={!gen_in_progress && _.last(messages)?.[1].type === "human" && !is_new_branch}>
-              <button type="submit" className={button_class + " text-xs"}>
+              <button type="submit" className={button_class + " text-xs pl-4"}>
                 Resend message
               </button>
             </Match>

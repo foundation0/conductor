@@ -1,46 +1,85 @@
 import WorkspaceSelector from "@/components/workspace/selector"
-import { Outlet, useLoaderData, useNavigate } from "react-router-dom"
+import { Outlet, useBeforeUnload, useLoaderData, useNavigate } from "react-router-dom"
 import PromptIcon from "@/assets/prompt.svg"
 import { useLocation } from "react-router-dom"
 import _ from "lodash"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { RiHashtag } from "react-icons/ri"
-import { useAuth } from "../hooks/useAuth"
-import { setActiveUser } from "../libraries/active_user"
-import { ModuleList } from "@/modules"
+import { useAuth } from "@/components/hooks/useAuth"
+import { setActiveUser } from "@/libraries/active_user"
+import { getModules } from "@/modules"
 import { ModuleT } from "@/data/schemas/modules"
 import UserActions from "@/data/actions/user"
+import { AIsT } from "@/data/schemas/ai"
+import AIActions from "@/data/actions/ai"
+import config from "@/config"
+import { del as delLS, get as getLS } from "@/data/storage/localStorage"
+import { ConvertGuest } from "@/components/user/convert_guest"
+import { BuyCredits } from "../user/buy_credits"
 
 export default function Conductor() {
-  const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
+  const { app_state, user_state, ai_state } = useLoaderData() as {
+    app_state: AppStateT
+    user_state: UserT
+    ai_state: AIsT
+  }
   const [active_sessions_elements, setActiveSessionsElements] = useState<any>([])
   const location = useLocation()
   const auth = useAuth()
   const navigate = useNavigate()
 
+  const [guest_mode, setGuestMode] = useState<boolean>(getLS({ key: "guest-mode" }))
+
+  const unload = useCallback(() => {
+    // remove guest-mode if it exists
+    if (getLS({ key: "guest-mode" })) {
+      auth.signout(() => {})
+      delLS({ key: "guest-mode" })
+    }
+    return true
+  }, [])
+  useBeforeUnload(unload)
+
   useEffect(() => {
     // upgrade user's modules
-    const built_in_modules = ModuleList()
-    const module_specs = built_in_modules.map((m) => m.specs)
-    let updated_modules: ModuleT[] = _.merge([], module_specs, user_state.modules.installed)
+    getModules().then((module_specs) => {
+      let updated_modules: ModuleT[] = _.uniqBy([...module_specs, ...user_state.modules.installed], "id")
 
-    // in all cases, update icon and author
-    updated_modules = updated_modules.map((m) => {
-      m.meta.icon = module_specs.find((bm) => bm.id === m.id)?.meta.icon || m.meta.icon
-      m.meta.author = module_specs.find((bm) => bm.id === m.id)?.meta.author || m.meta.author
-      return m
+      // in all cases, update icon and author
+      updated_modules = updated_modules.map((m) => {
+        m.meta.icon = module_specs.find((bm) => bm.id === m.id)?.meta.icon || m.meta.icon
+        m.meta.author = module_specs.find((bm) => bm.id === m.id)?.meta.author || m.meta.author
+        // mark openai is inactive
+        if (m.id === "openai") {
+          m.active = false
+        }
+        return m
+      })
+      // if user has no c1 installed, install it
+      let ais = [...(user_state.ais || [])]
+      if (!ais?.find((ai) => ai.id === "c1")) {
+        ais.push({ id: "c1", status: "active" })
+      }
+
+      // upgrade all workspace default llms to use ule
+      const upgraded_workspaces = user_state.workspaces.map((w) => {
+        w.defaults.llm_module = { id: config.defaults.llm_module.id, variant: config.defaults.llm_module.variant_id }
+        return w
+      })
+      UserActions.updateUser({ modules: { installed: updated_modules }, ais, workspaces: upgraded_workspaces })
+
+      // upgrade all AIs' default_llm_module using openai module to use ULE
+      ai_state.forEach((ai) => {
+        if (ai?.default_llm_module?.id === "openai") {
+          ai.default_llm_module = { _v: 1, ...config.defaults.llm_module }
+          AIActions.update({ ai })
+        }
+        return ai
+      })
     })
-
-    // if user has no c1 installed, install it
-    let ais = [...(user_state.ais || [])]
-    if (!ais?.find((ai) => ai.id === "c1")) {
-      ais.push({ id: "c1", status: "active" })
-    }
-
-    UserActions.updateUser({ modules: { installed: updated_modules }, ais })
   }, [])
 
   useEffect(() => {
@@ -89,30 +128,48 @@ export default function Conductor() {
   }, [JSON.stringify([app_state.active_sessions])])
 
   return (
-    <main id="Conductor" className={`flex flex-row flex-1 m-0 p-0 dark h-full bg-[#111]/60 mt-0.5`}>
-      <WorkspaceSelector />
-      <div id="WorkspaceView" className="flex flex-1 m-0.5 overflow-y-auto">
-        {location.pathname !== "/conductor/" ? (
-          <Outlet />
-        ) : (
-          <div className="flex justify-center items-center w-full">
-            <div>
-              <div className="flex justify-center items-center w-full">
-                <img src={PromptIcon} className="w-48 h-48 opacity-10" />
-              </div>
-              {user_state?.experiences?.find((e) => e.id === "onboarding/v1") && (
-                <>
-                  <div className="text-center text-2xl font-semibold text-zinc-200">Welcome to Prompt</div>
-                  <div className="mt-6 text-center text-md font-semibold text-zinc-400 mb-2">
-                    Continue where you left off
-                  </div>
-                  <div className="flex flex-col gap-2">{active_sessions_elements}</div>
-                </>
-              )}
-            </div>
+    <div className={`flex flex-col flex-1 m-0 p-0 dark h-full h-[100dvh] bg-[#111]/60 mt-0.5`}>
+      {guest_mode && (
+        <div className="h-6 w-full flex justify-center items-center text-[11px] font-semibold text-zinc-300">
+          <div className="text-yellow-500">You are using guest mode, no history is saved</div>
+          <div className="ml-2 text-zinc-500"> ➜ </div>
+          <div
+            className="underline hover:no-underline ml-2 cursor-pointer"
+            onClick={() => {
+              ;(window as any)["ConvertGuest"].showModal()
+            }}
+          >
+            Convert to a free Conductor account and unlock history.
           </div>
-        )}
-      </div>
-    </main>
+        </div>
+      )}
+      <main id="Conductor" className={`flex flex-row flex-1 m-0 p-0 h-[100dvh] dark bg-[#111]/60 mt-0.5`}>
+        <WorkspaceSelector />
+        <div id="WorkspaceView" className="flex flex-1 m-0.5 overflow-y-auto">
+          {location.pathname !== "/conductor/" ? (
+            <Outlet />
+          ) : (
+            <div className="flex justify-center items-center w-full">
+              <div>
+                <div className="flex justify-center items-center w-full">
+                  <img src={PromptIcon} className="w-48 h-48 opacity-10" />
+                </div>
+                {user_state?.experiences?.find((e) => e.id === "onboarding/v1") && (
+                  <>
+                    <div className="text-center text-2xl font-semibold text-zinc-200">Welcome to Conductor</div>
+                    <div className="mt-6 text-center text-md font-semibold text-zinc-400 mb-2">
+                      Continue where you left off
+                    </div>
+                    <div className="flex flex-col gap-2">{active_sessions_elements}</div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        <ConvertGuest />
+        <BuyCredits />
+      </main>
+    </div>
   )
 }

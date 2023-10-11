@@ -1,8 +1,19 @@
 import React from "react"
-import { useAuth } from "../hooks/useAuth"
+import { useAuth } from "@/components/hooks/useAuth"
 import { Navigate, useLocation } from "react-router-dom"
-import { buf2hex, createHash, decrypt, encrypt, getAddress, keyPair, randomBytes, signMessage } from "@/security/common"
+import {
+  buf2hex,
+  createHash,
+  decrypt,
+  encrypt,
+  getAddress,
+  hex2buf,
+  keyPair,
+  randomBytes,
+  signMessage,
+} from "@/security/common"
 import { get, set } from "./cloudflare"
+import { get as getKV, set as setKV} from "idb-keyval"
 import { pack } from "msgpackr"
 import { verify } from "@noble/secp256k1"
 import { BufferObjectS, UserS } from "@/data/schemas/user"
@@ -10,6 +21,9 @@ import { z } from "zod"
 import { error, ph } from "./logging"
 import { generateUser } from "./user"
 import UsersActions from "@/data/actions/users"
+import { set as setLS } from "@/data/storage/localStorage"
+import { UserT } from "@/data/loaders/user"
+import { getRemoteKey } from "@/data/storage/IDB"
 
 interface AuthContextType {
   user: any
@@ -49,17 +63,21 @@ export async function createUser({
   username,
   password,
   reminder,
-  email
+  email,
+  guest,
+  custom_master_key,
 }: {
   username: string
   password: string
   reminder: string
   email?: string
+  guest?: boolean
+  custom_master_key?: string
 }) {
   const buffer_key = buf2hex({ input: createHash({ str: username }) })
   const user_exists = await get({ key: buffer_key })
   if (user_exists) return error({ message: "user already exists" })
-  const master_key_buf = randomBytes(64)
+  const master_key_buf = custom_master_key ? hex2buf({ input: custom_master_key }) : randomBytes(64)
   const master_key = buf2hex({ input: master_key_buf })
   const user_key = buf2hex({ input: createHash({ str: master_key + username }) })
   const master_password = buf2hex({ input: createHash({ str: master_key + "master-password" }) })
@@ -77,7 +95,7 @@ export async function createUser({
     public_key: buf2hex({ input: key_pair.public_key }),
     meta: {
       username,
-      email
+      email,
     },
   }
   const user_parsed = UserS.parse(user)
@@ -118,14 +136,16 @@ export async function createUser({
   } */
 
   // store user locally
-  UsersActions.addUser({
-    id: user.id as string,
-    name: username,
-    username,
-    last_seen: new Date().getTime(),
-  })
+  if (!guest) {
+    UsersActions.addUser({
+      id: user.id as string,
+      name: username,
+      username,
+      last_seen: new Date().getTime(),
+    })
 
-  if(email) ph().capture("_email", { email })
+    if (email) ph().capture("_email", { email })
+  }
 
   return { user, buffer }
 }
@@ -176,4 +196,20 @@ export async function authenticateUser({ username, password }: { username: strin
   if (!UserS.safeParse(opened_user).success) return error({ message: "invalid user" })
 
   return opened_user
+}
+
+export async function convertGuestData({ guest_user, user }: { guest_user: UserT; user: UserT }) {
+  // go over each table and copy/paste data to new table
+
+  const tables = ["ais", "appstate", "notepads", "sessions", "user"]
+  for (const name of tables) {
+    const key = `${guest_user.meta.username}:${name}`
+    const data = await getKV(key)
+    if(!data) return error({ message: "Guest data not found", data: { key } })
+    if(name === 'user') {
+      data.meta = user.meta
+    }
+    await setKV(`${user.meta.username}:${name}`, data)
+  }
+  return true
 }

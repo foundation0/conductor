@@ -8,7 +8,7 @@ import _ from "lodash"
 import { initLoaders } from "@/data/loaders"
 import UserActions from "@/data/actions/user"
 import { LogItemS } from "@/data/schemas/app"
-import { error } from "@/components/libraries/logging"
+import { error } from "@/libraries/logging"
 
 async function getActiveWorkspace() {
   const { AppState, UserState } = await initLoaders()

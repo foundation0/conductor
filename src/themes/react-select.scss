@@ -2,8 +2,11 @@
   @apply text-xs border-0 rounded ;
   @apply text-zinc-200;
   .react-select__control {
-    @apply bg-zinc-900 border-0 cursor-pointer ;
+    @apply bg-zinc-900 border-0 cursor-pointer w-full;
     .react-select__value-container {
+      .react-select__input-container {
+        @apply text-zinc-200 #{!important};
+      }
       .react-select__single-value {
         @apply text-zinc-200 font-semibold #{!important};
       }

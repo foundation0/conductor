@@ -9,7 +9,7 @@ import { sha3_256 } from "@noble/hashes/sha3"
 import { getPublicKey, verify, signAsync } from "@noble/secp256k1"
 import { pack, unpack } from "msgpackr"
 import { KeyPairS, SecurePasswordS, VerifyPasswordS, EncryptS, DecryptS } from "@/data/schemas/security"
-import { error } from "@/components/libraries/logging"
+import { error } from "@/libraries/logging"
 import sodium from "sodium-javascript"
 type Hex = Uint8Array | string
 ;(async () => {

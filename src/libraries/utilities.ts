@@ -1,7 +1,14 @@
-import { ZodSchema, ZodType } from "zod"
+import { ZodSchema } from "zod"
 import { error } from "./logging"
 import _ from "lodash"
 import b4a from "b4a"
+import { OSesT } from "@/data/schemas/misc"
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+ 
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 export async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -51,12 +58,41 @@ export function fileToDataURL({ file, type }: { file: Uint8Array | string; type:
   return URL.createObjectURL(blob)
 }
 
-export function getOS(): string {
-  let OSName: string = "Unknown OS"
-  if (navigator.userAgent.indexOf("Win") !== -1) OSName = "Windows"
-  if (navigator.userAgent.indexOf("Mac") !== -1) OSName = "MacOS"
-  if (navigator.userAgent.indexOf("X11") !== -1) OSName = "UNIX"
-  if (navigator.userAgent.indexOf("Linux") !== -1) OSName = "Linux"
+export function getOS(): OSesT {
+  let OSName: OSesT = "unknown os"
+  if (navigator.userAgent.indexOf("Win") !== -1) OSName = "windows"
+  if (navigator.userAgent.indexOf("Mac") !== -1) OSName = "macos"
+  if (navigator.userAgent.indexOf("X11") !== -1) OSName = "unix"
+  if (navigator.userAgent.indexOf("Linux") !== -1) OSName = "linux"
 
   return OSName
+}
+
+// function to detect numbers in strings
+export function isNumeric(str: string) {
+  if (typeof str != "string") return false // we only process strings!
+  // make sure it keeps integers and floats as floats
+  return !isNaN(str as any) && !isNaN(parseFloat(str))
+}
+
+// parse floats into integers if they are whole numbers
+export function parseNumber(str: string) {
+  if (typeof str != "string") return str // we only process strings!
+  // make sure it keeps integers and floats as floats
+  if (isNumeric(str)) {
+    if (str.indexOf(".") !== -1) {
+      return parseFloat(str)
+    }
+    return parseInt(str)
+  }
+  return str
+}
+
+// turn string booleans into booleans
+export function parseBoolean(str: any) {
+  if (typeof str != "string") return str // we only process strings!
+  // make sure it keeps integers and floats as floats
+  if (str === "true") return true
+  if (str === "false") return false
+  return str
 }

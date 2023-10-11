@@ -1,4 +1,4 @@
-import { ph } from "@/components/libraries/logging"
+import { ph } from "@/libraries/logging"
 import { useEffect } from "react"
 
 export default function WorkspaceOrganizer() {

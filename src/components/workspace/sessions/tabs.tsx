@@ -1,10 +1,9 @@
 import { OpenSessionS } from "@/data/schemas/app"
 import { FolderS, GroupS, WorkspaceS } from "@/data/schemas/workspace"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { z } from "zod"
-import _, { create } from "lodash"
+import _ from "lodash"
 import { RxPlus } from "react-icons/rx"
-import { MdInbox } from "react-icons/md"
 import { RiHashtag } from "react-icons/ri"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
@@ -13,7 +12,7 @@ import { Link } from "react-router-dom"
 import AppStateActions from "@/data/actions/app"
 import { useHotkeys } from "react-hotkeys-hook"
 import { BiNotepad } from "react-icons/bi"
-import eventEmitter from "@/components/libraries/events"
+import eventEmitter from "@/libraries/events"
 
 export default function Tabs({
   setShowNotepad: setShowNotepad,
@@ -66,7 +65,7 @@ export default function Tabs({
         if (!s) return false
         return (
           <Link
-            className={`flex flex-row min-w-[71px] max-w-[200px] flex-nowrap flex-shrink border-transparent border-0  tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom transition-colors ph-no-capture ${
+            className={`flex flex-row min-w-[50px] max-w-[200px] flex-nowrap flex-shrink border-transparent border-0 tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom transition-colors ph-no-capture ${
               session_id === s.id
                 ? "tab-active bg-zinc-900/50 text-zinc-200"
                 : " bg-zinc-800 hover:bg-zinc-900/50 text-zinc-600 hover:text-zinc-300"

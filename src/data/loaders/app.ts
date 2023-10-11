@@ -3,9 +3,9 @@ import { AppStateS } from "../schemas/app"
 import * as z from "zod"
 import { getId } from "@/security/common"
 import { nanoid } from "nanoid"
-import { getActiveUser } from "@/components/libraries/active_user"
+import { getActiveUser } from "@/libraries/active_user"
 import _ from "lodash"
-import { error } from "@/components/libraries/logging"
+import { error } from "@/libraries/logging"
 
 export type AppStateT = z.infer<typeof AppStateS>
 export const state = async () =>

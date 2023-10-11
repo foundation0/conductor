@@ -1,11 +1,11 @@
 import Input from "@/components/workspace/sessions/chat/input"
 import { SessionsT, TextMessageT } from "@/data/loaders/sessions"
-import _, { get, set } from "lodash"
+import _, { update } from "lodash"
 import AutoScroll from "@brianmcallister/react-auto-scroll"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import { nanoid } from "nanoid"
-import { buildMessageTree } from "@/components/libraries/compute_message_chain"
+import { buildMessageTree } from "@/libraries/compute_message_chain"
 import { useLoaderData, useNavigate, useParams } from "react-router-dom"
 import SessionsActions from "@/data/actions/sessions"
 import { initLoaders } from "@/data/loaders"
@@ -14,22 +14,20 @@ import { UserT } from "@/data/loaders/user"
 import { FaUser } from "react-icons/fa"
 import { ModuleS } from "@/data/schemas/modules"
 import { z } from "zod"
-import { Link } from "react-router-dom"
-import generate_llm_module_options from "@/components/libraries/generate_llm_module_options"
 import { WorkspaceS } from "@/data/schemas/workspace"
-import { fieldFocus } from "@/components/libraries/field_focus"
+import { fieldFocus } from "@/libraries/field_focus"
 import { addMessage } from "./add_message"
 import PromptIcon from "@/assets/prompt.svg"
 import { autoRename } from "./auto_renamer"
 import UserActions from "@/data/actions/user"
 import { AIsT } from "@/data/schemas/ai"
-import generate_ai_options from "@/components/libraries/generate_ai_options"
-import { error } from "@/components/libraries/logging"
-import Select from "react-select"
-import { getAvatar } from "@/components/libraries/ai"
-import { RiAddCircleFill } from "react-icons/ri"
-import { getOS } from "@/components/libraries/utilities"
+import { error } from "@/libraries/logging"
+import { getAvatar } from "@/libraries/ai"
 import { KBD } from "@/components/misc/kbd"
+import config from "@/config"
+import SessionActions from "@/data/actions/sessions"
+import { AISelector } from "./ai_selector"
+import { TbSelector } from "react-icons/tb"
 
 const padding = 50
 
@@ -141,12 +139,24 @@ export default function Chat() {
 
   // set module
   useEffect(() => {
-    Module(session?.settings.module.id).then(module => {
+    Module(session?.settings.module.id).then(async (module) => {
+      if (!module && session) {
+        module = await Module(config.defaults.llm_module.id)
+        if (!module) return error({ message: "Default module not found" })
+        // update session default module
+        const new_session = _.cloneDeep(session)
+        new_session.settings.module = {
+          id: config.defaults.llm_module.id,
+          variant: config.defaults.llm_module.variant_id || "",
+        }
+        await SessionActions.updateSession({ session_id, session: new_session })
+        navigate(`/conductor/${workspace_id}/${session_id}`)
+      }
       if (!module) return
       setModule(module)
       setTimeout(() => fieldFocus({ selector: "#input" }), 200)
     })
-  }, [session?.settings.module])
+  }, [JSON.stringify([session?.settings.module, session])])
 
   // change session's active ai
   const handleAIChange = async ({ value }: { value: string }) => {
@@ -196,7 +206,7 @@ export default function Chat() {
 
     processed_messages.forEach((ms) => {
       const m = ms[1]
-      if (!m.source.match(/user/) && module.specs.meta.vendor?.name === m.source.replace("ai:", "").split("/")[0]) {
+      if (!m.source.match(/user/) && module.specs.id === m.source.replace("ai:", "").split("/")[0]) {
         const user_variant_settings = _.find(user_state.modules.installed, {
           id: module.specs.id,
         })?.meta?.variants?.find((v: any) => v.id === m.source.split("/")[1])
@@ -246,6 +256,7 @@ export default function Chat() {
     const ai_state = await AIState.get()
     const sessions_state = await SessionState.get()
     const session = sessions_state.active[session_id]
+    if (!session) return
     setSession(session)
     setInstalledAIs(ai_state)
     // deal with legacy sessions without AIs
@@ -276,7 +287,7 @@ export default function Chat() {
     }
     const active_session = _.find(app_state.open_sessions, { session_id: session_id })
     if (_.size(msgs) >= 2 && _.size(msgs) <= 5 && session_name === "Untitled" && active_session) {
-      const generated_session_name = await autoRename({ messages: msgs, module, api_key })
+      const generated_session_name = await autoRename({ session_id, messages: msgs, user_id: user_state.id })
       if (generated_session_name) {
         // update session name
         await UserActions.renameItem({
@@ -537,6 +548,10 @@ export default function Chat() {
         setBranchParentId,
         appendOrUpdateProcessedMessage,
         addRawMessage,
+        onError: async () => {
+          await updateMessages()
+          navigate(`/conductor/${workspace_id}/${session_id}`)
+        },
       },
     })
     if (!msg_ok) {
@@ -547,80 +562,36 @@ export default function Chat() {
     setTimeout(() => fieldFocus({ selector: "#input" }), 200)
   }
 
-  // create AI selector popover
-  const AISelector = () => {
-    const mod = _.find(user_state.modules.installed, { id: session.settings.module.id })
-    const variant = _.find(mod?.meta?.variants, { id: session.settings.module.variant })
-    const active_llm_module_text = `${mod?.meta.vendor.name} / ${variant?.id} ${
-      variant?.context_len && `(~${_.round(variant?.context_len / 5, 0)} words limit per message)`
-    }`
-    return (
-      <div
-        id="popoverContent"
-        className="z-10 inline-block text-sm gradient-bg border-2 border-zinc-700 shadow-md rounded-lg"
-      >
-        <div className="px-3 py-2 rounded-t-lg">
-          <h3 className="font-semibold text-center">Choose your AI...</h3>
+  const AISelectorButton = (
+    <label
+      tabIndex={0}
+      className="flex px-3 py-2 text-white font-semibold border-2 border-zinc-900/80 bg-zinc-800 hover:bg-zinc-700/30 transition-all rounded-xl cursor-pointer w-[300px]"
+    >
+      <div className="flex flex-row flex-grow flex-1 gap-2">
+        <div className="flex flex-col  items-center justify-center">
+          <img
+            src={getAvatar({ seed: _.find(ai_state, { id: session?.settings?.ai })?.meta?.name || "" })}
+            className={`border-0 rounded-full w-8 aspect-square `}
+          />
         </div>
-        <div className="flex flex-col gap-2 px-3 py-2">
-          <div className="flex flex-row flex-1 items-center">
-            <div className="flex flex-1 text-sm font-semibold text-zinc-500">Available AIs</div>
-            <Link
-              className="text-xs font-medium tooltip tooltip-top"
-              data-tip="Create new AI"
-              to={`/conductor/ai/create`}
-            >
-              <RiAddCircleFill className="w-4 h-4 text-zinc-500 hover:text-zinc-300" />
-            </Link>
+        <div className="flex flex-row flex-grow flex-1 items-center text-zinc-500 hover:text-zinc-200 transition-all">
+          <div className="flex flex-col flex-1 text-zinc-200">
+            {_.find(installed_ais, { id: session?.settings?.ai })?.persona.name}
           </div>
-          <Select
-            className="react-select-container"
-            classNamePrefix="react-select"
-            onChange={(e: any) => {
-              handleAIChange({
-                value: e.value,
-              })
-            }}
-            value={{
-              label: `${
-                _.find(installed_ais, { id: session.settings.ai })?.persona.name ||
-                _.first(installed_ais)?.persona.name ||
-                "click to select"
-              }`,
-              value: `${session.settings.ai}`,
-            }}
-            placeholder="Choose AI..."
-            options={generate_ai_options({
-              user_state,
-              ai_state: installed_ais,
-              selected: `${session.settings.ai}`,
-              return_as_object: true,
-            })}
-          ></Select>
-          <div className="text-sm font-semibold text-zinc-500">Available language models</div>
-          <Select
-            className="react-select-container"
-            classNamePrefix="react-select"
-            onChange={(e: any) => {
-              handleModuleChange({
-                value: e.value,
-              })
-            }}
-            value={{
-              label: `${active_llm_module_text}`,
-              value: `${session.settings.module.id}/${session.settings.module.variant}`,
-            }}
-            placeholder="Choose LLM model..."
-            options={generate_llm_module_options({
-              user_state,
-              selected: `${session.settings.module.id}/${session.settings.module.variant}`,
-              return_as_object: true,
-            })}
-          ></Select>
+          <div className="flex flex-col">
+            <TbSelector className="" />
+          </div>
+          {/* <div className="flex flex-row text-[10px] font-thin text-zinc-500">
+        {`using ${
+          _.find(user_state?.modules?.installed, {
+            id: session.settings.module.id,
+          })?.meta?.variants?.find((v) => v.id === session.settings.module.variant)?.name
+        }`}
+      </div> */}
         </div>
       </div>
-    )
-  }
+    </label>
+  )
 
   if (!session || !module) return null
   return (
@@ -629,39 +600,20 @@ export default function Chat() {
         <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
           {processed_messages && processed_messages?.length > 0 ? (
             <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4 pt-2">
-              <div className="dropdown w-[300px]">
-                <label
-                  tabIndex={0}
-                  className="flex px-3 py-2 text-white font-semibold border-2 border-zinc-900/80 bg-zinc-800 rounded-xl cursor-pointer"
-                >
-                  <div className="flex flex-row gap-2">
-                    <div className="flex flex-col items-center justify-center">
-                      <img
-                        src={getAvatar({ seed: _.find(ai_state, { id: session.settings.ai })?.meta?.name || "" })}
-                        className={`border-0 rounded-full w-8 aspect-square `}
-                        /* style={{
-                          borderColor:
-                            _.find(
-                              user_state.modules.installed,
-                              (m) => m.id === session.settings.module.id
-                            )?.meta?.variants?.find((v) => v.id === session.settings.module.variant)?.color ||
-                            "#00000000",
-                        }} */
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex flex-row">
-                        {_.find(installed_ais, { id: session.settings.ai })?.persona.name}
-                      </div>
-                      <div className="flex flex-row text-[10px] font-thin">{session.settings.module.variant}</div>
-                    </div>
-                  </div>
-                </label>
+              <div className="dropdown">
+                {AISelectorButton}
+
                 <div
                   tabIndex={0}
-                  className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content w-[300px]"
+                  className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content md:-left-[25%]"
                 >
-                  <AISelector />
+                  <AISelector
+                    installed_ais={installed_ais}
+                    session={session}
+                    user_state={user_state}
+                    handleAIChange={handleAIChange}
+                    handleModuleChange={handleModuleChange}
+                  />
                 </div>
               </div>
             </div>
@@ -675,93 +627,68 @@ export default function Chat() {
                 participants={participants}
                 paddingBottom={input_height + 30}
                 msgs_in_mem={msgs_in_mem}
+                gen_in_progress={gen_in_progress}
+                ai={_.find(ai_state, { id: session.settings.ai }) as AIsT[0]}
+                module={
+                  _.find(user_state?.modules?.installed, {
+                    id: session.settings.module.id,
+                  }) as UserT["modules"]["installed"][0]
+                }
               />
-            ) : api_key ? (
+            ) : (
               <div id="BlankChat" className="flex h-full flex-col justify-center items-center">
                 <img src={PromptIcon} className="w-52 h-52 mb-4 opacity-5" />
                 <div className="flex text-zinc-500 font-semibold text-sm pb-2">Select AI to chat with...</div>
                 <div className="flex">
-                  <div className="dropdown w-[300px]">
-                    <label
-                      tabIndex={0}
-                      className="flex px-3 py-2 text-white font-semibold border-2 border-zinc-900/80 bg-zinc-800 rounded-xl cursor-pointer"
-                    >
-                      <div className="flex flex-row gap-2">
-                        <div className="flex flex-col items-center justify-center">
-                          <img
-                            src={getAvatar({ seed: _.find(ai_state, { id: session.settings.ai })?.meta?.name || "" })}
-                            className={`border-0 rounded-full w-8 aspect-square `}
-                            /* style={{
-                              borderColor:
-                                _.find(
-                                  user_state.modules.installed,
-                                  (m) => m.id === session.settings.module.id
-                                )?.meta?.variants?.find((v) => v.id === session.settings.module.variant)?.color ||
-                                "#00000000",
-                            }} */
-                          />
-                        </div>
-                        <div className="flex flex-col">
-                          <div className="flex flex-row">
-                            {_.find(installed_ais, { id: session.settings.ai })?.persona.name}
-                          </div>
-                          <div className="flex flex-row text-[10px] font-thin">{session.settings.module.variant}</div>
-                        </div>
-                      </div>
-                    </label>
+                  <div className="dropdown">
+                    {AISelectorButton}
+
                     <div
                       tabIndex={0}
-                      className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content w-[300px]"
+                      className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content md:-left-[25%]"
                     >
-                      <AISelector />
+                      <AISelector
+                        installed_ais={installed_ais}
+                        session={session}
+                        user_state={user_state}
+                        handleAIChange={handleAIChange}
+                        handleModuleChange={handleModuleChange}
+                      />
                     </div>
                   </div>
                 </div>
                 <div className="flex mt-5 flex-col justify-center items-center gap-4">
                   <div className="text-xs text-zinc-400">
-                    <KBD fnk="alt" ck="T" desc="new session" />
+                    <KBD fnk={{ windows: "alt", macos: "ctrl" }} ck="T" desc="new session" />
                   </div>
                   <div className="text-xs text-zinc-400">
-                    <KBD fnk="alt" ck="R" desc="rename session" />
+                    <KBD fnk={{ windows: "alt", macos: "ctrl" }} ck="R" desc="rename session" />
                   </div>
                   <div className="text-xs text-zinc-400">
-                    <KBD fnk="alt" ck="W" desc="close session" />
+                    <KBD fnk={{ windows: "alt", macos: "ctrl" }} ck="W" desc="close session" />
                   </div>
                   <div className="text-xs text-zinc-400">
-                    <KBD fnk="shift" fnk2="alt" ck="D" desc="delete session" />
+                    <KBD
+                      fnk={{ windows: "shift", macos: "shift" }}
+                      fnk2={{ windows: "alt", macos: "ctrl" }}
+                      ck="D"
+                      desc="delete session"
+                    />
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex justify-center items-center h-full flex-col gap-2">
-                {user_state?.experiences?.find((e) => e.id === "onboarding/v1") ? (
-                  <>
-                    <div className="text-zinc-500">
-                      No API key for {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
-                    </div>
-                    <div className="text-sm">
-                      <Link to="/conductor/settings">
-                        Setup {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
-                      </Link>
-                    </div>
-                  </>
-                ) : (
-                  <img src={PromptIcon} className="w-48 h-48 opacity-10" />
-                )}
               </div>
             )}
           </div>
         </AutoScroll>
       </div>
       <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-        <div id="Input" ref={eInput} className={`max-w-screen-lg w-full my-4 mx-4 ${!api_key ? "opacity-25" : ""}`}>
+        <div id="Input" ref={eInput} className={`max-w-screen-lg w-full my-4 mx-4`}>
           <Input
             send={send}
             session_id={session_id}
             messages={processed_messages}
             gen_in_progress={gen_in_progress}
             is_new_branch={branch_parent_id}
-            disabled={!api_key}
             genController={genController}
             input_text={input_text}
             setMsgUpdateTs={setMsgUpdateTs}
@@ -771,4 +698,17 @@ export default function Chat() {
       </div>
     </div>
   )
+}
+
+{
+  /* <>
+  <div className="text-zinc-500">
+    No API key for {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
+  </div>
+  <div className="text-sm">
+    <Link to="/conductor/settings">
+      Setup {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
+    </Link>
+  </div>
+</> */
 }

@@ -1,7 +1,7 @@
 import { store } from "@/data/storage/IDB"
 import { NotepadsS } from "@/data/schemas/notepad"
 import * as z from "zod"
-import { getActiveUser } from "@/components/libraries/active_user"
+import { getActiveUser } from "@/libraries/active_user"
 
 export type NotepadsT = z.infer<typeof NotepadsS>
 

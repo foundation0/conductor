@@ -1,7 +1,7 @@
 import { createBrowserRouter, useNavigate } from "react-router-dom"
 import { ConductorR } from "@/components/conductor/routes"
 import ErrorPage from "./error"
-import { AddExistingUserR, LocalUsersR, OnboardingR } from "./components/user/routes"
+import { AddExistingUserR, GuestUserR, LocalUsersR, OnboardingR } from "./components/user/routes"
 import { useEffect } from "react"
 
 function RedirectToConductor() {
@@ -23,7 +23,8 @@ const router = createBrowserRouter([
   ConductorR,
   LocalUsersR,
   OnboardingR,
-  AddExistingUserR
+  AddExistingUserR,
+  GuestUserR
 ])
 
 export default router

@@ -13,6 +13,7 @@ const API = {
   },
   async addUser(user: z.infer<typeof PublicUserS>) {
     const { UsersState } = await initLoaders()
+    if(user.name.match(/guest-/)) return null
     const users = await API.getUsers()
     await UsersState.set({ ...users, [user.id]: user })
   },

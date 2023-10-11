@@ -1,10 +1,10 @@
 import { initLoaders } from "@/data/loaders"
 import _ from "lodash"
-import eventEmitter from "@/components/libraries/events"
-import { error, ph } from "@/components/libraries/logging"
+import eventEmitter from "@/libraries/events"
+import { error, ph } from "@/libraries/logging"
 import { AIS, AIT } from "../schemas/ai"
 import { getId } from "@/security/common"
-import { getActiveUser } from "@/components/libraries/active_user"
+import { getActiveUser } from "@/libraries/active_user"
 import UserActions from "@/data/actions/user"
 import { UserT } from "../loaders/user"
 

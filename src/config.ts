@@ -5,14 +5,23 @@ function override(key: string) {
     else return false
   } else return false
 }
-
 const config = {
+  defaults: {
+    llm_module: {
+      id: "ule",
+      variant_id: "openai_gpt-3.5-turbo",
+    }
+  },
   DB: {
-    URI: override("DB_URI") || "https://db.promptc0.com/",
+    URI: override("DB_URI") || import.meta.env.PROD ? "https://db.promptc0.com/" : "http://localhost:6002/",
     CF: {
       get_limit: 1000,
       set_limit: 5000,
     }
+  },
+  services: {
+    ule_URI: override("ULE_URI") || import.meta.env.PROD ? "wss://ule.promptc0.com" : "ws://localhost:7001",
+    wallet_URI: override("WALLET_URI") || import.meta.env.PROD ? "https://wallet.promptc0.com" : "http://localhost:6001",
   },
   features: {
     local_encryption: false // DO NOT CHANGE THIS AFTER INITIAL SETUP OR YOU WILL LOSE ALL YOUR DATA - TODO: functions to migrate data from non-encrypted to encrypted

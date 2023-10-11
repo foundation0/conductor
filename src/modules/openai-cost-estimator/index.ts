@@ -2,7 +2,7 @@ import { ModuleS } from "@/data/schemas/modules"
 import { z } from "zod"
 import { set, get } from "@/data/actions/cache"
 import { buf2hex, createHash } from "@/security/common"
-import { error } from "@/components/libraries/logging"
+import { error } from "@/libraries/logging"
 
 const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" })
 

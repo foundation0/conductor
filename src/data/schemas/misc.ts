@@ -1,0 +1,1 @@
+export type OSesT = 'windows' | 'macos' | 'unix' | 'linux' | 'unknown os'

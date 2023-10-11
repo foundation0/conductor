@@ -11,11 +11,11 @@ import MembersIcon from "@/assets/icons/members.svg"
 import CabinetIcon from "@/assets/icons/cabinet.svg"
 import Comment1Icon from "@/assets/icons/comment-1.svg"
 import IntersectIcon from "@/assets/icons/intersect.svg"
-import { fieldFocus } from "@/components/libraries/field_focus"
+import { fieldFocus } from "@/libraries/field_focus"
 import Lottie from "lottie-light-react"
 import WorkingOnIt from "@/assets/animations/working_on_it.json"
 import { MdKeyboardDoubleArrowLeft, MdKeyboardDoubleArrowRight } from "react-icons/md"
-import Joyride, { ACTIONS, EVENTS, STATUS, Step } from "react-joyride"
+import Joyride, { Step } from "react-joyride"
 import {
   Input,
   Tabs,
@@ -23,12 +23,12 @@ import {
   WorkspaceOrganizer,
   WorkspaceSelector,
   WorkspaceSidebar,
-  OpenAISetup,
 } from "@/components/experiences/onboarding/v1"
 import AppstateActions from "@/data/actions/app"
 import { Resizable } from "react-resizable"
 import "react-resizable/css/styles.css"
-import eventEmitter from "@/components/libraries/events"
+import eventEmitter from "@/libraries/events"
+import UserActions from "@/data/actions/user"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
@@ -81,21 +81,25 @@ export default function Workspace() {
   const sidebar_tabs = [
     {
       id: "sessions",
+      name: "Sessions",
       onClick: () => setActiveSidebarTab("sessions"),
       icon: <img src={Comment1Icon} className={sidebar_tab_class} />,
     },
     {
       id: "data",
+      name: "Data",
       onClick: () => setActiveSidebarTab("data"),
       icon: <img src={CabinetIcon} className={sidebar_tab_class} />,
     },
     {
       id: "members",
+      name: "Members",
       onClick: () => setActiveSidebarTab("members"),
       icon: <img src={MembersIcon} className={sidebar_tab_class} />,
     },
     {
       id: "market",
+      name: "Market",
       onClick: () => setActiveSidebarTab("market"),
       icon: <img src={IntersectIcon} className={sidebar_tab_class} />,
     },
@@ -132,12 +136,7 @@ export default function Workspace() {
       target: "#Input",
       content: <Input />,
       placement: "top",
-    },
-    {
-      target: "#ContentViews",
-      content: <OpenAISetup />,
-      placement: "center",
-    },
+    }
   ]
 
   useEffect(() => {
@@ -194,7 +193,7 @@ export default function Workspace() {
           }}
         >
           <div
-            className={`h-full ${
+            className={`h-[100dvh] transition-all ${
               sidebar_minimized ? "w-0 hidden" : "w-60 min-w-[200px] max-w-lg flex flex-1 flex-col "
             }`}
             style={{ width: `${organizer_width}px` }}
@@ -208,20 +207,21 @@ export default function Workspace() {
                   {_.find(user_state.workspaces, { id: workspace_id })?.name}
                 </div>
                 <Link className="flex items-center" to={`/conductor/${workspace_id}/settings`}>
-                  <MdSettingsSuggest className="w-4 h-4 text-zinc-400" />
+                  <MdSettingsSuggest className="w-4 h-4 text-zinc-400 hover:text-zinc-200 transition-all" />
                 </Link>
               </div>
               <div
                 id="SidebarView"
-                className="tabs flex flex-row py-3 bg-zinc-800 h-12justify-center items-center rounded-t-md border border-zinc-900/50 border-b-transparent"
+                className="tabs flex flex-row py-3 bg-zinc-800 h-12 justify-center items-center rounded-t-md border border-zinc-900/50 border-b-transparent"
               >
                 {sidebar_tabs.map((tab) => (
                   <div
                     key={tab.id}
-                    className={`flex flex-1 justify-center px-2 cursor-pointer ${
+                    className={`flex flex-1 justify-center px-2 cursor-pointer tooltip tooltip-bottom ${
                       active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
                     }`}
                     onClick={tab.onClick}
+                    data-tip={tab.name}
                   >
                     <div
                       className={`flex w-7 h-7 rounded justify-center items-center saturate-0 transition-all ${
@@ -238,7 +238,7 @@ export default function Workspace() {
             </div>
             <div
               id="WorkspaceSidebarContent"
-              className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent overflow-y-auto overflow-x-hidden`}
+              className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
             >
               <Switch fallback={""}>
                 <Match when={active_sidebar_tab === "sessions"}>

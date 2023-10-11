@@ -10,7 +10,8 @@ import AppStateActions from "@/data/actions/app"
 import { AppStateT } from "@/data/loaders/app"
 import { SessionsT } from "@/data/loaders/sessions"
 import SessionsActions from "@/data/actions/sessions"
-import { error } from "@/components/libraries/logging"
+import { error } from "@/libraries/logging"
+import config from "@/config"
 
 const API = {
   updateUser: async function (state: Partial<UserT>) {
@@ -267,8 +268,8 @@ const API = {
       },
       defaults: {
         llm_module: {
-          id: "openai",
-          variant: "gpt-3.5-turbo",
+          id: config.defaults.llm_module.id,
+          variant: config.defaults.llm_module.variant_id,
         },
       },
       groups: [

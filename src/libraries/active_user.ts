@@ -1,6 +1,5 @@
 import { UserT } from "@/data/loaders/user"
 import config from "@/config"
-import { Navigate } from "react-router-dom"
 
 let active_user_ttl: any = null
 

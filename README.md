@@ -1,4 +1,4 @@
-# Prompt Conductor Beta: "ChatGPT™ for professionals"
+# Conductor Beta: "ChatGPT™ for professionals"
 
 <div align="center">
   <a href="https://beta.promptc0.com" target="_blank">
@@ -8,7 +8,7 @@
 
 <div align="center">
   <a href="https://beta.promptc0.com" target="_blank">
-    <img src="https://img.shields.io/badge/web app-launch-green.svg" alt="Launch Prompt" height="20">
+    <img src="https://img.shields.io/badge/web app-launch-green.svg" alt="Launch Conductor" height="20">
   </a>
   <a href="https://discord.gg/PFMtbdrvXw" target="_blank">
     <img src="https://img.shields.io/badge/discord-join%20chat-blue.svg" alt="Join our Discord" height="20">
@@ -20,11 +20,9 @@
 
 ChatGPT™ is fantastic but its interface is not designed for professionals with multiple on-going conversations.
 
-This is why we built Prompt Conductor: A privacy-first multi-modal\* interface for AI-powered professionals.
+This is why we built Conductor: A privacy-first multi-modal\* interface for AI-powered professionals.
 
-Prompt is 100% open-source, decentralized*, community-driven software. Prompt has been designed as a modular platform* that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
-
-> Conductor is Prompt's desktop user interface, designed for professionals who want to get things done using AI. Later this year, we will release Prompt's yet unnamed mobile interface, designed for individuals who want to bring AI into their everyday life. Both are built on Prompt platform, decentralized and privacy-first computing network that allows anyone to train and run AI modules.
+Conductor is 100% open-source, decentralized*, community-driven software. Conductor has been designed as a modular platform* that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
 
 ## Key Features 🎯
 
@@ -32,7 +30,7 @@ Prompt is 100% open-source, decentralized*, community-driven software. Prompt ha
 🗂️ Organize your work via workspaces, groups and folders  
 🔒 Privacy-first & local-first: everything e2e encrypted  
 🤖 Supports focused AI personas to improve results  
-🛠️ Compatible with any model, Prompt is model-neutral  
+🛠️ Compatible with any model, Conductor is model-neutral  
 🌐 Always 100% open-source
 
 **\*Upcoming features 🆕**
@@ -41,10 +39,10 @@ Prompt is 100% open-source, decentralized*, community-driven software. Prompt ha
 🔮 Support for documents, images, audio, video and 3D  
 🤝 Go multiplayer, invite others to work with you  
 📱 Mobile app  
-🧩 Extend almost any aspect of Prompt with user-built modules  
-🌌 Prompt goes fully decentralized
+🧩 Extend almost any aspect of Conductor with user-built modules  
+🌌 Conductor goes fully decentralized
 
-## Watch Prompt in action 🎥
+## Watch Conductor in action 🎥
 
 Coming soon 🚧
 
@@ -52,7 +50,7 @@ Coming soon 🚧
 
 Go to [beta.promptc0.com](https://beta.promptc0.com), create an account and you are good to go.
 
-> Prompt is free and open-source, but you'll need OpenAI API key for the beta. Prompt's unified model engine is still in the works, so beta works directly through OpenAI's API.
+> Conductor is free and open-source, but you'll need OpenAI API key for the beta. Conductor's unified model engine is still in the works, so beta works directly through OpenAI's API.
 
 Or clone this repo and run it locally:
 
@@ -65,6 +63,6 @@ $ npm run dev
 
 ## Contribute 🤝
 
-We are looking for contributors to help us build Prompt. If you are interested, please join our [Discord](https://discord.gg/PFMtbdrvXw) and say hi!
+We are looking for contributors to help us build Conductor. If you are interested, please join our [Discord](https://discord.gg/PFMtbdrvXw) and say hi!
 
 Alternatively, follow us on [Twitter](https://twitter.com/promptc0) to stay up to date with our progress.

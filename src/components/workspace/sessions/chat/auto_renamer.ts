@@ -1,23 +1,20 @@
 import { TextMessageT } from "@/data/loaders/sessions"
-import SessionsActions from "@/data/actions/sessions"
 import _ from "lodash"
-import { compileSlidingWindowMemory } from "@/components/libraries/memory"
-import { main as CostEstimator, InputT as CostEstimatorInputT } from "@/modules/openai-cost-estimator/"
-import { error } from "@/components/libraries/logging"
-import { UserT } from "@/data/loaders/user"
-import { MessageRowT } from "."
-import { nanoid } from "nanoid"
+import { compileSlidingWindowMemory } from "@/libraries/memory"
+import { error } from "@/libraries/logging"
+import { Module } from "@/modules"
+import SessionsActions from "@/data/actions/sessions"
 
 export async function autoRename({
-  api_key,
-  module,
   messages,
+  user_id,
+  session_id,
 }: {
-  api_key: string
-  module: any
+  session_id: string
+  user_id: string
   messages: TextMessageT[]
 }) {
-  if (!api_key) return
+  const module = await Module("ule")
   if (!module) throw new Error("No module")
 
   let stream_response = ""
@@ -28,23 +25,27 @@ export async function autoRename({
   }
   let has_error = false
   const prompt = {
-    instructions: "",
-    user: "Based on the conversation, what three-word title best encapsulates its content? Answer only, no chat, no verbose.",
+    instructions:
+      "Based on the conversation, what three-word title best encapsulates its content? No chat, no verbose. Use the following format to answer: 'Title: {The title}'",
+    user: messages.map((m) => `${m.type}: ${m.text}`).join("\n"),
   }
   const memory = await compileSlidingWindowMemory({
-    model: "gpt-3.5-turbo",
+    model: "mistralai_mistral-7b-instruct",
     prompt,
-    messages,
+    messages: [],
     module,
   })
   if (!memory) return error({ message: "error compiling memory", data: { module_id: module.specs.id } })
-  console.info(`Message tokens: ${memory?.token_count}, USD: $${memory?.usd_cost}`)
-  const response = await module?.main(
+  const { receipt } = await module?.main(
     {
-      model: "gpt-3.5-turbo",
-      api_key,
+      model: "mistralai_mistral-7b-instruct",
+      user_id,
       prompt,
       history: memory?.history || [],
+      settings: {
+        temperature: 0.5,
+        max_tokens: 5,
+      },
     },
     {
       onData,
@@ -55,11 +56,19 @@ export async function autoRename({
       },
     }
   )
-
-  if (response || stream_response) {
+  if (receipt) {
+    receipt.details.type = "auto_session_rename"
+    SessionsActions.addCost({
+      session_id,
+      receipt,
+    })
+  } else {
+    // error({ message: "ULE didn't sent receipt, contact support", data: { module_id: module.specs.id } })
+  }
+  if (stream_response) {
     // remove " characters and if response ends with dot, remove that too
-    return (response || stream_response).trim().replace(/"/g, "").replace(/\.$/, "")
-  } else if (!has_error && !response && !stream_response) {
+    return stream_response.trim().replace(/"/g, "").replace(/\.$/, "").replace(/title:\s*|Title:\s*/gi, '')
+  } else if (!has_error && !stream_response) {
     error({ message: "no response from the module", data: { module_id: module.specs.id } })
   }
 }

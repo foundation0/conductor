@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useLoaderData, Link } from "react-router-dom"
 import { useAuth } from "@/components/hooks/useAuth"
-import { fieldFocus } from "../libraries/field_focus"
+import { fieldFocus } from "@/libraries/field_focus"
 import { useEffect, useState } from "react"
 import { BiRightArrowAlt } from "react-icons/bi"
 import _ from "lodash"
@@ -11,9 +11,9 @@ import { PublicUserS } from "@/data/schemas/user"
 import { z } from "zod"
 import { HiOutlineTrash } from "react-icons/hi"
 import UsersActions from "@/data/actions/users"
-import eventEmitter from "@/components/libraries/events"
+import eventEmitter from "@/libraries/events"
 import { FaUserPlus } from "react-icons/fa"
-import { ph } from "../libraries/logging"
+import { ph } from "@/libraries/logging"
 
 export function LocalUsersPage() {
   let { users_state } = useLoaderData() as { users_state: UsersT }
@@ -90,13 +90,10 @@ export function LocalUsersPage() {
   // if no users on device, redirect to onboarding
   useEffect(() => {
     if (users.length === 0) {
+      // navigate("/guest", { replace: true })
       navigate("/onboarding", { replace: true })
     }
   }, [users])
-
-  function getPhoto({ id }: { id: string }) {
-    return ""
-  }
 
   async function useSensor() {
     /* 

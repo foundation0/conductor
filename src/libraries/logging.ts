@@ -11,6 +11,7 @@ export function error({ message, data, type }: { message: string; data?: any; ty
   // })
   eventEmitter.emit("new_error", { type: type || "error", message, data })
   ph()?.capture("error", { message, data })
+  console.error(message, data)
   return false
 }
 

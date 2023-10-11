@@ -2,7 +2,8 @@ import { store } from "@/data/storage/IDB"
 import { TextMessageS, ChatS, SessionsS } from "@/data/schemas/sessions"
 import * as z from "zod"
 import _ from "lodash"
-import { getActiveUser } from "@/components/libraries/active_user"
+import { getActiveUser } from "@/libraries/active_user"
+import config from "@/config"
 
 export type TextMessageT = z.infer<typeof TextMessageS>
 export type ChatT = z.infer<typeof ChatS>
@@ -26,8 +27,8 @@ export const state = async () =>
             messages: [],
             settings: {
               module: {
-                id: "openai",
-                variant: "gpt-3.5-turbo",
+                id: config.defaults.llm_module.id,
+                variant: config.defaults.llm_module.variant_id,
               },
             },
           },

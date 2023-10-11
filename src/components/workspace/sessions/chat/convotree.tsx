@@ -3,11 +3,14 @@ import { TextMessageT } from "@/data/loaders/sessions"
 import Message from "./message"
 import _ from "lodash"
 import { RiAddCircleFill } from "react-icons/ri"
-import { fieldFocus } from "@/components/libraries/field_focus"
+import { fieldFocus } from "@/libraries/field_focus"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { useLoaderData, useParams } from "react-router-dom"
 import { AIsT } from "@/data/schemas/ai"
+import { UserT } from "@/data/loaders/user"
+import { ModuleT } from "@/data/schemas/modules"
+import { getAvatar } from "@/libraries/ai"
 dayjs.extend(relativeTime)
 
 type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
@@ -19,6 +22,9 @@ type ConversationTreeProps = {
   participants: { [key: string]: ReactElement }
   paddingBottom: number
   msgs_in_mem?: string[]
+  ai: AIsT[0]
+  module: ModuleT
+  gen_in_progress?: boolean
 }
 
 const ConversationTree: React.FC<ConversationTreeProps> = ({
@@ -28,12 +34,15 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   participants,
   paddingBottom,
   msgs_in_mem,
+  ai,
+  module,
+  gen_in_progress,
 }) => {
   if (!rows) {
     return null
   }
 
-  const { ai_state } = useLoaderData() as { ai_state: AIsT }
+  const { ai_state, user_state } = useLoaderData() as { ai_state: AIsT; user_state: UserT }
   const [ago_refresh, setAgoRefresh] = useState(1)
   const session_id = useParams<{ session_id: string }>().session_id
 
@@ -41,6 +50,16 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
     const interval = setInterval(() => setAgoRefresh(ago_refresh + 1), 60000)
     return () => clearInterval(interval)
   }, [session_id])
+
+  // delay the appearance of the fake AI message
+  const [show_loader_msg, setShowLoaderMsg] = useState(false)
+  useEffect(() => {
+    if (gen_in_progress) {
+      setTimeout(() => setShowLoaderMsg(true), 1000)
+    } else {
+      setShowLoaderMsg(false)
+    }
+  }, [gen_in_progress])
 
   if (paddingBottom < 80) paddingBottom = 80
   return (
@@ -53,7 +72,11 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
           else {
             const s = row[1].source.replace("ai:", "").split("/")
             const ai_name = _.find(ai_state, { id: s[2] })?.persona.name
-            sender = ai_name ? `${ai_name} (${s[1]})` : `${s[0]} ${s[1] ? `(${s[1]})` : ""}`
+            const module_name = _.find(user_state.modules.installed, { id: s[0] })?.meta.name
+            const variant_name = _.find(user_state.modules.installed, { id: s[0] })?.meta?.variants?.find(
+              (v) => v.id === s[1]
+            )?.name
+            sender = ai_name ? (module_name && variant_name ? `${ai_name} using ${variant_name}` : ai_name) : ``
             ai_image = participants[s[2] || s[0]]
           }
           return (
@@ -124,6 +147,47 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
             </div>
           )
         })}
+        {_.last(rows)?.[1].type === "human" && gen_in_progress && (
+          <div className={`flex flex-col flex-grow-1 transition-all ${!show_loader_msg && 'opacity-0'}`}>
+            <div className="ml-12 text-xs font-semibold text-zinc-600">
+              {ai.persona.name}
+              {" - " + dayjs().from(dayjs(), true) + " ago"}
+            </div>
+            <div className="flex flex-row">
+              <div className="flex flex-shrink mr-2">
+                <div className="flex">
+                  <div className="avatar placeholder">
+                    <div className=" text-zinc-200 w-8 h-8 flex ">
+                      <span className="text-sm w-full h-full flex justify-center items-center">
+                        <img
+                          className={`border-2 border-zinc-900 rounded-full w-3 h-3`}
+                          src={getAvatar({ seed: ai?.meta?.name || "" })}
+                        />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className={`Message flex flex-grow-1`}>
+                <Message
+                  message={{
+                    id: "loader",
+                    text: "thinking...",
+                    type: "ai" as const,
+                    source: "ai:",
+                    created_at: "",
+                    parent_id: "first",
+                    hash: "1337",
+                    _v: 1,
+                    version: "1.0",
+                  }}
+                  isActive={true}
+                  onClick={() => {}}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

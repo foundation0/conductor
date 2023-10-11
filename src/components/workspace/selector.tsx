@@ -85,7 +85,7 @@ export default function WorkspaceSelector() {
           </div>
           <div id="GlobalActions" className="flex flex-col justify-center items-center gap-2 mb-2">
             <div className="flex rounded-full h-12 w-12 justify-center items-center">
-              <div className="tooltip tooltip-right" data-tip="Questions? Problems? Ideas? Join Prompt Discord!">
+              <div className="tooltip tooltip-right" data-tip="Questions? Problems? Ideas? Join our Discord!">
                 <Link
                   to={`https://discord.gg/PFMtbdrvXw`}
                   target="_blank"
@@ -96,7 +96,7 @@ export default function WorkspaceSelector() {
               </div>
             </div>
             <div className="flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl overflow-hidden cursor-pointer   hover:bg-zinc-850   text-zinc-400 hover:text-zinc-200 transition-all">
-              <div className="tooltip tooltip-right" data-tip="Global settings and your profile">
+              <div className="tooltip tooltip-right h-full" data-tip="Global settings and your profile">
                 <Link to={`/conductor/settings`}>
                   {_.get(user_state, "meta.profile_photos[0]") ? (
                     <img

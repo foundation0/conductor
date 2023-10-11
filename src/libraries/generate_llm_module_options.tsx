@@ -12,12 +12,13 @@ export default function generate_llm_module_options({
   include_limits?: boolean
   return_as_object?: boolean
 }) {
-  const objects = user_state.modules.installed.filter((mod) => mod.meta.type === "LLM")
+  const objects = user_state.modules.installed.filter((mod) => mod.meta.type === "LLM" && mod.active)
   // expand modules into array of objects based on variants
   let result = _.reduce(
     objects,
     (acc: any, object) => {
       const id_model = _.get(object, "id")
+      const name_model = _.get(object, "meta.name")
       const api_key = _.get(object, "settings.api_key")
       const variants = _.get(object, "meta.variants")
 
@@ -28,8 +29,10 @@ export default function generate_llm_module_options({
           if(variants[i].active === false) return
           acc.push({
             id: id_model,
+            name: name_model || id_model,
             has_api_key: api_key ? true : false,
             variant: id,
+            variant_name: variants[i].name || variants[i].id,
             context_len: variants[i].context_len,
             active: variants[i].active,
           })
@@ -47,8 +50,8 @@ export default function generate_llm_module_options({
     return result.map((mod: any) => {
       return {
         value: `${mod.id}/${mod.variant}`,
-        label: `${mod.id} / ${mod.variant} ${
-          mod.context_len && include_limits ? `(~${_.round(mod.context_len / 5, 0)} words limit per message)` : ""
+        label: `${mod.name || mod.id} / ${mod.variant_name} ${
+          mod.context_len && include_limits ? `(~${_.round(mod.context_len / 5, 0)} word memory)` : ""
         }`,
       }
     })
@@ -61,7 +64,7 @@ export default function generate_llm_module_options({
         /* selected={selected === `{"id": "${mod.id}", "variant": "${mod.variant}"}`} */
       >
         {`${mod.id} / ${mod.variant} ${
-          mod.context_len && include_limits ? `(~${_.round(mod.context_len / 5, 0)} words limit per message)` : ""
+          mod.context_len && include_limits ? `(~${_.round(mod.context_len / 5, 0)} word memory)` : ""
         }`}
         {!mod.has_api_key ? " (no api key)" : ""}
       </option>

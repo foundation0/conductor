@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom"
 import CreateAI from "./create"
 import _ from "lodash"
-import { initLoaders, loader } from "@/data/loaders"
+import { loader } from "@/data/loaders"
 
 export const EditAIR = {
   path: "edit/:edit_ai_id",

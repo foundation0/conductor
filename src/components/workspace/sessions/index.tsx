@@ -1,4 +1,4 @@
-import _, { debounce, throttle } from "lodash"
+import _ from "lodash"
 import Session from "./session"
 import Tabs from "./tabs"
 import { useParams } from "react-router-dom"
@@ -8,7 +8,7 @@ import Notepad from "@/components/workspace/notepad"
 import AppstateActions from "@/data/actions/app"
 import { Resizable } from "react-resizable"
 import "react-resizable/css/styles.css"
-import eventEmitter from "@/components/libraries/events"
+import eventEmitter from "@/libraries/events"
 import { Match, Switch } from "react-solid-flow"
 
 export default function Workspace() {

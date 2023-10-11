@@ -3,8 +3,8 @@ import { ClipS, NotepadS } from "@/data/schemas/notepad"
 import _ from "lodash"
 import { nanoid } from "nanoid"
 import { z } from "zod"
-import eventEmitter from "@/components/libraries/events"
-import { ph } from "@/components/libraries/logging"
+import eventEmitter from "@/libraries/events"
+import { ph } from "@/libraries/logging"
 
 const API = {
   add: async ({ session_id, msg_id, type, data }: { session_id: string; msg_id: string; type: string; data: any }) => {

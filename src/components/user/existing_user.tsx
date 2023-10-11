@@ -1,13 +1,13 @@
 import { useLocation, useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/components/hooks/useAuth"
-import { fieldFocus } from "../libraries/field_focus"
+import { fieldFocus } from "@/libraries/field_focus"
 import { useEffect, useState } from "react"
 import { BiRightArrowAlt } from "react-icons/bi"
 import _ from "lodash"
 import { HiPlus } from "react-icons/hi"
 import PromptIcon from "@/assets/prompt.svg"
-import eventEmitter from "@/components/libraries/events"
-import { ph } from "../libraries/logging"
+import eventEmitter from "@/libraries/events"
+import { ph } from "@/libraries/logging"
 
 export function AddExistingUser() {
   let navigate = useNavigate()
@@ -117,7 +117,7 @@ export function AddExistingUser() {
               <img src={PromptIcon} className="w-48 h-48 mb-1 opacity-5" />
             </div>
             <div className="flex w-full justify-center text-zinc-500 text-sm font-semibold mb-4">
-              Login to your Prompt
+              Login to your Conductor
             </div>
             <label className="flex flex-row bg-zinc-700/30 border border-zinc-900 border-t-zinc-700 rounded-lg items-center  pl-4 text-xs  font-semibold">
               Username:

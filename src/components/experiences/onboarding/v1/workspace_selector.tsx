@@ -1,4 +1,4 @@
-import { ph } from "@/components/libraries/logging"
+import { ph } from "@/libraries/logging"
 import { useEffect } from "react"
 
 export default function WorkspaceSelector() {
@@ -8,7 +8,7 @@ export default function WorkspaceSelector() {
   return (
     <div className="flex flex-col gap-3 text-left">
       <p className="flex text-xl font-semibold items-center">Workspaces</p>
-      <p className="">Here are your workspaces. Prompt did one for you when you created your account.</p>
+      <p className="">Here are your workspaces. Conductor did one for you when you created your account.</p>
       <p>
         You can use them to separate projects without any shared context. Click the plus icon to create a new workspace.
         You can create as many as you want.

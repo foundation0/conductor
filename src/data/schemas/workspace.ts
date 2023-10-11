@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { nanoid } from "nanoid"
 import { getId } from "@/security/common"
+import config from "@/config"
 
 export const MembersS = z.object({
   _v: z.number().default(1),
@@ -49,7 +50,7 @@ export const WorkspaceS = z.object({
         .optional(),
     })
     .catch({
-      llm_module: { id: "openai", variant: "gpt-3.5-turbo" },
+      llm_module: { id: config.defaults.llm_module.id, variant: config.defaults.llm_module.variant_id },
     }),
   members: MembersS,
   groups: z.array(GroupS),

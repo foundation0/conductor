@@ -1,8 +1,7 @@
 import { ActionFunctionArgs, redirect } from "react-router-dom"
 import Sessions from "."
-import { initLoaders, loader } from "@/data/loaders"
+import { loader } from "@/data/loaders"
 import SessionActions from "@/data/actions/sessions"
-import { AppStateT } from "@/data/loaders/app"
 import _ from "lodash"
 
 export const SessionIdR = {

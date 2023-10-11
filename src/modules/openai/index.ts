@@ -8,22 +8,32 @@ import {
   MessagesPlaceholder,
 } from "langchain/prompts"
 import { ConversationChain } from "langchain/chains"
-import { BufferMemory, BufferWindowMemory } from "langchain/memory"
+import { BufferMemory } from "langchain/memory"
 import { TextMessageS } from "@/data/schemas/sessions"
 import _ from "lodash"
 // @ts-ignore
 import Icon from "./icon.svg?dataurl"
 
+const variant_setting = {
+  max_tokens: 2000,
+  temperature: 0,
+  top_p: 1,
+  n: 0,
+  frequency_penalty: 0,
+  presence_penalty: 0,
+  stop: "",
+}
+
 export const specs: z.infer<typeof ModuleS> = {
   _v: 1,
   _updated: 1,
-  id: "openai",
+  id: "ule",
   active: true,
   meta: {
     author: "0x000",
     description:
       "OpenAI is a for-profit artificial intelligence company, focused on creating proprietary AI models available via APIs.",
-    name: "ChatGPT",
+    name: "OpenAI",
     type: "LLM",
     vendor: { name: "OpenAI" },
     variants: [
@@ -34,6 +44,7 @@ export const specs: z.infer<typeof ModuleS> = {
         cost_input: 0.0015,
         cost_output: 0.002,
         color: "#28a08c",
+        settings: variant_setting
       },
       {
         id: "gpt-3.5-turbo-16k",
@@ -42,6 +53,7 @@ export const specs: z.infer<typeof ModuleS> = {
         cost_input: 0.003,
         cost_output: 0.004,
         color: "#28a08c",
+        settings: variant_setting
       },
       {
         id: "gpt-4",
@@ -50,6 +62,7 @@ export const specs: z.infer<typeof ModuleS> = {
         cost_input: 0.03,
         cost_output: 0.06,
         color: "#ac67ff",
+        settings: variant_setting
       },
       {
         id: "gpt-4-32k",
@@ -59,19 +72,13 @@ export const specs: z.infer<typeof ModuleS> = {
         cost_input: 0.06,
         cost_output: 0.12,
         color: "#ac67ff",
+        settings: variant_setting
       },
     ],
     icon: Icon,
   },
   settings: {
     api_key: "",
-    max_tokens: 2000,
-    temperature: 0,
-    top_p: 1,
-    n: 0,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-    stop: "",
   },
   streaming: true,
 }

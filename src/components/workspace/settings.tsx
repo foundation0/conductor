@@ -6,10 +6,11 @@ import _ from "lodash"
 // @ts-ignore
 import EasyEdit from "react-easy-edit"
 import { MdCheck, MdClose } from "react-icons/md"
-import generate_llm_module_options from "@/components/libraries/generate_llm_module_options"
+import generate_llm_module_options from "@/libraries/generate_llm_module_options"
 import { useDropzone } from "react-dropzone"
-import { error } from "../libraries/logging"
+import { error } from "@/libraries/logging"
 import { MdOutlineAddAPhoto } from "react-icons/md"
+import Select from "react-select"
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -145,7 +146,7 @@ export default function Settings() {
               </div>
             </div>
             <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-defaults-llm-module`}>
-              <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Default LLM module</div>
+              <div className="flex items-center text-sm font-semibold text-zinc-300">Default LLM module</div>
               <div
                 className="flex flex-grow text-end text-sm "
                 onClick={() => {
@@ -153,7 +154,37 @@ export default function Settings() {
                   return false
                 }}
               >
-                <select
+                <Select
+                  className="react-select-container w-full min-w-full"
+                  classNamePrefix="react-select"
+                  onChange={(e: any) => {
+                    handleEdit({
+                      value: `{ "id": "${e.value.split("/")[0]}", "variant": "${e.value.split("/")[1]}"}`,
+                      name: `workspaces.${workspace_i}.defaults.llm_module`,
+                      is_json: true,
+                    })
+                  }}
+                  value={{
+                    label: `${
+                      _.find(user_state?.modules?.installed, {
+                        id: workspace.defaults?.llm_module?.id,
+                      })?.meta.name
+                    } / ${
+                      _.find(user_state?.modules?.installed, {
+                        id: workspace.defaults?.llm_module?.id,
+                      })?.meta?.variants?.find((v) => v.id === workspace.defaults?.llm_module?.variant)?.name
+                    }`,
+                    value: `${workspace.defaults?.llm_module?.id}/${workspace.defaults?.llm_module?.variant}`,
+                  }}
+                  placeholder="Choose LLM model..."
+                  options={generate_llm_module_options({
+                    user_state,
+                    selected: `${workspace.defaults?.llm_module?.id}/${workspace.defaults?.llm_module?.variant}`,
+                    return_as_object: true,
+                  })}
+                ></Select>
+
+                {/* <select
                   className="border rounded-lg block w-full p-2 bg-zinc-800 border-zinc-700 placeholder-zinc-400 text-white text-xs"
                   defaultValue={
                     workspace.defaults?.llm_module?.id
@@ -169,7 +200,7 @@ export default function Settings() {
                   }}
                 >
                   {generate_llm_module_options({ user_state })}
-                </select>
+                </select> */}
               </div>
             </div>
           </div>

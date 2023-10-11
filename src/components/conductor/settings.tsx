@@ -1,67 +1,58 @@
 import { useEffect, useState, useCallback } from "react"
-import { useLoaderData, useNavigate } from "react-router-dom"
+import { useLoaderData, useNavigate, Link } from "react-router-dom"
 import { UserT } from "@/data/loaders/user"
 import UserActions from "@/data/actions/user"
 import UsersActions from "@/data/actions/users"
 import _ from "lodash"
-// @ts-ignore
 import EasyEdit from "react-easy-edit"
-import { MdCheck, MdClose } from "react-icons/md"
+import { MdCheck, MdClose, MdSettingsSuggest, MdOutlineAddAPhoto, MdOutlineRemoveCircle } from "react-icons/md"
 import { getAddress, hex2buf } from "@/security/common"
-import { MdSettingsSuggest } from "react-icons/md"
-import { ModuleSettings } from "@/components/conductor/module_settings"
 import IntersectIcon from "@/assets/icons/intersect.svg"
 import PersonaIcon from "@/assets/icons/persona.svg"
 import { useDropzone } from "react-dropzone"
-import { MdOutlineAddAPhoto } from "react-icons/md"
-import { error } from "../libraries/logging"
-import { Link } from "react-router-dom"
-import { useAuth } from "../hooks/useAuth"
-import { AIT, AIsT } from "@/data/schemas/ai"
+import { error } from "@/libraries/logging"
+import { useAuth } from "@/components/hooks/useAuth"
+import { AIsT } from "@/data/schemas/ai"
 import AIActions from "@/data/actions/ai"
-import { getAvatar } from "../libraries/ai"
+import { getAvatar } from "@/libraries/ai"
 import { RiAddCircleFill } from "react-icons/ri"
 import { LuSettings2 } from "react-icons/lu"
 import { BiBlock } from "react-icons/bi"
-import { MdOutlineRemoveCircle } from "react-icons/md"
-import { ModuleList } from "@/modules"
-import { Match, Switch } from "react-solid-flow"
-
-// function to detect numbers in strings
-function isNumeric(str: string) {
-  if (typeof str != "string") return false // we only process strings!
-  // make sure it keeps integers and floats as floats
-  return !isNaN(str as any) && !isNaN(parseFloat(str))
-}
-
-// parse floats into integers if they are whole numbers
-function parseNumber(str: string) {
-  if (typeof str != "string") return str // we only process strings!
-  // make sure it keeps integers and floats as floats
-  if (isNumeric(str)) {
-    if (str.indexOf(".") !== -1) {
-      return parseFloat(str)
-    }
-    return parseInt(str)
-  }
-  return str
-}
-
-// turn string booleans into booleans
-function parseBoolean(str: any) {
-  if (typeof str != "string") return str // we only process strings!
-  // make sure it keeps integers and floats as floats
-  if (str === "true") return true
-  if (str === "false") return false
-  return str
-}
+import { parseBoolean, parseNumber } from "@/libraries/utilities"
+import { getBalance, getFreeBalance, getWalletStatus } from "@/components/user/wallet"
+import { ModuleSettings } from "./module_settings"
+import { buyCreditsWithStripe } from "@/libraries/payments"
+import { getModules } from "@/modules"
+import { get as getLS } from "@/data/storage/localStorage"
 
 export default function Settings(props: any) {
   const navigate = useNavigate()
   let auth = useAuth()
   const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
   const [field_edit_id, setFieldEditId] = useState("")
+  const [balance, setBalance] = useState<number | string>("loading...")
+  const [wallet_status, setWalletStatus] = useState<string>("loading...")
 
+  const [module_list, setModuleList] = useState<any[]>([])
+
+  // initialization
+  useEffect(() => {
+    getBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
+      setBalance(balance)
+    })
+    getWalletStatus({ public_key: user_state.public_key, master_key: user_state.master_key }).then((wallet_status) => {
+      setWalletStatus(wallet_status)
+    })
+    // getFreeBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((free_balance) => {
+    //   console.log("free balance", free_balance)
+    // })
+    updateModules()
+  }, [])
+
+  const updateModules = async () => {
+    const mods = await getModules()
+    setModuleList(mods)
+  }
   const handleEdit = async ({ value, name, module_id }: { value: string; name: string; module_id?: string }) => {
     // field name is concatenated with . to denote nested fields
     let field_name = name.split(".")
@@ -80,6 +71,7 @@ export default function Settings(props: any) {
       const updated_public_user = _.set(public_user, f_name, field_value)
       await UsersActions.updateUser(updated_public_user)
     }
+    updateModules()
     navigate("/conductor/settings")
   }
 
@@ -139,10 +131,8 @@ export default function Settings(props: any) {
     },
   })
 
-  const module_list = ModuleList()
-
   // @ts-ignore
-  const version = __APP_VERSION__ || "// dev build"
+  const version = import.meta.env.PROD ? __APP_VERSION__ : "// dev build"
   return (
     <div className="Settings content flex flex-col flex-grow items-center m-10">
       <div className="flex flex-col w-full justify-start items-start max-w-2xl">
@@ -255,11 +245,47 @@ export default function Settings(props: any) {
         </div>
 
         <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
+          Credits
+        </div>
+        <div className="flex flex-row w-full gap-2">
+          <div className="flex flex-col w-full gap-4 ">
+            <div className="w-full">
+              <div className="flex flex-row w-full gap-4 h-8">
+                <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Status</div>
+                <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">{wallet_status === "no_wallet" ? "waiting for funds" : wallet_status}</div>
+              </div>
+            </div>
+            <div className="w-full">
+              <div className="flex flex-row w-full gap-4 h-8">
+                <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
+                  Current balance{" "}
+                  <span
+                    className="text-xs ml-3 link text-blue-400 hover:text-blue-100 transition-all cursor-pointer"
+                    onClick={async () => {
+                      if(getLS({ key: "guest-mode"})) return (window as any)["ConvertGuest"].showModal()
+                      const { error: err } = (await buyCreditsWithStripe({ user_id: user_state.id })) as any
+                      if (err) {
+                        console.error(err)
+                        error({ message: "Something went wrong, we are investigating..." })
+                      }
+                    }}
+                  >
+                    Buy credits
+                  </span>
+                </div>
+                <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
+                  {_.isNumber(balance) ? `$${balance}` : balance}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
           Modules
         </div>
         <div className="flex flex-row w-full gap-2">
-          {user_state?.modules.installed
-            ?.filter((m) => m.meta?.type !== "utility")
+          {module_list
+            ?.filter((m) => m.meta?.type.toLowerCase() === "llm")
             //?.filter((m) => _.find(module_list, { id: m.id }))
             .map((module: any, index: number) => {
               return (
@@ -268,9 +294,14 @@ export default function Settings(props: any) {
                   className="w-1/2 bg-zinc-800/50 bg-gradient rounded-xl p-5 border-t border-t-zinc-600/50"
                 >
                   <div className="flex w-full mb-2 pb-2 border-b border-b-zinc-700">
-                    <div className="flex items-center text-zinc-400 font-semibold">{module.meta.vendor.name}</div>
+                    <div className="flex items-center text-zinc-400 font-semibold">
+                      {module.meta?.vendor?.name || "Unknown"}{" "}
+                    </div>
                     <div className="flex flex-1 items-center justify-end gap-2">
-                      <label className="relative inline-flex items-center cursor-pointer tooltip tooltip-top" data-tip="Active/inactive module">
+                      <label
+                        className="relative inline-flex items-center cursor-pointer tooltip tooltip-top"
+                        data-tip="Active/inactive module"
+                      >
                         <input
                           type="checkbox"
                           onChange={() => {
@@ -295,35 +326,7 @@ export default function Settings(props: any) {
                     </div>
                   </div>
                   <div className="flex items-center text-zinc-400 font-semibold text-xs mb-3">
-                    {module.meta.description || "No description"}
-                  </div>
-                  <div className="flex flex-col w-full gap-1" data-id={`${module.id}-apikey`}>
-                    <div className="flex flex-grow items-center text-sm font-bold text-zinc-400">
-                      {module.vendor} {module.name} API key
-                    </div>
-                    <div
-                      className="flex flex-grow w-full text-sm "
-                      onClick={() => {
-                        setFieldEditId(`${module.id}-apikey`)
-                        return false
-                      }}
-                    >
-                      <EasyEdit
-                        type="text"
-                        onSave={(data: any) => {
-                          setFieldEditId("")
-                          handleEdit({ value: data, name: `modules.installed.${index}.settings.api_key` })
-                        }}
-                        onCancel={() => setFieldEditId("")}
-                        onBlur={() => setFieldEditId("")}
-                        cancelOnBlur={true}
-                        saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                        cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
-                        onHoverCssClassName={`cursor-pointer`}
-                        value={module.settings?.api_key || "click to add api key"}
-                        editComponent={<EditComponent />}
-                      />
-                    </div>
+                    {module.meta?.description || "No description"}
                   </div>
 
                   <ModuleSettings {...{ module, index: index - 1, setFieldEditId, handleEdit, EditComponent }} />
@@ -492,7 +495,7 @@ export default function Settings(props: any) {
                                   if (ai?.id === "c1") {
                                     return error({
                                       message:
-                                        "Assistant is required by Prompt's core functions, so it can't be deleted.",
+                                        "Assistant is required by Conductor's core functions, so it can't be deleted.",
                                     })
                                   }
                                   await AIActions.delete({ ai_id: ai?.id })

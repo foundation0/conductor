@@ -1,17 +1,18 @@
 import { TextMessageT, SessionsT } from "@/data/loaders/sessions"
 import _ from "lodash"
-import { CostS, SessionsS, TextMessageS } from "@/data/schemas/sessions"
+import { CostS, ReceiptS, SessionsS, TextMessageS } from "@/data/schemas/sessions"
 import { nanoid } from "nanoid"
 import { AppStateT } from "@/data/loaders/app"
 import { initLoaders } from "@/data/loaders"
 import AppStateActions from "@/data/actions/app"
 import UserActions from "@/data/actions/user"
 import { UserT } from "@/data/loaders/user"
-import { error, ph } from "@/components/libraries/logging"
+import { error, ph } from "@/libraries/logging"
 import { z } from "zod"
+import config from "@/config"
 
 const API = {
-  updateSessions: async function (state: SessionsT) {
+  updateSessions: async function (state: Partial<SessionsT>) {
     const { SessionState } = await initLoaders()
     const sessions: SessionsT = SessionState.get()
     const updated_state: SessionsT = { ...sessions, ...state }
@@ -21,6 +22,16 @@ const API = {
     return parsed.data
   },
 
+  updateSession: async function ({ session_id, session }: { session_id: string; session: any}) {
+    const { SessionState } = await initLoaders()
+    const sessions: SessionsT = SessionState.get()
+    const updated_sessions = _.cloneDeep(sessions)
+    const current_session = updated_sessions.active[session_id]
+    if (!session) return error({ message: "Session not found", data: { session_id } })
+    const updated_session = { ...current_session, ...session }
+    updated_sessions.active[session_id] = updated_session
+    return API.updateSessions(updated_sessions)
+  },
   updateMessages: async function ({ session_id, messages }: { session_id: string; messages: TextMessageT[] }) {
     const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })
@@ -92,8 +103,19 @@ const API = {
     ph().capture("sessions/message_added")
     return vmessage.data
   },
-  // use CostS
-  addCost: async function ({
+  addCost: async function ({ session_id, receipt }: { receipt: z.infer<typeof ReceiptS>; session_id: string }) {
+    const { SessionState } = await initLoaders()
+    const sessions = SessionState.get()
+    const session = sessions.active[session_id]
+    if (!session) throw new Error("Session not found")
+
+    if (!ReceiptS.safeParse(receipt).success) return error({ message: "Invalid receipt", data: receipt })
+
+    if (!session.receipts) session.receipts = []
+    session.receipts.push(receipt)
+    await API.updateSessions(sessions)
+  },
+  /* addCost: async function ({
     session_id,
     msgs,
     cost_usd,
@@ -107,7 +129,7 @@ const API = {
     if (!session.ledger) session.ledger = []
     session.ledger.push({ _v: 1, created_at: new Date(), msgs, cost_usd, tokens, module })
     await API.updateSessions(sessions)
-  },
+  }, */
   clearMessages: async function ({ session_id }: { session_id: string }) {
     const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })
@@ -150,9 +172,9 @@ const API = {
       type: "chat",
       created_at: new Date(),
       settings: {
-        module: active_workspace.defaults.llm_module || {
-          id: "openai",
-          variant: "gpt-3.5-turbo",
+        module: {
+          id: active_workspace.defaults.llm_module.id || config.defaults.llm_module.id,
+          variant: active_workspace.defaults.llm_module.variant || config.defaults.llm_module.variant_id,
         },
       },
     }

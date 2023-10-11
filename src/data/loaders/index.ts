@@ -5,7 +5,7 @@ import { state as NotepadState } from "@/data/loaders/notepad"
 import { state as UsersState } from "@/data/loaders/users"
 import { state as MessagesState } from "@/data/loaders/messages"
 import { state as AIState } from "@/data/loaders/ai"
-import { getActiveUser } from "@/components/libraries/active_user"
+import { getActiveUser } from "@/libraries/active_user"
 import _ from "lodash"
 
 const noopAPI = { get: () => null, set: () => null }

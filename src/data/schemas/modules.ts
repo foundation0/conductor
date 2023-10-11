@@ -3,6 +3,7 @@ import { RangeS } from "./common"
 
 export const LLMVariantS = z.object({
   id: z.string(),
+  name: z.string().optional(),
   type: z.enum(["language", "image", "audio", "video", "3D", "graph"]).default("language"),
   active: z
     .boolean()
@@ -13,8 +14,10 @@ export const LLMVariantS = z.object({
   cost_output: z.number().optional(),
   color: z.string().default("transparent").optional(),
   template: z.string().optional(),
+  settings: z.record(z.any()).optional(),
   cost: z.number().optional().describe("deprecated"), // deprecated
 })
+export type LLMVariantT = z.infer<typeof LLMVariantS>
 
 export const ModuleS = z.object({
   _v: z.number().default(1),
@@ -37,8 +40,8 @@ export const ModuleS = z.object({
     variants: z.array(LLMVariantS).optional(),
   }),
   settings: z.record(z.any()).optional(),
-  streaming: z.boolean().catch(() => false),
-  cost: z.number().optional(),
+  cost: z.number().optional().describe("deprecated"), // deprecated
+  streaming: z.boolean().catch(() => false).optional().describe("deprecated"), // deprecated
 })
 export type ModuleT = z.infer<typeof ModuleS>
 

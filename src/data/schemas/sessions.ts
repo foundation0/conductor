@@ -30,6 +30,28 @@ export const CostS = z.object({
   }),
 })
 
+const ReceiptDetailsS = z.object({
+  type: z.string().catch(() => "chat_message"),
+  input: z.object({
+    tokens: z.number(),
+    cost_usd: z.number(),
+  }),
+  output: z.object({
+    tokens: z.number(),
+    cost_usd: z.number(),
+  }),
+})
+export type ReceiptDetailsT = z.infer<typeof ReceiptDetailsS>
+
+export const ReceiptS = z.object({
+  receipt_id: z.string(),
+  vendor: z.string(),
+  model: z.string(),
+  cost_usd: z.number(),
+  details: ReceiptDetailsS,
+})
+export type ReceiptT = z.infer<typeof ReceiptS>
+
 export const ChatS = z.object({
   _v: z.number().default(1),
   _updated: z.number().optional(),
@@ -47,7 +69,8 @@ export const ChatS = z.object({
     }),
     ai: z.string().optional(),
   }),
-  ledger: z.array(CostS).optional(),
+  receipts: z.array(ReceiptS).optional(),
+  ledger: z.array(CostS).optional().describe("deprecated"),
   // deprecated
   messages: z.array(TextMessageS).optional().describe("deprecated"),
 })

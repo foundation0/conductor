@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { nanoid } from "nanoid"
-import { generateSchemaTransformer } from "@/components/libraries/utilities"
+import { generateSchemaTransformer } from "@/libraries/utilities"
 
 export const DataS = generateSchemaTransformer({
   schemas: [z.object({

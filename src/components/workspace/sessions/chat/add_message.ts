@@ -1,14 +1,14 @@
 import { TextMessageT } from "@/data/loaders/sessions"
 import SessionsActions from "@/data/actions/sessions"
 import _ from "lodash"
-import { compileSlidingWindowMemory } from "@/components/libraries/memory"
-import { main as CostEstimator, InputT as CostEstimatorInputT } from "@/modules/openai-cost-estimator/"
-import { error } from "@/components/libraries/logging"
+import { compileSlidingWindowMemory } from "@/libraries/memory"
+import { error } from "@/libraries/logging"
 import { UserT } from "@/data/loaders/user"
 import { MessageRowT } from "."
 import { nanoid } from "nanoid"
 import { AIT } from "@/data/schemas/ai"
-import { AIToInstruction } from "@/components/libraries/ai"
+import { AIToInstruction } from "@/libraries/ai"
+import { ReceiptT } from "@/data/schemas/sessions"
 
 export async function addMessage({
   session,
@@ -30,11 +30,12 @@ export async function addMessage({
     setBranchParentId,
     appendOrUpdateProcessedMessage,
     addRawMessage,
+    onError
   },
 }: {
   session: any
   session_id: string
-  api_key: string
+  api_key?: string
   module: any
   processed_messages: MessageRowT[]
   branch_parent_id: string | boolean
@@ -42,7 +43,7 @@ export async function addMessage({
   message_id?: string
   raw_messages: TextMessageT[]
   user_state: UserT
-  ai: AIT,
+  ai: AIT
   callbacks: {
     setGenInProgress: Function
     setMsgUpdateTs: Function
@@ -51,12 +52,10 @@ export async function addMessage({
     setBranchParentId: Function
     appendOrUpdateProcessedMessage: Function
     addRawMessage: Function
+    onError?: Function
   }
 }): Promise<boolean | undefined> {
-  if (!api_key) return false
   if (!module) throw new Error("No module")
-  // const CostEstimator = new ComlinkWorker(new URL('../../modules/openai-cost-estimator/index.ts', import.meta.url), {/* normal Worker options*/})
-  // console.log(await CostEstimator.main())
   // if no activePath, use first as parent id
   let parent_id = "first"
   // if activePath exists, set parent id as the last message id in the chain
@@ -70,10 +69,10 @@ export async function addMessage({
   if (parent_id !== "first") {
     const parent_msg = raw_messages?.find((msg: any) => msg.id === parent_id)
     if (parent_msg?.type === "human") {
-      console.log("resending")
+      // console.log("resending")
       resend = true
     } else if (!parent_msg && _.size(raw_messages) > 0) {
-      console.log("no parent")
+      // console.log("no parent")
       return false
     }
   }
@@ -87,7 +86,7 @@ export async function addMessage({
         instructions: AIToInstruction({ ai }) || "you are a helpful assistant",
         user: message,
       },
-      messages: _.map(processed_messages, (m) => m[1]),
+      messages: _.map(processed_messages, (m) => m[1]).filter((m) => m.hash !== "1337"),
       module,
     })
     if (!memory) {
@@ -124,7 +123,7 @@ export async function addMessage({
     setGenInProgress(true)
     // setMsgUpdateTs(new Date().getTime())
     if (m) {
-      const source = `ai:${module?.specs?.meta?.vendor?.name}/${session?.settings.module.variant}/${ai?.id}`
+      const source = `ai:${module?.specs?.id}/${session?.settings.module.variant}/${ai?.id}`
       let stream_response = ""
       function onData({ data }: { data: any }) {
         if (data) {
@@ -151,10 +150,12 @@ export async function addMessage({
       }
 
       setMsgsInMem(memory ? memory.included_ids : [])
-      console.info(`Message tokens: ${memory?.token_count}, USD: $${memory?.usd_cost}`)
-      const response = await module?.main(
+
+      const { receipt } = (await module?.main(
         {
           model: session?.settings.module.variant,
+          user_id: user_state.id,
+          settings: _.find(user_state.modules.installed, { id: session?.settings.module.id })?.meta.variants?.find(v => v.id === session?.settings.module.variant)?.settings || {},
           api_key,
           prompt,
           history: memory?.history || [],
@@ -166,26 +167,19 @@ export async function addMessage({
           onError: (data: any) => {
             has_error = true
             setGenInProgress(false)
-            error({ message: data.message || data.code, data })
+            if(!data.surpress) error({ message: data.message || data.code, data })
+            onError && onError()
           },
         }
-      )
+      )) as { receipt: ReceiptT }
 
-      SessionsActions.addCost({
-        session_id,
-        msgs: _.uniq([...memory?.included_ids, m.id]) as [string, ...string[]],
-        cost_usd: memory.usd_cost,
-        tokens: memory.token_count,
-        module: session.settings.module,
-      })
-
-      if (response || stream_response) {
+      if (stream_response) {
         const aim: TextMessageT = await SessionsActions.addMessage({
           session_id,
           message: {
             type: "ai",
             hash: "123",
-            text: response || stream_response,
+            text: stream_response,
             source,
             parent_id: m.id,
           },
@@ -196,24 +190,27 @@ export async function addMessage({
 
         const model = user_state.modules.installed.find((m: any) => m.id === session.settings.module.id)
         const variant = _.find(model?.meta.variants, { id: session.settings.module.variant })
-        const costs = await CostEstimator({
+
+        /* const costs = await CostEstimator({
           model: session.settings.module.variant,
           response: response || stream_response || "",
           costs: { input: variant?.cost_input || 0, output: variant?.cost_output || 0 },
-        })
-        if (!costs)
+        }) */
+
+        /* 
+        if (!receipt)
           return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
-        console.log(`Output tokens: ${costs.tokens}, USD: $${costs.usd}`)
+        console.log(
+          `Input: ${receipt.details.input.tokens} tokens, $${receipt.details.input.cost_usd} : Output: ${receipt.details.output.tokens} tokens, $${receipt.details.output.cost_usd} : Total: $${receipt.cost_usd}`
+        )
         SessionsActions.addCost({
           session_id,
-          msgs: _.uniq([...memory?.included_ids, aim.id]) as [string, ...string[]],
-          cost_usd: costs.usd,
-          tokens: costs.tokens,
-          module: session.settings.module,
-        })
+          receipt,
+        }) 
+        */
 
         return true
-      } else if (!has_error && !response && !stream_response) {
+      } else if (!has_error && !stream_response) {
         return error({ message: "no response from the module", data: { module_id: module.specs.id } })
       }
     }
