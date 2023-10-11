@@ -8,8 +8,8 @@
   <a href="https://discord.gg/PFMtbdrvXw" target="_blank">
     <img src="https://img.shields.io/badge/discord-join%20chat-blue.svg" alt="Join our Discord" height="20">
   </a>
-  <a href="https://twitter.com/promptc0" target="_blank">
-    <img src="https://img.shields.io/badge/twitter-follow%20-blue.svg" alt="Follow us on Twitter" height="20">
+  <a href="https://twitter.com/conductorc0" target="_blank">
+    <img src="https://img.shields.io/badge/X-follow%20-blue.svg" alt="Follow us on X" height="20">
   </a>
 </div>
 
