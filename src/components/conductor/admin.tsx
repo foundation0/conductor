@@ -16,7 +16,7 @@ export function Admin() {
         installed: mods,
       },
     })
-    navigate("/conductor/internal::admin")
+    navigate("/c/internal::admin")
     alert("Modules reset to default")
   }
   return (

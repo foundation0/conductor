@@ -26,7 +26,7 @@ export default function WorkspaceCreate() {
         <Form
           method="put"
           className="flex flex-col justify-center items-center w-full"
-          action="/conductor/workspace"
+          action="/c/workspace"
           onSubmit={() => {
             setLoginInProgress(true)
           }}

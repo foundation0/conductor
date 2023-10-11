@@ -42,7 +42,7 @@ export function LocalUsersPage() {
     )
   }, [JSON.stringify(users_state)])
 
-  let from = location.state?.from?.pathname || "/conductor/"
+  let from = location.state?.from?.pathname || "/c/"
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     setLoginInProgress(true)

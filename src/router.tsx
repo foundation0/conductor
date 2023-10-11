@@ -8,7 +8,7 @@ function RedirectToConductor() {
   let navigate = useNavigate()
 
   useEffect(() => {
-    navigate("/conductor/")
+    navigate("/c/")
   }, [])
   return null
 }

@@ -13,7 +13,7 @@ export default function Tabs() {
   useEffect(() => {
     ph().capture("experiences/onboarding/v1/input")
     markExperienceAsComplete({ experience_id: "onboarding/v1", user_state }).then(() => {
-      navigate(`/conductor/${workspace_id}/${session_id}`, { replace: true })
+      navigate(`/c/${workspace_id}/${session_id}`, { replace: true })
     })
   }, [])
 

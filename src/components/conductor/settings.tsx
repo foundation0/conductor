@@ -72,7 +72,7 @@ export default function Settings(props: any) {
       await UsersActions.updateUser(updated_public_user)
     }
     updateModules()
-    navigate("/conductor/settings")
+    navigate("/c/settings")
   }
 
   const EditComponent = function (props: any) {
@@ -159,7 +159,7 @@ export default function Settings(props: any) {
               className={`bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-100 rounded-lg block px-2 py-1.5 text-xs font-semibold cursor-pointer`}
               onClick={() => {
                 auth.signout(() => {
-                  navigate("/conductor/authenticate")
+                  navigate("/c/authenticate")
                 })
               }}
             >
@@ -351,7 +351,7 @@ export default function Settings(props: any) {
         <div className="flex flex-grow flex-1 w-full flex-col gap-3">
           <div className="flex flex-row w-full gap-2">
             <Link
-              to="/conductor/ai/create"
+              to="/c/ai/create"
               className="w-1/2 bg-zinc-900 rounded-lg p-3 flex flex-col justify-center items-center border-zinc-700 border border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500 tooltip tooltip-top saturate-0 hover:saturate-100"
               data-tip="Create a new AI"
             >
@@ -403,7 +403,7 @@ export default function Settings(props: any) {
                           {ai?.id !== "c1" && (
                             <div className="inline-flex items-center gap-3">
                               <Link
-                                to={`/conductor/ai/edit/${ai.id}`}
+                                to={`/c/ai/edit/${ai.id}`}
                                 className="flex items-center tooltip tooltip-top"
                                 data-tip="Modify AI"
                               >
@@ -420,7 +420,7 @@ export default function Settings(props: any) {
                                       ...user_state,
                                       ais: _.filter(user_state.ais, (a) => a.id !== ai?.id),
                                     })
-                                    navigate("/conductor/settings")
+                                    navigate("/c/settings")
                                   }
                                 }}
                               >
@@ -471,14 +471,14 @@ export default function Settings(props: any) {
                                       ais: [...(user_state?.ais || []), user_ai],
                                     })
 
-                                  navigate("/conductor/settings")
+                                  navigate("/c/settings")
                                 }
                               }}
                             >
                               <RiAddCircleFill className="w-4 h-4 hover:text-zinc-200" />
                             </button>
                             <Link
-                              to={`/conductor/ai/edit/${ai.id}`}
+                              to={`/c/ai/edit/${ai.id}`}
                               className="flex items-center tooltip tooltip-top"
                               data-tip="Modify AI"
                             >
@@ -504,7 +504,7 @@ export default function Settings(props: any) {
                                       ...user_state,
                                       ais: _.filter(user_state.ais, (a) => a.id !== ai?.id),
                                     })
-                                  navigate("/conductor/settings")
+                                  navigate("/c/settings")
                                 }
                               }}
                             >

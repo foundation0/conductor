@@ -52,7 +52,7 @@ export default function Notepad() {
     setFieldEditId("")
     setDirtyClip(false)
     setTimeout(() => {
-      navigate(`/conductor/${workspace_id}/${session_id}`)
+      navigate(`/c/${workspace_id}/${session_id}`)
     }, 200)
   }
 
@@ -107,7 +107,7 @@ export default function Notepad() {
     if (!session_id) return
     NotepadActions.deleteClip({ session_id, clip_id: c.id })
     setTimeout(() => {
-      navigate(`/conductor/${workspace_id}/${session_id}`)
+      navigate(`/c/${workspace_id}/${session_id}`)
     }, 200)
   }
 

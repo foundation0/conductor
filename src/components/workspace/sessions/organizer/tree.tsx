@@ -47,7 +47,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       })
     }
 
-    navigate(`/conductor/${workspace_id}/${session_id}`)
+    navigate(`/c/${workspace_id}/${session_id}`)
   }
 
   const updateGroup = async ({ name, group_id }: { name: string; group_id: string }) => {
@@ -56,7 +56,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       group_id,
     })
 
-    navigate(`/conductor/${workspace_id}/${session_id}`)
+    navigate(`/c/${workspace_id}/${session_id}`)
   }
   const updateFolder = async ({ name, group_id, folder_id }: { name: string; group_id: string; folder_id: string }) => {
     await UserActions.renameItem({
@@ -65,7 +65,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       folder_id,
     })
 
-    navigate(`/conductor/${workspace_id}/${session_id}`)
+    navigate(`/c/${workspace_id}/${session_id}`)
   }
   const updateSession = async ({
     name,
@@ -85,7 +85,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       session_id,
     })
 
-    navigate(`/conductor/${workspace_id}/${session_id}`)
+    navigate(`/c/${workspace_id}/${session_id}`)
   }
 
   const EditComponent = function (props: any) {
@@ -144,10 +144,10 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
         },
         {
           method: "DELETE",
-          action: "/conductor/workspace/session",
+          action: "/c/workspace/session",
         }
       )
-      navigate(`/conductor/${workspace_id}/${next_session.session_id}`)
+      navigate(`/c/${workspace_id}/${next_session.session_id}`)
     }
   })
 
@@ -163,7 +163,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       },
       {
         method: "PUT",
-        action: `/conductor/workspace/session`,
+        action: `/c/workspace/session`,
       }
     )
   })
@@ -241,7 +241,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                               },
                               {
                                 method: "DELETE",
-                                action: "/conductor/workspace/group",
+                                action: "/c/workspace/group",
                               }
                             )
                           }}
@@ -281,7 +281,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                             },
                             {
                               method: "PUT",
-                              action: `/conductor/workspace/group`,
+                              action: `/c/workspace/group`,
                             }
                           )
                         }}
@@ -300,7 +300,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                             },
                             {
                               method: "PUT",
-                              action: `/conductor/workspace/folder`,
+                              action: `/c/workspace/folder`,
                             }
                           )
                         }}
@@ -400,7 +400,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                                     },
                                     {
                                       method: "DELETE",
-                                      action: "/conductor/workspace/folder",
+                                      action: "/c/workspace/folder",
                                     }
                                   )
                                 }}
@@ -429,7 +429,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                             },
                             {
                               method: "PUT",
-                              action: `/conductor/workspace/session`,
+                              action: `/c/workspace/session`,
                             }
                           )
                         }}
@@ -459,7 +459,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         className={`flex flex-1 relative items-center cursor-pointer text-xs font-semibold text-ellipsis overflow-hidden ph-no-capture transition-all ${
                           session.id === session_id ? " text-zinc-100" : "text-zinc-400  hover:text-zinc-100"
                         }`}
-                        to={`/conductor/${workspace_id}/${session.id}`}
+                        to={`/c/${workspace_id}/${session.id}`}
                       >
                         <EasyEdit
                           type="text"
@@ -520,7 +520,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                                       },
                                       {
                                         method: "DELETE",
-                                        action: `/conductor/workspace/session`,
+                                        action: `/c/workspace/session`,
                                       }
                                     )
                                   }}

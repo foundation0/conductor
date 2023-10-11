@@ -20,7 +20,7 @@ export const AdminR = {
 }
 
 export const ConductorR = {
-  path: "/conductor/",
+  path: "/c/",
   element: (
     <RequireAuth>
       <Conductor />

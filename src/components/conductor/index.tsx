@@ -96,10 +96,10 @@ export default function Conductor() {
       const folder = group?.folders[0]
       const session = _.get(folder, "sessions[0]")
       if (workspace && session) {
-        navigate(`/conductor/${workspace.id}/${session.id}`)
+        navigate(`/c/${workspace.id}/${session.id}`)
       }
     }
-  }, [location.pathname === "/conductor/"])
+  }, [location.pathname === "/c/"])
 
   useEffect(() => {
     setActiveSessionsElements(
@@ -111,7 +111,7 @@ export default function Conductor() {
         const session = folder?.sessions?.find((s) => s.id === sess.session_id) ?? null
         if (!session) return null
         return (
-          <Link key={sess.session_id} to={`/conductor/${workspace?.id}/${session?.id}`}>
+          <Link key={sess.session_id} to={`/c/${workspace?.id}/${session?.id}`}>
             <div className="flex flex-row gap-2 border-t border-t-zinc-700 py-2 pl-2 pr-4 text-sm rounded-lg border-zinc-800 bg-zinc-800 hover:bg-zinc-800/70 text-zinc-300">
               <div className="flex flex-shrink">
                 <img src={workspace?.icon} className="w-10 h-10" />
@@ -146,7 +146,7 @@ export default function Conductor() {
       <main id="Conductor" className={`flex flex-row flex-1 m-0 p-0 h-[100dvh] dark bg-[#111]/60 mt-0.5`}>
         <WorkspaceSelector />
         <div id="WorkspaceView" className="flex flex-1 m-0.5 overflow-y-auto">
-          {location.pathname !== "/conductor/" ? (
+          {location.pathname !== "/c/" ? (
             <Outlet />
           ) : (
             <div className="flex justify-center items-center w-full">

@@ -36,7 +36,7 @@ export default function Settings() {
     const field_value = is_json ? JSON.parse(value) : value
     const new_user_state = { ...user_state, ..._.set(user_state, field_name, field_value) }
     await UserActions.updateUser(new_user_state)
-    navigate(`/conductor/${workspace_id}/settings`)
+    navigate(`/c/${workspace_id}/settings`)
   }
 
   const EditComponent = function (props: any) {
@@ -227,7 +227,7 @@ export default function Settings() {
                   },
                   {
                     method: "DELETE",
-                    action: `/conductor/workspace`,
+                    action: `/c/workspace`,
                   }
                 )
               }}

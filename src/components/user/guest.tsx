@@ -31,7 +31,7 @@ export function Guest() {
     setTimeout(() => {
       auth.signin({ username: created_user.user.meta?.username || username, password }, () => {
         ph().capture("auth/_guest_session")
-        navigate("/conductor/")
+        navigate("/c/")
       })
     }, 200)
   }

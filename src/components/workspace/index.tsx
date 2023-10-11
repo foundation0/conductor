@@ -53,7 +53,7 @@ export default function Workspace() {
   // check that workspace exists
   useEffect(() => {
     if (!_.find(user_state.workspaces, { id: workspace_id })) {
-      navigate("/conductor/")
+      navigate("/c/")
     }
   }, [workspace_id])
 
@@ -72,7 +72,7 @@ export default function Workspace() {
         .first()
         .get("id")
         .value()
-      navigate(`/conductor/${workspace_id}/${first_session_id}`)
+      navigate(`/c/${workspace_id}/${first_session_id}`)
     }
   }, [workspace_id])
 
@@ -206,7 +206,7 @@ export default function Workspace() {
                 <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300 rounded-md">
                   {_.find(user_state.workspaces, { id: workspace_id })?.name}
                 </div>
-                <Link className="flex items-center" to={`/conductor/${workspace_id}/settings`}>
+                <Link className="flex items-center" to={`/c/${workspace_id}/settings`}>
                   <MdSettingsSuggest className="w-4 h-4 text-zinc-400 hover:text-zinc-200 transition-all" />
                 </Link>
               </div>

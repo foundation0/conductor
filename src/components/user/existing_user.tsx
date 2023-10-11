@@ -16,7 +16,7 @@ export function AddExistingUser() {
   const [username, setUsername] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [loginInProgress, setLoginInProgress] = useState<boolean>(false)
-  let from = location.state?.from?.pathname || "/conductor/"
+  let from = location.state?.from?.pathname || "/c/"
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     setLoginInProgress(true)

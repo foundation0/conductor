@@ -103,7 +103,7 @@ export default function Chat() {
     new_sessions.active[session_id] = new_session
     await SessionsActions.updateSessions(new_sessions)
 
-    navigate(`/conductor/${workspace_id}/${session_id}`)
+    navigate(`/c/${workspace_id}/${session_id}`)
 
     // set focus to #input
     setTimeout(() => {
@@ -150,7 +150,7 @@ export default function Chat() {
           variant: config.defaults.llm_module.variant_id || "",
         }
         await SessionActions.updateSession({ session_id, session: new_session })
-        navigate(`/conductor/${workspace_id}/${session_id}`)
+        navigate(`/c/${workspace_id}/${session_id}`)
       }
       if (!module) return
       setModule(module)
@@ -178,7 +178,7 @@ export default function Chat() {
     new_sessions.active[session_id] = new_session
     await SessionsActions.updateSessions(new_sessions)
 
-    navigate(`/conductor/${workspace_id}/${session_id}`)
+    navigate(`/c/${workspace_id}/${session_id}`)
 
     // set focus to #input
     setTimeout(() => {
@@ -297,7 +297,7 @@ export default function Chat() {
           session_id,
         })
 
-        navigate(`/conductor/${workspace_id}/${session_id}`)
+        navigate(`/c/${workspace_id}/${session_id}`)
       }
     }
   }
@@ -550,7 +550,7 @@ export default function Chat() {
         addRawMessage,
         onError: async () => {
           await updateMessages()
-          navigate(`/conductor/${workspace_id}/${session_id}`)
+          navigate(`/c/${workspace_id}/${session_id}`)
         },
       },
     })
@@ -706,7 +706,7 @@ export default function Chat() {
     No API key for {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
   </div>
   <div className="text-sm">
-    <Link to="/conductor/settings">
+    <Link to="/c/settings">
       Setup {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
     </Link>
   </div>

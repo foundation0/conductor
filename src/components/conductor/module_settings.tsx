@@ -366,7 +366,7 @@ export function ModuleSettings({
                               setFieldEditId("")
                               setTimeout(() => {
                                 handleEdit({ module_id: module.id, value: data, name: edit_key })
-                                navigate(`/conductor/settings`)
+                                navigate(`/c/settings`)
                               }, 100)
                             }}
                             onCancel={() => setFieldEditId("")}

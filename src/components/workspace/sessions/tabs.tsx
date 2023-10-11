@@ -71,7 +71,7 @@ export default function Tabs({
                 : " bg-zinc-800 hover:bg-zinc-900/50 text-zinc-600 hover:text-zinc-300"
             }`}
             key={s.id}
-            to={`/conductor/${workspace_id}/${s.id}`}
+            to={`/c/${workspace_id}/${s.id}`}
             data-tip={s.name}
           >
             <div className="flex flex-shrink-0">
@@ -87,8 +87,8 @@ export default function Tabs({
                   e.preventDefault()
                   if (!session_id) return
                   const new_tab = await AppStateActions.removeOpenSession({ session_id: s.id })
-                  if (session_id === s.id) navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
-                  else navigate(`/conductor/${workspace_id}/${session_id}`)
+                  if (session_id === s.id) navigate(`/c/${workspace_id}/${new_tab?.session_id}`)
+                  else navigate(`/c/${workspace_id}/${session_id}`)
                 }}
               >
                 <RxPlus />
@@ -126,7 +126,7 @@ export default function Tabs({
       const first_session = _.first(first_folder.sessions)
 
       if (first_session) {
-        navigate(`/conductor/${workspace_id}/${first_session.id}`)
+        navigate(`/c/${workspace_id}/${first_session.id}`)
       } else {
         console.warn("first session not found")
       }
@@ -168,7 +168,7 @@ export default function Tabs({
         folder_id: s.folder_id,
       }
       AppStateActions.updateAppState({ open_sessions: [...app_state.open_sessions, new_tab] }).then(() => {
-        navigate(`/conductor/${workspace_id}/${session_id}`)
+        navigate(`/c/${workspace_id}/${session_id}`)
       })
     }
   }, [JSON.stringify([session_id, open_tabs])])
@@ -177,7 +177,7 @@ export default function Tabs({
   useHotkeys("alt+w", async () => {
     if (!session_id) return
     const new_tab = await AppStateActions.removeOpenSession({ session_id })
-    navigate(`/conductor/${workspace_id}/${new_tab?.session_id}`)
+    navigate(`/c/${workspace_id}/${new_tab?.session_id}`)
   })
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -222,7 +222,7 @@ export default function Tabs({
       },
       {
         method: "PUT",
-        action: `/conductor/workspace/session`,
+        action: `/c/workspace/session`,
       }
     )
   }

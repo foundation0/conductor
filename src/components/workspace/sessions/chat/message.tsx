@@ -59,7 +59,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       if (icon_id) setUsedIcon(icon_id)
       await NotepadActions.add({ session_id, data: text, msg_id, type: "text" })
       setTimeout(closeSelection, selector_delay)
-      if (workspace_id) navigate(`/conductor/${workspace_id}/${session_id}`)
+      if (workspace_id) navigate(`/c/${workspace_id}/${session_id}`)
     }
   }
   // console.log(new Date().getTime(), selection_open, is_hovering)

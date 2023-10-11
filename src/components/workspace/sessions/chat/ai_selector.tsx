@@ -47,7 +47,7 @@ export function AISelector({
             <Link
               className="text-xs font-medium tooltip tooltip-top"
               data-tip="Create new AI"
-              to={`/conductor/ai/create`}
+              to={`/c/ai/create`}
             >
               <RiAddCircleFill className="w-4 h-4 text-zinc-500 hover:text-zinc-300 transition-all" />
             </Link>

@@ -24,7 +24,7 @@ export const SessionR = {
           folder_id: formData.get("folder_id") as string,
         })
         response.ok = true
-        return redirect(`/conductor/${formData.get("workspace_id")}/${s.session.id}`)
+        return redirect(`/c/${formData.get("workspace_id")}/${s.session.id}`)
       case "post":
         // Update folder
         break

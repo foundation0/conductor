@@ -165,7 +165,7 @@ const API = {
       open_sessions: new_open_sessions,
     })
     if (active_session) {
-      // router.navigate({ from: '/conductor', to: `/conductor/:session_id`})
+      // router.navigate({ from: '/c', to: `/c/:session_id`})
     }
     return active_session
   },

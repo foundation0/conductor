@@ -93,7 +93,7 @@ export const WorkspaceR = {
           const nw = await UserActions.addWorkspace({ name })
           if (!nw) return { ok: false }
           ph().capture("workspaces/create")
-          return redirect(`/conductor/${nw.id}/${_.get(nw, "groups[0].folders[0].sessions[0].id") || ""}`)
+          return redirect(`/c/${nw.id}/${_.get(nw, "groups[0].folders[0].sessions[0].id") || ""}`)
         }
         return { ok: false }
 
@@ -158,9 +158,9 @@ export const WorkspaceR = {
           const next_workspace_first_session = next_workspace.groups.flatMap((g) =>
             g.folders.flatMap((f) => f.sessions)
           )[0]
-          return redirect(`/conductor/${next_workspace.id}/${next_workspace_first_session?.id || ""}`)
+          return redirect(`/c/${next_workspace.id}/${next_workspace_first_session?.id || ""}`)
         } else {
-          return redirect("/conductor/create")
+          return redirect("/c/create")
         }
     }
     return { ok: false }
