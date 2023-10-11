@@ -1,15 +1,10 @@
-# Conductor Beta: "ChatGPT™ for professionals"
+# Conductor: AGI for creators, professionals, entrepreneurs and organizations
 
 <div align="center">
-  <a href="https://beta.promptc0.com" target="_blank">
-    <img src="./assets/prompt-beta-cover-v2-min.png" alt="prompt-beta-overview" width="100%"  style="border-radius: 15px; padding-bottom: 20px"/>
-  </a>
+    <img src="./assets/conductor-beta-cover.png" alt="conductor-beta-overview" width="100%"  style="border-radius: 15px; padding-bottom: 20px"/>
 </div>
 
 <div align="center">
-  <a href="https://beta.promptc0.com" target="_blank">
-    <img src="https://img.shields.io/badge/web app-launch-green.svg" alt="Launch Conductor" height="20">
-  </a>
   <a href="https://discord.gg/PFMtbdrvXw" target="_blank">
     <img src="https://img.shields.io/badge/discord-join%20chat-blue.svg" alt="Join our Discord" height="20">
   </a>
@@ -18,11 +13,9 @@
   </a>
 </div>
 
-ChatGPT™ is fantastic but its interface is not designed for professionals with multiple on-going conversations.
+> Conductor: Multi-modal multi-tool for AI-powered creators, professionals, entrepreneurs and organizations
 
-This is why we built Conductor: A privacy-first multi-modal\* interface for AI-powered professionals.
-
-Conductor is 100% open-source, decentralized*, community-driven software. Conductor has been designed as a modular platform* that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
+Conductor is open-source, decentralized*, community-driven software. Conductor has been designed as a modular platform* that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
 
 ## Key Features 🎯
 
@@ -38,7 +31,6 @@ Conductor is 100% open-source, decentralized*, community-driven software. Conduc
 🗣️ Talk with AIs  
 🔮 Support for documents, images, audio, video and 3D  
 🤝 Go multiplayer, invite others to work with you  
-📱 Mobile app  
 🧩 Extend almost any aspect of Conductor with user-built modules  
 🌌 Conductor goes fully decentralized
 
@@ -48,18 +40,19 @@ Coming soon 🚧
 
 ## Get started 🚀
 
-Go to [beta.promptc0.com](https://beta.promptc0.com), create an account and you are good to go.
+> Conductor is free and open-source, but in its current beta state, it is not yet ready for production use. We are working hard to get it there as soon as possible. If you are interested in helping us test Conductor, please join our [Discord](https://discord.gg/PFMtbdrvXw) and say hi!
 
-> Conductor is free and open-source, but you'll need OpenAI API key for the beta. Conductor's unified model engine is still in the works, so beta works directly through OpenAI's API.
 
-Or clone this repo and run it locally:
-
+### Run Conductor locally
 ```bash
-$ git clone https://github.com/promptc0/a0
-$ cd a0
+$ git clone https://github.com/foundation0/conductor
+$ cd conductor
 $ npm install
-$ npm run dev
+$ npm run build
+$ npm run preview
 ```
+
+Please note that as the module system is still under development, your milage running local models may vary.
 
 ## Contribute 🤝
 
