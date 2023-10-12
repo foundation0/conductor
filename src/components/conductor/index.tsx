@@ -65,11 +65,11 @@ export default function Conductor() {
       }
 
       // upgrade all workspace default llms to use ule
-      const upgraded_workspaces = user_state.workspaces.map((w) => {
-        w.defaults.llm_module = { id: config.defaults.llm_module.id, variant: config.defaults.llm_module.variant_id }
-        return w
-      })
-      UserActions.updateUser({ modules: { installed: updated_modules }, ais, workspaces: upgraded_workspaces })
+      // const upgraded_workspaces = user_state.workspaces.map((w) => {
+      //   w.defaults.llm_module = { id: config.defaults.llm_module.id, variant: config.defaults.llm_module.variant_id }
+      //   return w
+      // })
+      // UserActions.updateUser({ modules: { installed: updated_modules }, ais, workspaces: upgraded_workspaces })
 
       // upgrade all AIs' default_llm_module using openai module to use ULE
       ai_state.forEach((ai) => {
