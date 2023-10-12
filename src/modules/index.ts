@@ -51,13 +51,13 @@ export const Module = async (mod: string, factory_state: boolean = false) => {
       // if installed_module is ULE, fetch updated info
       if (installed_module.id === "ule") {
         const cached_ule_models = CACHE[installed_module.id]
-        if (!cached_ule_models || cached_ule_models.created_at < Date.now() - 1000 * 60 * 5) {
-          let updated_mods = await new Promise(async resolve => {
+        if (!cached_ule_models || (cached_ule_models?.created_at || 0) < Date.now() - 1000 * 60 * 5) {
+          let updated_mods = await new Promise(async (resolve) => {
             let output: any = []
             const ULE = await PEClient({
               host: `${config.services.ule_URI}/PE`,
               onData: (data) => {
-                output = [ ...output, ...data ]
+                output = [...output, ...data]
               },
               onDone: (data) => {
                 resolve(output)
@@ -73,11 +73,11 @@ export const Module = async (mod: string, factory_state: boolean = false) => {
               },
             })
             ULE.compute({
-              type: 'GetPricing',
+              type: "GetPricing",
               user_id: user_state.id,
             })
           })
-          
+
           CACHE[installed_module.id] = {
             created_at: Date.now(),
             value: updated_mods,
@@ -89,12 +89,13 @@ export const Module = async (mod: string, factory_state: boolean = false) => {
         latest_ule_models = _(CACHE[installed_module.id].value)
           .map((vendor: any) => {
             return vendor.models.map((model: any) => {
+              const existing_settings = _.find(installed_module.meta.variants, { id: model.id })?.settings
               return {
                 id: model.id,
                 name: `${vendor.meta.name} ${model.name}`,
                 type: "language",
                 context_len: model.context_len,
-                settings: {
+                settings: existing_settings || {
                   max_tokens: 2000,
                   temperature: 0.8,
                   top_p: 1,
@@ -105,19 +106,18 @@ export const Module = async (mod: string, factory_state: boolean = false) => {
             })
           })
           .flatten()
-          .sortBy('name', 'asc')
+          .orderBy("name", "asc")
           .value()
       }
 
       // merge user's variants with module's variants, make sure there is no duplicate
-      if (typeof mm.specs.meta?.variants === "object")
-        mm.specs.meta.variants = _.uniqBy(
-          [...mm.specs.meta.variants, ...(latest_ule_models || []), ...(installed_module.meta.variants || [])],
-          "id"
-        )
-      mm.specs.active = installed_module.active
-      mm.specs.settings = { ...mm.specs.settings, ...installed_module.settings }
-      // mm.specs.meta.variants = _.uniqBy(installed_module.meta.variants, "id")
+      if (typeof mm.specs.meta?.variants === "object") {
+        mm.specs.meta.variants = _(latest_ule_models).uniqBy("id").sortBy("id").value()
+
+        mm.specs.active = installed_module.active
+        mm.specs.settings = { ...mm.specs.settings, ...installed_module.settings }
+        // mm.specs.meta.variants = _.uniqBy(installed_module.meta.variants, "id")
+      }
     }
   }
   return mm as {

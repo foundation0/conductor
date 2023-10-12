@@ -46,10 +46,10 @@ export default function Conductor() {
   useEffect(() => {
     // upgrade user's modules
     getModules().then((module_specs) => {
-      let updated_modules: ModuleT[] = _.uniqBy([...module_specs, ...user_state.modules.installed], "id")
+      // let updated_modules: ModuleT[] = _.merge((module_specs || []), user_state.modules?.installed || [])
 
       // in all cases, update icon and author
-      updated_modules = updated_modules.map((m) => {
+      module_specs = module_specs.map((m) => {
         m.meta.icon = module_specs.find((bm) => bm.id === m.id)?.meta.icon || m.meta.icon
         m.meta.author = module_specs.find((bm) => bm.id === m.id)?.meta.author || m.meta.author
         // mark openai is inactive
@@ -69,7 +69,8 @@ export default function Conductor() {
       //   w.defaults.llm_module = { id: config.defaults.llm_module.id, variant: config.defaults.llm_module.variant_id }
       //   return w
       // })
-      // UserActions.updateUser({ modules: { installed: updated_modules }, ais, workspaces: upgraded_workspaces })
+
+      UserActions.updateUser({ modules: { installed: module_specs }, ais })
 
       // upgrade all AIs' default_llm_module using openai module to use ULE
       ai_state.forEach((ai) => {
