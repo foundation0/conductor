@@ -10,7 +10,7 @@ type PEArgsT = {
 
 export async function PEClient<T>({ host, onData, onDone, onError }: PEArgsT): Promise<{
   close: () => void
-  abort: () => void
+  abort: (params: { user_id: string }) => void
   compute: (request: T) => void
 }> {
   let request_id: string = ""
@@ -19,8 +19,8 @@ export async function PEClient<T>({ host, onData, onDone, onError }: PEArgsT): P
     close: () => {
       onDone && onDone(null)
     },
-    abort: () => {
-      ws.send(JSON.stringify({ request_id, type: "Abort" }))
+    abort: ({ user_id }: { user_id: string }) => {
+      ws.send(JSON.stringify({ request_id, user_id, type: "Abort" }))
     },
     compute: (request: T) => {
       // check if websocket is already open

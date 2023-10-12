@@ -15,7 +15,7 @@ const variant_setting = {
   temperature: 0,
   top_p: 1,
   frequency_penalty: 0,
-  presence_penalty: 0
+  presence_penalty: 0,
 }
 
 export let specs: z.infer<typeof ModuleS> = {
@@ -25,8 +25,7 @@ export let specs: z.infer<typeof ModuleS> = {
   active: true,
   meta: {
     author: "0x000",
-    description:
-      "Unified LLM Engine offers a standardized access to all major open-source and proprietary LLMs.",
+    description: "Unified LLM Engine offers a standardized access to all major open-source and proprietary LLMs.",
     name: "LLM",
     type: "LLM",
     vendor: { name: "Unified LLM Engine" },
@@ -41,7 +40,7 @@ export let specs: z.infer<typeof ModuleS> = {
     ],
     icon: Icon,
   },
-  settings: {}
+  settings: {},
 }
 
 const InputS = z.object({
@@ -74,7 +73,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
   const { user_id, model, prompt, settings, history } = InputS.parse(input)
   const { setGenController, onData, onClose, onError } = StreamingS.parse(callbacks)
 
-  if(!user_id) {
+  if (!user_id) {
     error({ message: "user_id is required" })
     return "error"
   }
@@ -108,7 +107,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
       },
     })
 
-    setGenController && setGenController({ abort: ULE.abort })
+    setGenController && setGenController({ abort: () => ULE.abort({ user_id }) })
 
     const messages: any = [
       {
