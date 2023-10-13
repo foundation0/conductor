@@ -146,7 +146,7 @@ export default function Conductor() {
       )}
       <main id="Conductor" className={`flex flex-row flex-1 m-0 p-0 h-[100dvh] dark bg-[#111]/60 mt-0.5`}>
         <WorkspaceSelector />
-        <div id="WorkspaceView" className="flex flex-1 m-0.5 overflow-y-hidden">
+        <div id="WorkspaceView" className="flex flex-1 m-0.5 overflow-y-auto overflow-x-hidden">
           {location.pathname !== "/c/" ? (
             <Outlet />
           ) : (

@@ -238,7 +238,7 @@ export default function Workspace() {
             </div>
             <div
               id="WorkspaceSidebarContent"
-              className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
+              className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent overflow-y-auto overflow-x-hidden`}
             >
               <Switch fallback={""}>
                 <Match when={active_sidebar_tab === "sessions"}>

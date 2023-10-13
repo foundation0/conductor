@@ -134,7 +134,7 @@ export default function Settings(props: any) {
   // @ts-ignore
   const version = import.meta.env.PROD ? __APP_VERSION__ : "// dev build"
   return (
-    <div className="Settings content flex flex-col flex-grow items-center m-10">
+    <div className="Settings content flex flex-col flex-grow items-center m-10 mb-0">
       <div className="flex flex-col w-full justify-start items-start max-w-2xl">
         <div className="text-lg text-zinc-400 shadow font-semibold">Global Settings</div>
 
