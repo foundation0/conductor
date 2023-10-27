@@ -99,7 +99,7 @@ export default function Chat() {
     if (!sid) return
     const { SessionState } = await initLoaders()
     const s = await SessionState.get()
-    const data = s.active[sid]?.data
+    const data = s.active[sid]?.data || []
     if (data) {
       setAttachedData(data)
 
