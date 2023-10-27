@@ -1,4 +1,4 @@
-import eventEmitter from "./events"
+import { emit } from "./events"
 import Posthog from "posthog-js"
 
 let posthog: any = null
@@ -9,14 +9,17 @@ export function error({ message, data, type }: { message: string; data?: any; ty
   //   message,
   //   data,
   // })
-  eventEmitter.emit("new_error", { type: type || "error", message, data })
+  if(type){
+    emit({ type, data: { message, data } })
+  }
+  emit({ type: "new_error", data: { type: type || "error", message, data } })
   ph()?.capture("error", { message, data })
   console.error(message, data)
   return false
 }
 
 export async function info({ message, data }: { message: string; data?: any; type?: string }) {
-  eventEmitter.emit("info", { type: "info", message, data })
+  emit({ type: "info", data: { type: "info", message, data } })
   if (localStorage?.getItem("debug") === "true") {
     console.log(message, data)
   }

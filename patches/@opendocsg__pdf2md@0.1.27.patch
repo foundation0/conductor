@@ -1,0 +1,15 @@
+diff --git a/lib/pdf2md.js b/lib/pdf2md.js
+index 895e433fc172ce1d5936321c31ddc9ea45a67f14..d2ffd1e5a7020170b6ff31bd7e9efa156c2331ac 100755
+--- a/lib/pdf2md.js
++++ b/lib/pdf2md.js
+@@ -1,8 +1,8 @@
+ const { parse } = require('./util/pdf')
+ const { makeTransformations, transform } = require('./util/transformations')
+-if (typeof document === 'undefined') {
++/* if (typeof document === 'undefined') {
+   require('./util/dom-stubs').setStubs(global)
+-}
++} */
+ /**
+  * Reads a
+  * @param {string|TypedArray|DocumentInitParameters|PDFDataRangeTransport} pdfBuffer

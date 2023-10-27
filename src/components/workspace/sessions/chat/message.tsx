@@ -119,9 +119,9 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
             )}
             <ReactMarkdown
               components={{
-                code({ node, inline, className, children, ...props }) {
+                code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || "")
-                  return !inline && match ? (
+                  return match ? (
                     <div
                       className="relative"
                       /* onMouseEnter={handleMouseHoverCode}
@@ -177,7 +177,6 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                         </div>
                       </div>
                       <SyntaxHighlighter
-                        {...props}
                         children={String(children).replace(/\n$/, "")}
                         style={vscDarkPlus}
                         language={match[1]}

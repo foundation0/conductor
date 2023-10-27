@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import * as Toast from "@radix-ui/react-toast"
-import eventEmitter from "@/libraries/events"
+import eventEmitter, { listen } from "@/libraries/events"
 import _ from "lodash"
 
 const ToastNotification = () => {
@@ -13,10 +13,13 @@ const ToastNotification = () => {
       setOpen(true)
     }
 
-    eventEmitter.on("new_error", handleErrorEvent)
-
+    const stop_new_error = listen({
+      type: "new_error",
+      action: handleErrorEvent,
+    })
+    
     return () => {
-      eventEmitter.off("new_error", handleErrorEvent)
+      stop_new_error?.()
     }
   }, [])
 

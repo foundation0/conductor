@@ -19,11 +19,12 @@ import { RiAddCircleFill } from "react-icons/ri"
 import { LuSettings2 } from "react-icons/lu"
 import { BiBlock } from "react-icons/bi"
 import { parseBoolean, parseNumber } from "@/libraries/utilities"
-import { getBalance, getFreeBalance, getWalletStatus } from "@/components/user/wallet"
+import { getBalance, getBytesBalance, getFreeBalance, getWalletStatus } from "@/components/user/wallet"
 import { ModuleSettings } from "./module_settings"
 import { buyCreditsWithStripe } from "@/libraries/payments"
 import { getModules } from "@/modules"
 import { get as getLS } from "@/data/storage/localStorage"
+import humanize from "humanize"
 
 export default function Settings(props: any) {
   const navigate = useNavigate()
@@ -31,6 +32,7 @@ export default function Settings(props: any) {
   const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
   const [field_edit_id, setFieldEditId] = useState("")
   const [balance, setBalance] = useState<number | string>("loading...")
+  const [bytes_balance, setBytesBalance] = useState<number | string>("loading...")
   const [wallet_status, setWalletStatus] = useState<string>("loading...")
 
   const [module_list, setModuleList] = useState<any[]>([])
@@ -39,6 +41,9 @@ export default function Settings(props: any) {
   useEffect(() => {
     getBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
       setBalance(balance)
+    })
+    getBytesBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
+      setBytesBalance(balance)
     })
     getWalletStatus({ public_key: user_state.public_key, master_key: user_state.master_key }).then((wallet_status) => {
       setWalletStatus(wallet_status)
@@ -252,7 +257,9 @@ export default function Settings(props: any) {
             <div className="w-full">
               <div className="flex flex-row w-full gap-4 h-8">
                 <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Status</div>
-                <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">{wallet_status === "no_wallet" ? "waiting for funds" : wallet_status}</div>
+                <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
+                  {wallet_status === "no_wallet" ? "waiting for funds" : wallet_status}
+                </div>
               </div>
             </div>
             <div className="w-full">
@@ -262,7 +269,7 @@ export default function Settings(props: any) {
                   <span
                     className="text-xs ml-3 link text-blue-400 hover:text-blue-100 transition-all cursor-pointer"
                     onClick={async () => {
-                      if(getLS({ key: "guest-mode"})) return (window as any)["ConvertGuest"].showModal()
+                      if (getLS({ key: "guest-mode" })) return (window as any)["ConvertGuest"].showModal()
                       const { error: err } = (await buyCreditsWithStripe({ user_id: user_state.id })) as any
                       if (err) {
                         console.error(err)
@@ -275,6 +282,14 @@ export default function Settings(props: any) {
                 </div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
                   {_.isNumber(balance) ? `$${balance}` : balance}
+                </div>
+              </div>
+            </div>
+            <div className="w-full">
+              <div className="flex flex-row w-full gap-4 h-8">
+                <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Stored bytes </div>
+                <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
+                  {_.isNumber(bytes_balance) ? `${humanize.filesize(bytes_balance)}` : bytes_balance}
                 </div>
               </div>
             </div>

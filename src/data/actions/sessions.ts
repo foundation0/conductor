@@ -10,6 +10,8 @@ import { UserT } from "@/data/loaders/user"
 import { error, ph } from "@/libraries/logging"
 import { z } from "zod"
 import config from "@/config"
+import { emit } from "@/libraries/events"
+import { DataRefT } from "../schemas/workspace"
 
 const API = {
   updateSessions: async function (state: Partial<SessionsT>) {
@@ -237,6 +239,40 @@ const API = {
     const ms = await MessagesState({ session_id })
     await ms.destroy()
   },
+  async addData({ session_id, data }: { session_id: string; data: DataRefT }) {
+    const { SessionState } = await initLoaders()
+    const sessions = SessionState.get()
+    const session = sessions.active[session_id]
+    if (!session) throw new Error("Session not found")
+    if (!session.data) session.data = []
+    // check that data doesn't exist
+    if (session.data.find((d: DataRefT) => d.id === data.id)) return
+    session.data.push(data)
+    await API.updateSessions(sessions)
+    emit({
+      type: "sessions/add_data",
+      data: {
+        session_id,
+        data,
+      },
+    })
+  },
+  async removeData({ session_id, data_id }: { session_id: string; data_id: any }) {
+    const { SessionState } = await initLoaders()
+    const sessions = SessionState.get()
+    const session = sessions.active[session_id]
+    if (!session) throw new Error("Session not found")
+    if (!session.data) session.data = []
+    session.data = session.data.filter((d: DataRefT) => d.id !== data_id)
+    await API.updateSessions(sessions)
+    emit({
+      type: "sessions/remove_data",
+      data: {
+        session_id,
+        data_id,
+      },
+    })
+  }
 }
 
 export default API

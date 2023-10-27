@@ -16,7 +16,7 @@ const config = {
     URI: override("DB_URI") || import.meta.env.PROD ? "https://db.promptc0.com/" : "http://localhost:6002/",
     CF: {
       get_limit: 1000,
-      set_limit: 5000,
+      set_limit: 60000,
     }
   },
   services: {

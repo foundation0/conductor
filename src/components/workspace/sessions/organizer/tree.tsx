@@ -18,6 +18,7 @@ import { useHotkeys } from "react-hotkeys-hook"
 import EasyEdit from "react-easy-edit"
 import { error } from "@/libraries/logging"
 import { getOS } from "@/libraries/utilities"
+import { emit } from "@/libraries/events"
 
 type GroupT = z.infer<typeof GroupS>
 type LoaderT = { app_state: AppStateT; user_state: UserT }
@@ -123,50 +124,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
     setFieldEditId(session_id || "")
   })
 
-  // keyboard shortcut for deleting a session
-  useHotkeys(getOS() === "macos" ? "shift+ctrl+d" : "shift+alt+d", () => {
-    if (field_edit_id || !session_id) return
-    if (app_state.open_sessions.length === 1) {
-      return error({ message: "You can't delete the last session." })
-    }
-    const session = _.find(app_state.open_sessions, { session_id })
-    if (session && confirm("Are you sure you want to delete this session?")) {
-      const session_index = _.findIndex(app_state.open_sessions, { session_id })
-      // get the previous session from open sessions
-      const next_session = app_state.open_sessions[session_index === 0 ? session_index + 1 : session_index - 1]
-
-      fetcher.submit(
-        {
-          workspace_id: workspace_id || "",
-          session_id: session_id || "",
-          group_id: session.group_id || "",
-          folder_id: session.folder_id || "",
-        },
-        {
-          method: "DELETE",
-          action: "/c/workspace/session",
-        }
-      )
-      navigate(`/c/${workspace_id}/${next_session.session_id}`)
-    }
-  })
-
-  // keyboard shortcut for creating new session
-  useHotkeys(getOS() === "macos" ? "ctrl+t" : "alt+t", () => {
-    if (field_edit_id || !session_id) return
-    const session = _.find(app_state.open_sessions, { session_id })
-    fetcher.submit(
-      {
-        workspace_id: workspace_id || "",
-        folder_id: session?.folder_id || "",
-        group_id: session?.group_id || "",
-      },
-      {
-        method: "PUT",
-        action: `/c/workspace/session`,
-      }
-    )
-  })
+  
 
   /* TODO
   // alt+up and alt+down to navigate between open sessions
@@ -460,6 +418,9 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                           session.id === session_id ? " text-zinc-100" : "text-zinc-400  hover:text-zinc-100"
                         }`}
                         to={`/c/${workspace_id}/${session.id}`}
+                        onClick={() => {
+                          emit({ type: "sessions/change", data: { session_id: session.id } })
+                        }}
                       >
                         <EasyEdit
                           type="text"

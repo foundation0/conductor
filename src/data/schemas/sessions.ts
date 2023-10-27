@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid"
 import { z } from "zod"
+import { DataRefS } from "./workspace"
 
 export const TextMessageS = z.object({
   _v: z.number().default(1),
@@ -11,6 +12,7 @@ export const TextMessageS = z.object({
   created_at: z.string().catch(() => new Date().toUTCString()),
   type: z.enum(["human", "ai", "system"]),
   text: z.string().nonempty(),
+  context: z.string().optional(),
   active: z.boolean().optional(),
   source: z.string().nonempty(),
   parent_id: z.string().catch("first"),
@@ -70,10 +72,12 @@ export const ChatS = z.object({
     ai: z.string().optional(),
   }),
   receipts: z.array(ReceiptS).optional(),
-  ledger: z.array(CostS).optional().describe("deprecated"),
+  data: z.array(DataRefS).optional(),
   // deprecated
+  ledger: z.array(CostS).optional().describe("deprecated"),
   messages: z.array(TextMessageS).optional().describe("deprecated"),
 })
+export type ChatT = z.infer<typeof ChatS>
 
 export const SessionsS = z.object({
   _v: z.number().default(1),

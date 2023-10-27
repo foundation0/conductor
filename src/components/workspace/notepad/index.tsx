@@ -311,9 +311,9 @@ export default function Notepad() {
                   <div onClick={() => onEdit(c)}>
                     <ReactMarkdown
                       components={{
-                        code({ node, inline, className, children, ...props }) {
+                        code({ node, className, children, ...props }) {
                           const match = /language-(\w+)/.exec(className || "")
-                          return !inline && match ? (
+                          return match ? (
                             <div
                               className="relative code flex fit-content"
                               /* onMouseEnter={handleMouseHoverCode}
@@ -340,8 +340,7 @@ export default function Notepad() {
                                   )}
                                 </div>
                               </div>
-                              <SyntaxHighlighter
-                                {...props}
+                             <SyntaxHighlighter
                                 children={String(children).replace(/\n$/, "")}
                                 style={vscDarkPlus}
                                 language={match[1]}

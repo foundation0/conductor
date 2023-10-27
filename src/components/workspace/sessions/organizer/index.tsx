@@ -9,7 +9,7 @@ import { useParams } from "react-router-dom"
 
 type GroupT = z.infer<typeof GroupS>
 
-export default function Organizer({ app_state, user_state }: { app_state: AppStateT; user_state: UserT }) {
+export default function SessionOrganizer({ app_state, user_state }: { app_state: AppStateT; user_state: UserT }) {
   const workspace_id = useParams().workspace_id as string
   const [groups, setGroups] = useState<GroupT[]>([])
 

@@ -3,6 +3,7 @@ import Sessions from "."
 import { loader } from "@/data/loaders"
 import SessionActions from "@/data/actions/sessions"
 import _ from "lodash"
+import { emit } from "@/libraries/events"
 
 export const SessionIdR = {
   path: ":session_id",
@@ -24,6 +25,7 @@ export const SessionR = {
           folder_id: formData.get("folder_id") as string,
         })
         response.ok = true
+        emit({ type: "sessions/change", data: { session_id: s.session.id } })
         return redirect(`/c/${formData.get("workspace_id")}/${s.session.id}`)
       case "post":
         // Update folder

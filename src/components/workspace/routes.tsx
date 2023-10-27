@@ -11,6 +11,7 @@ import { z } from "zod"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import { ph } from "@/libraries/logging"
+import { DataR } from "./data/routes"
 
 export const WorkspaceCreateR = {
   path: "create",
@@ -178,5 +179,5 @@ export const WorkspaceIdR = {
   path: ":workspace_id",
   element: <Workspace />,
   loader,
-  children: [WorkspaceSettingsR, SessionIdR],
+  children: [WorkspaceSettingsR, SessionIdR, DataR],
 }

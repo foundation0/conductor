@@ -101,7 +101,7 @@ export default function Settings() {
   const cancelButton = <MdClose className="w-3 h-3  text-zinc-200" />
 
   return (
-    <div className="Settings flex flex-col flex-grow items-center m-10">
+    <div className="Settings content flex flex-col flex-grow items-center m-10">
       <div className="flex flex-col w-full justify-start items-start max-w-2xl">
         <div className="text-xl text-zinc-400 shadow font-semibold">{workspace.name} settings</div>
         <hr className="w-full border-zinc-700 my-4" />

@@ -4,7 +4,8 @@ import _ from "lodash"
 import { Outlet, useLoaderData, useNavigate, useParams } from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
-import Organizer from "@/components/workspace/sessions/organizer"
+import SessionOrganizer from "@/components/workspace/sessions/organizer"
+import DataOrganizer from "@/components/workspace/data"
 import { Link } from "react-router-dom"
 import { MdSettingsSuggest } from "react-icons/md"
 import MembersIcon from "@/assets/icons/members.svg"
@@ -136,7 +137,7 @@ export default function Workspace() {
       target: "#Input",
       content: <Input />,
       placement: "top",
-    }
+    },
   ]
 
   useEffect(() => {
@@ -238,13 +239,16 @@ export default function Workspace() {
             </div>
             <div
               id="WorkspaceSidebarContent"
-              className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent overflow-y-auto overflow-x-hidden`}
+              className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
             >
               <Switch fallback={""}>
                 <Match when={active_sidebar_tab === "sessions"}>
-                  <Organizer app_state={app_state} user_state={user_state} />
+                  <SessionOrganizer app_state={app_state} user_state={user_state} />
                 </Match>
-                <Match when={["data", "members", "market"].indexOf(active_sidebar_tab) !== -1}>
+                <Match when={active_sidebar_tab === "data"}>
+                  <DataOrganizer />
+                </Match>
+                <Match when={["members", "market"].indexOf(active_sidebar_tab) !== -1}>
                   <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
                     <Lottie animationData={WorkingOnIt}></Lottie>
                     <div className="text-md text-center">Coming soon&trade;</div>

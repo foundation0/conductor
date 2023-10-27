@@ -7,8 +7,19 @@ import topLevelAwait from "vite-plugin-top-level-await"
 import { comlink } from "vite-plugin-comlink"
 import { faviconsPlugin } from "@darkobits/vite-plugin-favicons"
 import { dataURLLoader } from "./utils/blobToDataURL"
-import basicSsl from "@vitejs/plugin-basic-ssl"
-import million from 'million/compiler';
+import { viteStaticCopy } from "vite-plugin-static-copy"
+
+const wasmContentTypePlugin = {
+  name: "wasm-content-type-plugin",
+  configureServer(server) {
+    server.middlewares.use((req, res, next) => {
+      if (req.url.endsWith(".wasm")) {
+        res.setHeader("Content-Type", "application/wasm")
+      }
+      next()
+    })
+  },
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
@@ -30,11 +41,21 @@ export default defineConfig(({ command, mode }) => {
           },
         },
       }),
+
       svgr(),
       dataURLLoader,
       comlink(),
       wasm(),
       topLevelAwait(),
+      wasmContentTypePlugin,
+      viteStaticCopy({
+        targets: [
+          {
+            src: "./node_modules/@xenova/transformers/dist/*.wasm",
+            dest: "assets/wasm/",
+          },
+        ],
+      }),
     ],
     resolve: {
       alias: {
@@ -48,7 +69,7 @@ export default defineConfig(({ command, mode }) => {
       ...env,
     },
     worker: {
-      plugins: [comlink()],
+      plugins: [wasm(),topLevelAwait(), comlink()],
     },
   }
 })

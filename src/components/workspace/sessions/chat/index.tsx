@@ -1,33 +1,54 @@
-import Input from "@/components/workspace/sessions/chat/input"
-import { SessionsT, TextMessageT } from "@/data/loaders/sessions"
-import _, { update } from "lodash"
-import AutoScroll from "@brianmcallister/react-auto-scroll"
+// TODO: This component has bloated with too many responsibilities. Refactor it into smaller components using events.
+
+// React
 import { useEffect, useRef, useState } from "react"
-import ConversationTree from "@/components/workspace/sessions/chat/convotree"
-import { nanoid } from "nanoid"
-import { buildMessageTree } from "@/libraries/compute_message_chain"
 import { useLoaderData, useNavigate, useParams } from "react-router-dom"
-import SessionsActions from "@/data/actions/sessions"
-import { initLoaders } from "@/data/loaders"
-import { Module } from "@/modules/"
-import { UserT } from "@/data/loaders/user"
-import { FaUser } from "react-icons/fa"
-import { ModuleS } from "@/data/schemas/modules"
+
+// Helpers
+import _ from "lodash"
 import { z } from "zod"
-import { WorkspaceS } from "@/data/schemas/workspace"
-import { fieldFocus } from "@/libraries/field_focus"
-import { addMessage } from "./add_message"
+import { nanoid } from "nanoid"
+import AutoScroll from "@brianmcallister/react-auto-scroll"
+
+// Icons
 import PromptIcon from "@/assets/prompt.svg"
-import { autoRename } from "./auto_renamer"
-import UserActions from "@/data/actions/user"
-import { AIsT } from "@/data/schemas/ai"
-import { error } from "@/libraries/logging"
-import { getAvatar } from "@/libraries/ai"
-import { KBD } from "@/components/misc/kbd"
-import config from "@/config"
-import SessionActions from "@/data/actions/sessions"
-import { AISelector } from "./ai_selector"
+import { FaUser } from "react-icons/fa"
+import { TiDelete } from "react-icons/ti"
 import { TbSelector } from "react-icons/tb"
+import { KBD } from "@/components/misc/kbd"
+
+// Data
+import Data from "@/components/workspace/data/data"
+import { DataRefT, WorkspaceS } from "@/data/schemas/workspace"
+import { initLoaders } from "@/data/loaders"
+import { queryIndex } from "@/libraries/data"
+import config from "@/config"
+
+// Libraries
+import { addMessage } from "./add_message"
+import { autoRename } from "./auto_renamer"
+import { buildMessageTree } from "@/libraries/compute_message_chain"
+import { error } from "@/libraries/logging"
+import { fieldFocus } from "@/libraries/field_focus"
+import { getAvatar } from "@/libraries/ai"
+import { listen } from "@/libraries/events"
+import { Module } from "@/modules/"
+
+// Actions
+import SessionActions from "@/data/actions/sessions"
+import SessionsActions from "@/data/actions/sessions"
+import UserActions from "@/data/actions/user"
+
+// Schemas
+import { AIsT } from "@/data/schemas/ai"
+import { ModuleS } from "@/data/schemas/modules"
+import { UserT } from "@/data/loaders/user"
+import { SessionsT, TextMessageT } from "@/data/loaders/sessions"
+
+// Components
+import ConversationTree from "@/components/workspace/sessions/chat/convotree"
+import Input from "@/components/workspace/sessions/chat/input"
+import { AISelector } from "./ai_selector"
 
 const padding = 50
 
@@ -45,14 +66,14 @@ export default function Chat() {
 
   // setup stores
   const workspace_id = useParams().workspace_id as string
-  const session_id = useParams().session_id as string
+  const [sid, setSid] = useState(useParams().session_id as string)
   const [workspace, setWorkspace] = useState<z.infer<typeof WorkspaceS>>(
     user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
   )
   const [installed_ais, setInstalledAIs] = useState<AIsT>(ai_state)
 
   // setup session
-  const [session, setSession] = useState(sessions_state.active[session_id] || null)
+  const [session, setSession] = useState(sessions_state.active[sid] || null)
 
   // setup messages and generation related states
   const [messages_state, setMessagesStates] = useState<any>()
@@ -71,6 +92,56 @@ export default function Chat() {
     user: <FaUser />,
     AI: <FaUser />,
   })
+
+  // setup data
+  const [attached_data, setAttachedData] = useState<DataRefT[]>([])
+  async function updateData() {
+    if (!sid) return
+    const { SessionState } = await initLoaders()
+    const s = await SessionState.get()
+    const data = s.active[sid]?.data
+    if (data) {
+      setAttachedData(data)
+
+      // setup index
+      await queryIndex({ query: "future", update: true, source: "session", session_id: sid })
+    }
+  }
+
+  useEffect(() => {
+    const stop_sid_listener = listen({
+      type: "sessions/change",
+      action: ({ session_id }: { session_id: string }) => {
+        // console.log(`chat, got updated sid ${session_id}`)
+        setSid(session_id)
+      },
+    })
+
+    const stop_data_listener = listen({
+      type: ["sessions/add_data", "sessions/remove_data"],
+      action: ({ session_id }: { session_id: string }) => {
+        // console.log("sessions/add_data", sid, session_id)
+        if (sid === session_id) updateData()
+      },
+    })
+
+    const stop_store_listener = listen({
+      type: "store_update",
+      action: ({ name }: { name: string }) => {
+        if (name === sid) {
+          // console.log(`store_update: ${name}`)
+          updateSession()
+        }
+      },
+    })
+    updateData()
+
+    return () => {
+      stop_data_listener()
+      stop_store_listener()
+      stop_sid_listener()
+    }
+  }, [sid])
 
   // setup various layout related states
   const eInput = useRef<HTMLDivElement | null>(null)
@@ -100,10 +171,10 @@ export default function Chat() {
 
     // update session in sessions
     const new_sessions = _.cloneDeep(sessions_state)
-    new_sessions.active[session_id] = new_session
+    new_sessions.active[sid] = new_session
     await SessionsActions.updateSessions(new_sessions)
 
-    navigate(`/c/${workspace_id}/${session_id}`)
+    navigate(`/c/${workspace_id}/${sid}`)
 
     // set focus to #input
     setTimeout(() => {
@@ -112,9 +183,9 @@ export default function Chat() {
   }
 
   // set focus to input when session changes
-  useEffect(() => {
+  /* useEffect(() => {
     fieldFocus({ selector: "#input" })
-  }, [session_id])
+  }, [sid]) */
 
   // keep track of input height
   useEffect(() => {
@@ -149,8 +220,8 @@ export default function Chat() {
           id: config.defaults.llm_module.id,
           variant: config.defaults.llm_module.variant_id || "",
         }
-        await SessionActions.updateSession({ session_id, session: new_session })
-        navigate(`/c/${workspace_id}/${session_id}`)
+        await SessionActions.updateSession({ session_id: sid, session: new_session })
+        navigate(`/c/${workspace_id}/${sid}`)
       }
       if (!module) return
       setModule(module)
@@ -175,10 +246,10 @@ export default function Chat() {
 
     // update session in sessions
     const new_sessions = _.cloneDeep(sessions_state)
-    new_sessions.active[session_id] = new_session
+    new_sessions.active[sid] = new_session
     await SessionsActions.updateSessions(new_sessions)
 
-    navigate(`/c/${workspace_id}/${session_id}`)
+    navigate(`/c/${workspace_id}/${sid}`)
 
     // set focus to #input
     setTimeout(() => {
@@ -249,13 +320,14 @@ export default function Chat() {
     setParticipants(p)
   }, [JSON.stringify(processed_messages)])
 
-  // Update local session state when sessions[session_id] changes
+  // Update local session state when sessions[sid] changes
   const updateSession = async () => {
+    // console.log("update")
     const { AppState, SessionState, UserState, AIState } = await initLoaders()
     const user_state = await UserState.get()
     const ai_state = await AIState.get()
     const sessions_state = await SessionState.get()
-    const session = sessions_state.active[session_id]
+    const session = sessions_state.active[sid]
     if (!session) return
     setSession(session)
     setInstalledAIs(ai_state)
@@ -267,44 +339,46 @@ export default function Chat() {
       setSession(new_session)
       // update session in sessions
       const new_sessions = _.cloneDeep(sessions_state)
-      new_sessions.active[session_id] = new_session
+      new_sessions.active[sid] = new_session
       await SessionsActions.updateSessions(new_sessions)
     }
     const workspace = user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
     const s = await SessionState.get()
-    const ss = await MessagesState({ session_id })
+    const ss = await MessagesState({ session_id: sid })
     const msgs: TextMessageT[] = ss?.get()
-    setSession(s.active[session_id])
+    setSession(s.active[sid])
     setRawMessages(_.uniqBy(msgs || [], "id"))
     setMessagesStates(ss)
     const app_state = await AppState.get()
     let session_name = ""
     for (const group of workspace.groups) {
       for (const folder of group.folders) {
-        const session = folder.sessions?.find((s) => s.id === session_id)
+        const session = folder.sessions?.find((s) => s.id === sid)
         if (session) session_name = session.name
       }
     }
-    const active_session = _.find(app_state.open_sessions, { session_id: session_id })
+    const active_session = _.find(app_state.open_sessions, { session_id: sid })
+    // updateData()
     if (_.size(msgs) >= 2 && _.size(msgs) <= 5 && session_name === "Untitled" && active_session) {
-      const generated_session_name = await autoRename({ session_id, messages: msgs, user_id: user_state.id })
+      const generated_session_name = await autoRename({ session_id: sid, messages: msgs, user_id: user_state.id })
       if (generated_session_name) {
         // update session name
         await UserActions.renameItem({
           new_name: generated_session_name,
           group_id: active_session.group_id,
           folder_id: active_session.folder_id,
-          session_id,
+          session_id: sid,
         })
 
-        navigate(`/c/${workspace_id}/${session_id}`)
+        navigate(`/c/${workspace_id}/${sid}`)
       }
     }
   }
 
   useEffect(() => {
+    // setAttachedData([])
     updateSession()
-  }, [JSON.stringify([session_id, sessions_state.active[session_id], gen_in_progress, branch_parent_id])])
+  }, [JSON.stringify([sid, sessions_state.active[sid], gen_in_progress, branch_parent_id])])
 
   // update raw messages when msg_update_ts changes
   useEffect(() => {
@@ -365,7 +439,7 @@ export default function Chat() {
     if (!session?.settings.module.variant) return
     if (!messages) return
     compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: messages.map((m) => m[1]) })
-  }, [JSON.stringify([module, session?.settings.module.variant, session_id, branch_parent_id])]) */
+  }, [JSON.stringify([module, session?.settings.module.variant, sid, branch_parent_id])]) */
 
   // Function to handle the window resize event
   const handleResize = () => {
@@ -377,6 +451,7 @@ export default function Chat() {
         "px"
     )
   }
+
   // useEffect to add and remove the event listener
   useEffect(() => {
     window.addEventListener("resize", handleResize)
@@ -439,7 +514,7 @@ export default function Chat() {
     const container_e = document.querySelector(".react-auto-scroll__scroll-container") as HTMLElement
     const offset = container_e.scrollTop
     setRawMessages(updated_messages)
-    await SessionsActions.updateMessages({ session_id, messages: updated_messages })
+    await SessionsActions.updateMessages({ session_id: sid, messages: updated_messages })
     container_e?.scrollTo({ top: offset })
     fieldFocus({ selector: "#input" })
   }
@@ -480,7 +555,7 @@ export default function Chat() {
   }
 
   async function appendOrUpdateProcessedMessage({ message }: { message: TextMessageT }) {
-    const ms = await MessagesState({ session_id })
+    const ms = await MessagesState({ session_id: sid })
     const raw_messages: TextMessageT[] = ms?.get()
     const activePath = computeActivePath(raw_messages || [])
 
@@ -491,15 +566,12 @@ export default function Chat() {
     if (msg_index === -1) {
       // if message is not found, append it to the end
       new_processed_messages?.push([[], message, []])
-      // setProcessedMessages(new_processed_messages)
     } else {
       // if message is found, update it
       new_processed_messages[msg_index][1] = message
-      // setProcessedMessages(new_processed_messages)
     }
 
     setProcessedMessages(new_processed_messages)
-    // setProcessedMessages(rows)
   }
 
   function addRawMessage({ message }: { message: TextMessageT }) {
@@ -528,11 +600,28 @@ export default function Chat() {
       setGenInProgress(true)
     }
 
+    // get the 5 last messages
+    let latest_messages: string[] = []
+    if (processed_messages && processed_messages.length > 0) {
+      latest_messages = _(processed_messages)
+        .filter((p) => p[1].type === "human")
+        ?.slice(-5)
+        .map((m) => m[1].text)
+        .value()
+    }
+    const context = await queryIndex({
+      query: [...latest_messages, message].join("\n"),
+      source: "session",
+      session_id: sid,
+      result_count: 5,
+    })
+
     const msg_ok = await addMessage({
       session,
-      session_id,
+      session_id: sid,
       api_key,
       module,
+      context,
       processed_messages: processed_messages || [],
       branch_parent_id,
       message,
@@ -550,7 +639,7 @@ export default function Chat() {
         addRawMessage,
         onError: async () => {
           await updateMessages()
-          navigate(`/c/${workspace_id}/${session_id}`)
+          navigate(`/c/${workspace_id}/${sid}`)
         },
       },
     })
@@ -581,13 +670,6 @@ export default function Chat() {
           <div className="flex flex-col">
             <TbSelector className="" />
           </div>
-          {/* <div className="flex flex-row text-[10px] font-thin text-zinc-500">
-        {`using ${
-          _.find(user_state?.modules?.installed, {
-            id: session.settings.module.id,
-          })?.meta?.variants?.find((v) => v.id === session.settings.module.variant)?.name
-        }`}
-      </div> */}
         </div>
       </div>
     </label>
@@ -682,33 +764,40 @@ export default function Chat() {
         </AutoScroll>
       </div>
       <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-        <div id="Input" ref={eInput} className={`max-w-screen-lg w-full my-4 mx-4`}>
-          <Input
-            send={send}
-            session_id={session_id}
-            messages={processed_messages}
-            gen_in_progress={gen_in_progress}
-            is_new_branch={branch_parent_id}
-            genController={genController}
-            input_text={input_text}
-            setMsgUpdateTs={setMsgUpdateTs}
-            session={session}
-          />
+        <div className={`max-w-screen-lg w-full my-4 mx-4`} ref={eInput}>
+          <div className="flex flex-row gap-2 pb-1">
+            {attached_data?.map((d, i) => {
+              return (
+                <div key={i} className="min-w-[60px] max-w-[500px] flex-nowrap bg-zinc-800 rounded">
+                  <Data
+                    {...d}
+                    removeIcon={<TiDelete />}
+                    onRemove={() => {
+                      SessionActions.removeData({
+                        session_id: sid,
+                        data_id: d.id,
+                      })
+                    }}
+                  ></Data>
+                </div>
+              )
+            })}
+          </div>
+          <div id="Input" className={``}>
+            <Input
+              send={send}
+              session_id={sid}
+              messages={processed_messages}
+              gen_in_progress={gen_in_progress}
+              is_new_branch={branch_parent_id}
+              genController={genController}
+              input_text={input_text}
+              setMsgUpdateTs={setMsgUpdateTs}
+              session={session}
+            />
+          </div>
         </div>
       </div>
     </div>
   )
-}
-
-{
-  /* <>
-  <div className="text-zinc-500">
-    No API key for {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
-  </div>
-  <div className="text-sm">
-    <Link to="/c/settings">
-      Setup {module?.specs.meta.vendor?.name || module?.specs.meta.name} module
-    </Link>
-  </div>
-</> */
 }

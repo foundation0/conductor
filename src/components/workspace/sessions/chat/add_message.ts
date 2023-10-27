@@ -15,6 +15,7 @@ export async function addMessage({
   session_id,
   api_key,
   module,
+  context,
   processed_messages,
   branch_parent_id,
   message,
@@ -30,13 +31,14 @@ export async function addMessage({
     setBranchParentId,
     appendOrUpdateProcessedMessage,
     addRawMessage,
-    onError
+    onError,
   },
 }: {
   session: any
   session_id: string
   api_key?: string
   module: any
+  context?: { pageContent: string; metadata: { id: string; name: string } }[]
   processed_messages: MessageRowT[]
   branch_parent_id: string | boolean
   message: string
@@ -77,6 +79,13 @@ export async function addMessage({
     }
   }
 
+  let ctx = ""
+  if (context && context?.length > 0) {
+    ctx = `## CONTEXT ##\n\n${context
+      .map((c) => `ID: ${c.metadata.id}\nDOC NAME: ${c.metadata.name}\n\n${c.pageContent}`)
+      .join("\n\n---\n\n")}\n\n## CONTEXT ENDS ##\n\n`
+  }
+
   if (message || resend) {
     let m: TextMessageT | undefined = undefined
 
@@ -84,7 +93,7 @@ export async function addMessage({
       model: session?.settings.module.variant,
       prompt: {
         instructions: AIToInstruction({ ai }) || "you are a helpful assistant",
-        user: message,
+        user: `${ctx}${message}`,
       },
       messages: _.map(processed_messages, (m) => m[1]).filter((m) => m.hash !== "1337"),
       module,
@@ -112,6 +121,7 @@ export async function addMessage({
           type: "human",
           hash: "123",
           text: message,
+          context: ctx,
           source: `user:${user_state.id}`,
           active: true,
           parent_id,
@@ -145,17 +155,26 @@ export async function addMessage({
       }
       let has_error = false
       const prompt = {
-        instructions: AIToInstruction({ ai }) || "you are a helpful assistant",
-        user: m.text,
+        instructions: `${AIToInstruction({ ai })}\n\n${ctx}` || "you are a helpful assistant",
+        user: `${m.text}`,
       }
 
       setMsgsInMem(memory ? memory.included_ids : [])
+
+      // prepend the first type human message in history with ctx
+      /* const first_human_msg = _.findIndex(memory?.history, { role: "user" })
+      if (first_human_msg > -1) {
+        memory.history[first_human_msg].content = `${ctx}${memory.history[first_human_msg].content}`
+      } */
 
       const { receipt } = (await module?.main(
         {
           model: session?.settings.module.variant,
           user_id: user_state.id,
-          settings: _.find(user_state.modules.installed, { id: session?.settings.module.id })?.meta.variants?.find(v => v.id === session?.settings.module.variant)?.settings || {},
+          settings:
+            _.find(user_state.modules.installed, { id: session?.settings.module.id })?.meta.variants?.find(
+              (v) => v.id === session?.settings.module.variant
+            )?.settings || {},
           api_key,
           prompt,
           history: memory?.history || [],
@@ -167,7 +186,7 @@ export async function addMessage({
           onError: (data: any) => {
             has_error = true
             setGenInProgress(false)
-            if(!data.surpress) error({ message: data.message || data.code, data })
+            if (!data.surpress) error({ message: data.message || data.code, data })
             onError && onError()
           },
         }

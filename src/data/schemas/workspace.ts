@@ -2,12 +2,21 @@ import { z } from "zod"
 import { nanoid } from "nanoid"
 import { getId } from "@/security/common"
 import config from "@/config"
+import { DataTypesTextS, DataTypesBinaryT, DataTypesBinaryS } from "./data_types"
 
 export const MembersS = z.object({
   _v: z.number().default(1),
   read: z.array(z.string()),
   write: z.array(z.string()).optional(),
 })
+
+export const DataRefS = z.object({
+  id: z.string(),
+  name: z.string(),
+  filename: z.string().optional(),
+  mime: z.union([DataTypesTextS, DataTypesBinaryS]),
+})
+export type DataRefT = z.infer<typeof DataRefS>
 
 export const SessionS = z.object({
   _v: z.number().default(1),
@@ -24,6 +33,7 @@ export const FolderS = z.object({
   name: z.string(),
   excluded_members: z.array(z.string()).optional(),
   sessions: z.array(SessionS).optional(),
+  data: z.array(DataRefS).optional(),
 })
 
 export const GroupS = z.object({
@@ -32,6 +42,7 @@ export const GroupS = z.object({
   name: z.string().catch("Untitled"),
   excluded_members: z.array(z.string()).optional(),
   folders: z.array(FolderS),
+  data: z.array(DataRefS).optional(),
 })
 
 export const WorkspaceS = z.object({
@@ -54,4 +65,6 @@ export const WorkspaceS = z.object({
     }),
   members: MembersS,
   groups: z.array(GroupS),
+  data: z.array(DataRefS).optional(),
 })
+export type WorkspaceT = z.infer<typeof WorkspaceS>

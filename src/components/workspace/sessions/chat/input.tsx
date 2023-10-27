@@ -113,7 +113,7 @@ export default function Input({
                   if (document.activeElement?.id === "input") document.getElementById("input")?.blur()
                 }
                 const key = e.code + (e.shiftKey ? "Shift" : "") + (e.ctrlKey ? "Ctrl" : "") + (e.altKey ? "Alt" : "")
-                
+
                 switch (key) {
                   case "Enter":
                     e.preventDefault()
@@ -146,15 +146,21 @@ export default function Input({
               </button>
             </Match>
             <Match when={gen_in_progress}>
-              <button
-                onClick={() => {
-                  if (typeof genController?.abort === "function") genController.abort()
-                }}
-                type="submit"
-                className={button_class}
+              <span
+                className="tooltip tooltip-top"
+                data-tip="Temporarily disabled due to technical issues with LLM provider"
               >
-                Stop
-              </button>
+                <button
+                  onClick={() => {
+                    // if (typeof genController?.abort === "function") genController.abort()
+                  }}
+                  disabled={true}
+                  type="submit"
+                  className={button_class}
+                >
+                  Stop
+                </button>
+              </span>
             </Match>
             <Match when={!gen_in_progress && (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)}>
               <div className="flex flex-row gap-2">
@@ -162,7 +168,10 @@ export default function Input({
                   className="tooltip tooltip-top"
                   data-tip={`Total cost: $${_.sumBy(session.receipts, (l) => l.cost_usd).toFixed(
                     2
-                  )}\nTotal tokens used: ${_.sumBy(session.receipts, (l) => l.details.input.tokens + l.details.output.tokens).toFixed(0)}`}
+                  )}\nTotal tokens used: ${_.sumBy(
+                    session.receipts,
+                    (l) => l.details.input.tokens + l.details.output.tokens
+                  ).toFixed(0)}`}
                   onClick={async (e) => {
                     e.preventDefault()
                   }}

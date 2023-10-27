@@ -1,9 +1,8 @@
-import { UserT } from "@/data/loaders/user"
 import { initLoaders } from "@/data/loaders"
 import { z } from "zod"
-import { SessionS, WorkspaceS } from "@/data/schemas/workspace"
+import { SessionS, DataRefT, WorkspaceS, WorkspaceT } from "@/data/schemas/workspace"
 import _ from "lodash"
-import { UserS } from "@/data/schemas/user"
+import { UserS, UserT } from "@/data/schemas/user"
 import { nanoid } from "nanoid"
 import { buf2hex, getId, keyPair } from "@/security/common"
 import AppStateActions from "@/data/actions/app"
@@ -12,6 +11,9 @@ import { SessionsT } from "@/data/loaders/sessions"
 import SessionsActions from "@/data/actions/sessions"
 import { error } from "@/libraries/logging"
 import config from "@/config"
+import { emit } from "@/libraries/events"
+import VectorsActions from "./vectors"
+import DataActions from "./data"
 
 const API = {
   updateUser: async function (state: Partial<UserT>) {
@@ -21,6 +23,9 @@ const API = {
     const parsed = UserS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
     await UserState.set(parsed.data)
+
+    emit({ type: "user/update", data: parsed.data })
+
     return parsed.data
   },
 
@@ -43,6 +48,9 @@ const API = {
       }
       return workspace
     })
+
+    emit({ type: "user/add_group", data: { workspace_id, group: new_group } })
+
     return API.updateUser(us)
   },
   deleteGroup: async ({ workspace_id, group_id }: { workspace_id: string; group_id: string }) => {
@@ -90,6 +98,8 @@ const API = {
     const new_open_folders = as.open_folders.filter((open_folder) => open_folder.group_id !== group_id)
     as.open_folders = new_open_folders
     await AppStateActions.updateAppState(as)
+
+    emit({ type: "user/delete_group", data: { workspace_id, group_id } })
   },
   addFolder: async ({ name, group_id, workspace_id }: { workspace_id: string; group_id: string; name?: string }) => {
     const { UserState, AppState } = await initLoaders()
@@ -123,6 +133,8 @@ const API = {
       { _v: 1, folder_id: new_folder.id, group_id: group_id, workspace_id: workspace_id },
     ]
     await AppStateActions.updateAppState(as)
+
+    emit({ type: "user/add_folder", data: { workspace_id, group_id, folder: new_folder } })
   },
   deleteFolder: async ({
     workspace_id,
@@ -185,6 +197,8 @@ const API = {
     const new_open_folders = as.open_folders.filter((open_folder) => open_folder.folder_id !== folder_id)
     as.open_folders = new_open_folders
     await AppStateActions.updateAppState(as)
+
+    emit({ type: "user/delete_folder", data: { workspace_id, folder_id, group_id } })
   },
 
   addSession: async function ({
@@ -243,6 +257,8 @@ const API = {
     )
 
     await UserState.set(updated_state)
+
+    emit({ type: "user/add_session", data: { session: new_session, group_id, folder_id } })
 
     return { session: new_session, group_id, folder_id }
   },
@@ -315,6 +331,8 @@ const API = {
       },
     }
     await SessionState.set(new_sessions)
+
+    emit({ type: "user/add_workspace", data: { workspace: new_workspace } })
 
     return new_workspace
   },
@@ -400,6 +418,201 @@ const API = {
       })
     }
     await UserState.set(us)
+
+    emit({ type: "user/rename_item", data: { group_id, folder_id, session_id, new_name } })
+  },
+  async addDataToWorkspace({ workspace_id, data }: { workspace_id: string; data: DataRefT }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const updated_state: UserT = { ...user_state }
+    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
+    // check if data.id exists already
+    const data_exists = _.find(updated_state.workspaces[workspace_index].data, { id: data.id })
+    if (data_exists) return
+    _.set(updated_state, `workspaces[${workspace_index}].data`, updated_state.workspaces?.[workspace_index]?.data || [])
+    updated_state.workspaces?.[workspace_index]?.data?.push(data)
+    // validate
+    const parsed = UserS.safeParse(updated_state)
+    if (!parsed.success) throw new Error("Invalid state")
+    await UserState.set(parsed.data)
+
+    emit({
+      type: "user/add_data_to_workspace",
+      data: {
+        workspace_id,
+        data,
+      },
+    })
+  },
+  async deleteDataFromWorkspace({ workspace_id, data_id }: { workspace_id: string; data_id: string }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const updated_state: UserT = { ...user_state }
+    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
+    const data_index = _.findIndex(updated_state.workspaces[workspace_index].data, { id: data_id })
+    if (data_index === -1) return
+    updated_state.workspaces[workspace_index]?.data?.splice(data_index, 1)
+    // validate
+    const parsed = UserS.safeParse(updated_state)
+    if (!parsed.success) throw new Error("Invalid state")
+    await UserState.set(parsed.data)
+
+    await VectorsActions.delete({ id: data_id })
+    await DataActions.delete({ id: data_id })
+
+    emit({
+      type: "user/delete_data_from_workspace",
+      data: {
+        workspace_id,
+        data_id,
+      },
+    })
+  },
+  async addDataToGroup({ workspace_id, group_id, data }: { workspace_id: string; group_id: string; data: DataRefT }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const updated_state: UserT = { ...user_state }
+    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
+    const group_index = _.findIndex(updated_state.workspaces[workspace_index].groups, { id: group_id })
+    // check if data.id exists already
+    const data_exists = _.find(updated_state.workspaces[workspace_index].groups[group_index]?.data, { id: data.id })
+    if (data_exists) return
+    _.set(
+      updated_state,
+      `workspaces[${workspace_index}].groups[${group_index}].data`,
+      updated_state.workspaces?.[workspace_index]?.groups?.[group_index]?.data || []
+    )
+    updated_state.workspaces?.[workspace_index]?.groups?.[group_index]?.data?.push(data)
+    // validate
+    const parsed = UserS.safeParse(updated_state)
+    if (!parsed.success) throw new Error("Invalid state")
+    await UserState.set(parsed.data)
+
+    emit({
+      type: "user/add_data_to_group",
+      data: {
+        workspace_id,
+        group_id,
+        data,
+      },
+    })
+  },
+  async deleteDataFromGroup({
+    workspace_id,
+    group_id,
+    data_id,
+  }: {
+    workspace_id: string
+    group_id: string
+    data_id: string
+  }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const updated_state: UserT = { ...user_state }
+    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
+    const group_index = _.findIndex(updated_state.workspaces[workspace_index].groups, { id: group_id })
+    const data_index = _.findIndex(updated_state.workspaces[workspace_index].groups[group_index]?.data, data_id)
+    if (data_index === -1) return
+    updated_state.workspaces[workspace_index].groups[group_index]?.data?.splice(data_index, 1)
+    // validate
+    const parsed = UserS.safeParse(updated_state)
+    if (!parsed.success) throw new Error("Invalid state")
+    await UserState.set(parsed.data)
+
+    emit({
+      type: "user/delete_data_from_group",
+      data: {
+        workspace_id,
+        group_id,
+        data_id,
+      },
+    })
+  },
+  async addDataToFolder({
+    workspace_id,
+    group_id,
+    folder_id,
+    data,
+  }: {
+    workspace_id: string
+    group_id: string
+    folder_id: string
+    data: DataRefT
+  }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const updated_state: UserT = { ...user_state }
+    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
+    const group_index = _.findIndex(updated_state.workspaces[workspace_index].groups, { id: group_id })
+    const folder_index = _.findIndex(updated_state.workspaces[workspace_index].groups[group_index]?.folders, {
+      id: folder_id,
+    })
+    // check if data.id exists already
+    const data_exists = _.find(
+      updated_state.workspaces[workspace_index].groups[group_index]?.folders[folder_index]?.data,
+      { id: data.id }
+    )
+    if (data_exists) return
+    _.set(
+      updated_state,
+      `workspaces[${workspace_index}].groups[${group_index}].folders[${folder_index}].data`,
+      updated_state.workspaces?.[workspace_index]?.groups?.[group_index]?.folders?.[folder_index]?.data || []
+    )
+    updated_state.workspaces?.[workspace_index]?.groups?.[group_index]?.folders?.[folder_index]?.data?.push(data)
+    // validate
+    const parsed = UserS.safeParse(updated_state)
+    if (!parsed.success) throw new Error("Invalid state")
+    await UserState.set(parsed.data)
+
+    emit({
+      type: "user/add_data_to_folder",
+      data: {
+        workspace_id,
+        group_id,
+        folder_id,
+        data,
+      },
+    })
+  },
+  async deleteDataFromFolder({
+    workspace_id,
+    group_id,
+    folder_id,
+    data_id,
+  }: {
+    workspace_id: string
+    group_id: string
+    folder_id: string
+    data_id: string
+  }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const updated_state: UserT = { ...user_state }
+    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
+    const group_index = _.findIndex(updated_state.workspaces[workspace_index].groups, { id: group_id })
+    const folder_index = _.findIndex(updated_state.workspaces[workspace_index].groups[group_index]?.folders, {
+      id: folder_id,
+    })
+    const data_index = _.findIndex(
+      updated_state.workspaces[workspace_index].groups[group_index]?.folders[folder_index]?.data,
+      data_id
+    )
+    if (data_index === -1) return
+    updated_state.workspaces[workspace_index].groups[group_index]?.folders[folder_index]?.data?.splice(data_index, 1)
+    // validate
+    const parsed = UserS.safeParse(updated_state)
+    if (!parsed.success) throw new Error("Invalid state")
+    await UserState.set(parsed.data)
+
+    emit({
+      type: "user/delete_data_from_folder",
+      data: {
+        workspace_id,
+        group_id,
+        folder_id,
+        data_id,
+      },
+    })
   },
 }
 

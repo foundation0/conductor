@@ -45,6 +45,7 @@ export const UserS = z.object({
     data: z.array(AssociatedDatS).optional(),
   })).optional(),
 })
+export type UserT = z.infer<typeof UserS>
 
 export const PublicUserS = z.object({
   id: z.string().nonempty(),
