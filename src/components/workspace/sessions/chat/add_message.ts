@@ -13,12 +13,12 @@ import { ReceiptT } from "@/data/schemas/sessions"
 export async function addMessage({
   session,
   session_id,
-  api_key,
   module,
   context,
   processed_messages,
   branch_parent_id,
   message,
+  meta,
   message_id,
   raw_messages,
   user_state,
@@ -36,12 +36,12 @@ export async function addMessage({
 }: {
   session: any
   session_id: string
-  api_key?: string
   module: any
   context?: { pageContent: string; metadata: { id: string; name: string } }[]
   processed_messages: MessageRowT[]
   branch_parent_id: string | boolean
   message: string
+  meta: TextMessageT["meta"]
   message_id?: string
   raw_messages: TextMessageT[]
   user_state: UserT
@@ -95,7 +95,7 @@ export async function addMessage({
         instructions: AIToInstruction({ ai }) || "you are a helpful assistant",
         user: `${ctx}${message}`,
       },
-      messages: _.map(processed_messages, (m) => m[1]).filter((m) => m.hash !== "1337"),
+      messages: _.map(processed_messages, (m) => m[1]).filter((m) => m.hash !== "1337"), // 1337 is the hash for temporary messages - TODO: use meta.role for this
       module,
     })
     if (!memory) {
@@ -121,6 +121,7 @@ export async function addMessage({
           type: "human",
           hash: "123",
           text: message,
+          meta: meta || { role: "msg" },
           context: ctx,
           source: `user:${user_state.id}`,
           active: true,
@@ -175,7 +176,6 @@ export async function addMessage({
             _.find(user_state.modules.installed, { id: session?.settings.module.id })?.meta.variants?.find(
               (v) => v.id === session?.settings.module.variant
             )?.settings || {},
-          api_key,
           prompt,
           history: memory?.history || [],
         },

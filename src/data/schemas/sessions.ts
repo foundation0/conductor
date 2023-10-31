@@ -11,10 +11,15 @@ export const TextMessageS = z.object({
   version: z.literal("1.0").catch("1.0"),
   created_at: z.string().catch(() => new Date().toUTCString()),
   type: z.enum(["human", "ai", "system"]),
+  meta: z
+    .object({
+      role: z.enum(["msg", "continue", "regen"]).catch("msg"),
+    })
+    .optional(),
   text: z.string().nonempty(),
   context: z.string().optional(),
   active: z.boolean().optional(),
-  source: z.string().nonempty(),
+  source: z.string().min(1),
   parent_id: z.string().catch("first"),
   signature: z.string().optional(), // optional for now
   hash: z.string().optional(), // optional for now

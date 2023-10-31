@@ -151,7 +151,7 @@ export function LocalUsersPage() {
             <div className="flex flex-col justify-center items-center mb-2">
               <div className="flex w-20 h-20 rounded-full bg-zinc-900/30 border-t border-t-zinc-700 justify-center items-center overflow-hidden">
                 {_.size(active_user?.profile_photos) > 0 ? (
-                  <img src={_.first(active_user?.profile_photos)} className="h-full w-full" />
+                  <img src={_.first(active_user?.profile_photos)} className="object-cover h-full w-full" />
                 ) : (
                   active_user?.name?.slice(0, 1)
                 )}

@@ -4,8 +4,10 @@
   }
 
   li li {
-    padding-left: 0.4rem;
-    padding-top: 0.4rem;
+    padding-left: 1rem;
+    padding-top: 0rem;
+    margin-bottom: 0.1rem;
+    margin-top: 0.1rem;
   }
 
   ol {
@@ -15,19 +17,21 @@
   }
 
   li {
+
     list-style: auto;
     list-style-position: inside;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
 
     &::marker {
       font-weight: bold;
-      color: #ffffffbf;
+      color: #ffffff8a;
     }
 
     p {
       display: inline;
     }
   }
+
 
   pre {
     overflow: auto !important;

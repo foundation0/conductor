@@ -152,7 +152,9 @@ export default function DataOrganizer() {
   return (
     <div className={`h-full w-full flex flex-col gap-3`}>
       <div
-        onClick={() => open()}
+        onClick={function () {
+          open()
+        }}
         className="flex flex-row bg-zinc-800/30 hover:bg-zinc-900/70 border border-dashed border-zinc-700  border-t-zinc-600/70 rounded-md flex-1 p-3 cursor-pointer text-zinc-500 hover:text-zinc-200"
       >
         <div className="flex w-6 w-6 rounded-full bg-zinc-700/30  justify-center items-center overflow-hidden text-zinc-500 font-semibold">
@@ -187,6 +189,7 @@ export default function DataOrganizer() {
         </div>
       )}
       <div {...getRootProps()} className="flex flex-col gap-1 h-full w-full relative">
+        <input {...getInputProps()} />
         {
           _(data_list)
             .sortBy("name")

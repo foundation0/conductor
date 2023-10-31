@@ -33,26 +33,26 @@ export default function WorkspaceSelector() {
             <For each={user_state.workspaces}>
               {(workspace) => {
                 let session_id = ""
-                if (!app_state.active_sessions[workspace.id]) {
-                  // session_id?.match(/^0x/)
-                  // if not, get the first session id from the workspace's first group's first folder
-                  // use lodash chaining
-                  session_id = _.chain(workspace.groups)
-                    .first()
-                    .get("folders")
-                    .first()
-                    .get("sessions")
-                    .first()
-                    .get("id")
-                    .value()
+                // if (!app_state.active_sessions[workspace.id]) {
+                // session_id?.match(/^0x/)
+                // if not, get the first session id from the workspace's first group's first folder
+                // use lodash chaining
+                session_id = _.chain(workspace.groups)
+                  .first()
+                  .get("folders")
+                  .first()
+                  .get("sessions")
+                  .first()
+                  .get("id")
+                  .value()
 
-                  /* session_id =
+                /* session_id =
                     _.first(
                       _.first(_.first(_.find(user_state.workspaces, { id: workspace_id })?.groups)?.folders)?.sessions
                     )?.id || "" */
-                } else {
-                  session_id = app_state.active_sessions[workspace.id].session_id
-                }
+                // } else {
+                //   session_id = app_state.active_sessions[workspace.id].session_id
+                // }
                 return (
                   <div className="tooltip tooltip-right relative" data-tip={`Open ${workspace.name}`}>
                     {workspace.id === workspace_id && (

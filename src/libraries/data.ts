@@ -71,17 +71,6 @@ export async function processImportedFiles({ files, workspace_id }: { files: any
       return callback()
     } */
 
-    // add the file to the workspace data
-    await UserActions.addDataToWorkspace({
-      workspace_id,
-      data: {
-        id: data_id,
-        name: file.name,
-        mime,
-        filename: file.name,
-      },
-    })
-
     emit({
       type: "data-import/progress",
       data: {
@@ -132,7 +121,7 @@ export async function processImportedFiles({ files, workspace_id }: { files: any
             type: "data-import/progress",
             data: {
               name: file.name,
-              progress: processed_chunks / chunks.length,
+              progress: processed_chunks / (chunks.length * 0.8) > 1 || 1, // 80% of the progress is for vectorization
             },
           })
           return vectors
@@ -170,6 +159,17 @@ export async function processImportedFiles({ files, workspace_id }: { files: any
 
     // update the workspace vector index
     // await VectorsActions.updateWorkspaceIndex({ workspace_id, indexer: "voy", vectors, data: chunks })
+
+    // add the file to the workspace data
+    await UserActions.addDataToWorkspace({
+      workspace_id,
+      data: {
+        id: data_id,
+        name: file.name,
+        mime,
+        filename: file.name,
+      },
+    })
 
     emit({
       type: "data-import/done",

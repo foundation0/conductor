@@ -31,7 +31,7 @@ import { buildMessageTree } from "@/libraries/compute_message_chain"
 import { error } from "@/libraries/logging"
 import { fieldFocus } from "@/libraries/field_focus"
 import { getAvatar } from "@/libraries/ai"
-import { listen } from "@/libraries/events"
+import { emit, listen } from "@/libraries/events"
 import { Module } from "@/modules/"
 
 // Actions
@@ -41,7 +41,7 @@ import UserActions from "@/data/actions/user"
 
 // Schemas
 import { AIsT } from "@/data/schemas/ai"
-import { ModuleS } from "@/data/schemas/modules"
+import { ModuleS, ModuleT } from "@/data/schemas/modules"
 import { UserT } from "@/data/loaders/user"
 import { SessionsT, TextMessageT } from "@/data/loaders/sessions"
 
@@ -66,11 +66,20 @@ export default function Chat() {
 
   // setup stores
   const workspace_id = useParams().workspace_id as string
-  const [sid, setSid] = useState(useParams().session_id as string)
+  const session_id = useParams().session_id as string
+  const [sid, setSid] = useState(session_id)
   const [workspace, setWorkspace] = useState<z.infer<typeof WorkspaceS>>(
     user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
   )
   const [installed_ais, setInstalledAIs] = useState<AIsT>(ai_state)
+
+  // refresh chat if session or workspace id changes
+  useEffect(() => {
+    if (session_id !== sid) {
+      // emit session change
+      emit({ type: "sessions/change", data: { session_id } })
+    }
+  }, [JSON.stringify([sid, workspace_id])])
 
   // setup session
   const [session, setSession] = useState(sessions_state.active[sid] || null)
@@ -134,12 +143,22 @@ export default function Chat() {
         }
       },
     })
+
+    const stop_add_message_listener = listen({
+      type: "sessions/add_message",
+      action: ({ session_id, message, meta, bid }: { session_id: string; message: string; meta: TextMessageT["meta"], bid: string }) => {
+        if (session_id !== sid) return
+        send({ message, meta, bid })
+      },
+    })
+
     updateData()
 
     return () => {
       stop_data_listener()
       stop_store_listener()
       stop_sid_listener()
+      stop_add_message_listener()
     }
   }, [sid])
 
@@ -158,7 +177,6 @@ export default function Chat() {
   )
 
   // setup active module states
-  const [api_key, setApiKey] = useState<string>("")
   const [module, setModule] = useState<{ specs: z.infer<typeof ModuleS>; main: Function } | undefined>(undefined)
 
   // change session's active module
@@ -256,14 +274,6 @@ export default function Chat() {
       fieldFocus({ selector: "#input" })
     }, 200)
   }
-
-  // set api key
-  useEffect(() => {
-    if (!module) return
-    const api_key = _.find(user_state.modules.installed, { id: module?.specs?.id })?.settings?.api_key
-    if (!api_key) return
-    setApiKey(api_key)
-  }, [JSON.stringify([user_state.modules.installed, module])])
 
   // when processed messages are updated
   useEffect(() => {
@@ -378,7 +388,7 @@ export default function Chat() {
   useEffect(() => {
     // setAttachedData([])
     updateSession()
-  }, [JSON.stringify([sid, sessions_state.active[sid], gen_in_progress, branch_parent_id])])
+  }, [JSON.stringify([workspace_id, sid, sessions_state.active[sid], gen_in_progress, branch_parent_id])])
 
   // update raw messages when msg_update_ts changes
   useEffect(() => {
@@ -572,17 +582,28 @@ export default function Chat() {
     }
 
     setProcessedMessages(new_processed_messages)
+    return new_processed_messages
   }
 
   function addRawMessage({ message }: { message: TextMessageT }) {
     setRawMessages([...(raw_messages || []), message])
   }
 
-  async function send({ message }: { message: string }) {
+  async function send({ message, meta, bid }: { message: string; meta?: TextMessageT["meta"], bid?: string }) {
     const ai = _.find(ai_state, { id: session?.settings.ai || "c1" })
     if (!ai) return error({ message: "AI not found" })
 
+    let active_module: any = module
+    if (!active_module) {
+      // get the default module
+      const defaultModule = _.find(user_state.modules.installed, { id: ai.default_llm_module.id })
+      if (defaultModule) {
+        active_module = await Module(defaultModule.id)
+      }
+    }
+
     // Add temp message to processed messages to show it in the UI faster - will get overwritten automatically once raw_messages are updated
+    let processed_messages_update = processed_messages 
     if (!branch_msg_id) {
       const tmp_id = nanoid(10)
       const temp_msg = {
@@ -591,19 +612,20 @@ export default function Chat() {
         type: "human",
         hash: "123",
         text: message,
+        meta: meta || {},
         source: `user:${user_state.id}`,
         active: true,
-        parent_id: branch_parent_id || "first",
+        parent_id: branch_parent_id || bid || "first",
       }
-
-      setProcessedMessages([...(processed_messages || []), [[], temp_msg as TextMessageT, []]])
+      processed_messages_update = await appendOrUpdateProcessedMessage({ message: temp_msg as TextMessageT })
+      // setProcessedMessages([...(processed_messages || []), [[], temp_msg as TextMessageT, []]])
       setGenInProgress(true)
     }
 
     // get the 5 last messages
     let latest_messages: string[] = []
-    if (processed_messages && processed_messages.length > 0) {
-      latest_messages = _(processed_messages)
+    if (processed_messages_update && processed_messages_update.length > 0) {
+      latest_messages = _(processed_messages_update)
         .filter((p) => p[1].type === "human")
         ?.slice(-5)
         .map((m) => m[1].text)
@@ -619,12 +641,12 @@ export default function Chat() {
     const msg_ok = await addMessage({
       session,
       session_id: sid,
-      api_key,
-      module,
+      module: active_module,
       context,
-      processed_messages: processed_messages || [],
-      branch_parent_id,
+      processed_messages: processed_messages_update || [],
+      branch_parent_id: branch_parent_id || bid || "first",
       message,
+      meta,
       message_id: branch_msg_id || "",
       raw_messages: raw_messages || [],
       user_state,
