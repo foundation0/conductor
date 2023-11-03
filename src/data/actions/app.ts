@@ -9,6 +9,7 @@ import { initLoaders } from "@/data/loaders"
 import UserActions from "@/data/actions/user"
 import { LogItemS } from "@/data/schemas/app"
 import { error } from "@/libraries/logging"
+import { listen } from "@/libraries/events"
 
 async function getActiveWorkspace() {
   const { AppState, UserState } = await initLoaders()
@@ -19,7 +20,7 @@ async function getActiveWorkspace() {
     : undefined
 }
 
-const API = {
+const API: { [key: string]: Function } = {
   updateAppState: async function (new_state: Partial<AppStateT>) {
     const { AppState } = await initLoaders()
     const state: AppStateT = AppState.get()
@@ -203,6 +204,25 @@ const API = {
     })
     return li.data.id
   },
+  getCurrentWorkspaceId: async function () {
+    const { AppState } = await initLoaders()
+    const app_state: AppStateT = AppState.get()
+    return app_state.active_workspace_id
+  }
 }
+
+listen({
+  type: "app.*",
+  action: async (data: any, e: any) => {
+    const { callback } = data
+    const method: string = e?.event?.replace("app.", "")
+    if (method in API) {
+      const response = await API[method](data)
+      callback(response)
+    } else {
+      callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
 
 export default API

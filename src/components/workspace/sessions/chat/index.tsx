@@ -2,7 +2,7 @@
 
 // React
 import { useEffect, useRef, useState } from "react"
-import { useLoaderData, useNavigate, useParams } from "react-router-dom"
+import { useLoaderData, useNavigate } from "react-router-dom"
 
 // Helpers
 import _ from "lodash"
@@ -15,7 +15,7 @@ import PromptIcon from "@/assets/prompt.svg"
 import { FaUser } from "react-icons/fa"
 import { TiDelete } from "react-icons/ti"
 import { TbSelector } from "react-icons/tb"
-import { KBD } from "@/components/misc/kbd"
+import { KBDs } from "./kbd"
 
 // Data
 import Data from "@/components/workspace/data/data"
@@ -27,17 +27,17 @@ import config from "@/config"
 // Libraries
 import { addMessage } from "./add_message"
 import { autoRename } from "./auto_renamer"
-import { buildMessageTree } from "@/libraries/compute_message_chain"
 import { error } from "@/libraries/logging"
 import { fieldFocus } from "@/libraries/field_focus"
 import { getAvatar } from "@/libraries/ai"
-import { emit, listen } from "@/libraries/events"
 import { Module } from "@/modules/"
+import { useEvent } from "@/components/hooks/useEvent"
 
 // Actions
 import SessionActions from "@/data/actions/sessions"
 import SessionsActions from "@/data/actions/sessions"
 import UserActions from "@/data/actions/user"
+import { computeActivePath, onBranchClick, onNewBranchClick, buildMessageTree } from "./branching"
 
 // Schemas
 import { AIsT } from "@/data/schemas/ai"
@@ -49,12 +49,12 @@ import { SessionsT, TextMessageT } from "@/data/loaders/sessions"
 import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import Input from "@/components/workspace/sessions/chat/input"
 import { AISelector } from "./ai_selector"
+import { emit, query } from "@/libraries/events"
+import { ChatT, MessageRowT } from "@/data/schemas/sessions"
 
 const padding = 50
 
-export type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
-
-export default function Chat() {
+export default function Chat({ workspace_id, session_id }: { workspace_id: string; session_id: string }) {
   const { sessions_state, user_state, MessagesState, ai_state } = useLoaderData() as {
     sessions_state: SessionsT
     user_state: UserT
@@ -65,12 +65,8 @@ export default function Chat() {
   const navigate = useNavigate()
 
   // setup stores
-  const workspace_id = useParams().workspace_id as string
-  const session_id = useParams().session_id as string
-  const [sid, setSid] = useState(session_id)
-  const [workspace, setWorkspace] = useState<z.infer<typeof WorkspaceS>>(
-    user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
-  )
+  const [sid] = useState(session_id)
+
   const [installed_ais, setInstalledAIs] = useState<AIsT>(ai_state)
 
   // refresh chat if session or workspace id changes
@@ -96,19 +92,49 @@ export default function Chat() {
   const [msg_update_ts, setMsgUpdateTs] = useState<number>(0)
   const [input_text, setInputText] = useState<string>("")
 
-  // setup participants
-  const [participants, setParticipants] = useState<{ [key: string]: React.ReactElement }>({
-    user: <FaUser />,
-    AI: <FaUser />,
+  useEvent({
+    name: "chat/new-branch",
+    target: session_id,
+    action: ({ id, parent_id }: { id: string; parent_id: string }) => {
+      setBranchMsgId(id)
+      setBranchParentId(parent_id)
+    },
+  })
+
+  useEvent({
+    name: "chat/raw-messages",
+    target: session_id,
+    action: ({ messages }: { messages: TextMessageT[] }) => {
+      setRawMessages(messages)
+    },
+  })
+
+  useEvent({
+    name: "chat/branch-click",
+    target: session_id,
+    action: async (data: { msg_id: string; no_update?: boolean; msgs?: TextMessageT[] }) => {
+      await onBranchClick({ ...data, session_id })
+      const container_e = document.querySelector(".react-auto-scroll__scroll-container") as HTMLElement
+      const offset = container_e.scrollTop
+      container_e?.scrollTo({ top: offset })
+      fieldFocus({ selector: "#input" })
+    },
+  })
+
+  useEvent({
+    name: "chat/new-branch-click",
+    target: session_id,
+    action: ({ parent_id }: { parent_id: string }) => {
+      onNewBranchClick({ parent_id, session_id })
+    },
   })
 
   // setup data
   const [attached_data, setAttachedData] = useState<DataRefT[]>([])
   async function updateData() {
     if (!sid) return
-    const { SessionState } = await initLoaders()
-    const s = await SessionState.get()
-    const data = s.active[sid]?.data || []
+    const session = await query<ChatT>({ type: "sessions.getById", data: { session_id: sid } })
+    const data = session?.data || []
     if (data) {
       setAttachedData(data)
 
@@ -117,50 +143,7 @@ export default function Chat() {
     }
   }
 
-  useEffect(() => {
-    const stop_sid_listener = listen({
-      type: "sessions/change",
-      action: ({ session_id }: { session_id: string }) => {
-        // console.log(`chat, got updated sid ${session_id}`)
-        setSid(session_id)
-      },
-    })
-
-    const stop_data_listener = listen({
-      type: ["sessions/add_data", "sessions/remove_data"],
-      action: ({ session_id }: { session_id: string }) => {
-        // console.log("sessions/add_data", sid, session_id)
-        if (sid === session_id) updateData()
-      },
-    })
-
-    const stop_store_listener = listen({
-      type: "store_update",
-      action: ({ name }: { name: string }) => {
-        if (name === sid) {
-          // console.log(`store_update: ${name}`)
-          updateSession()
-        }
-      },
-    })
-
-    const stop_add_message_listener = listen({
-      type: "sessions/add_message",
-      action: ({ session_id, message, meta, bid }: { session_id: string; message: string; meta: TextMessageT["meta"], bid: string }) => {
-        if (session_id !== sid) return
-        send({ message, meta, bid })
-      },
-    })
-
-    updateData()
-
-    return () => {
-      stop_data_listener()
-      stop_store_listener()
-      stop_sid_listener()
-      stop_add_message_listener()
-    }
-  }, [sid])
+  useEvent({ name: ["sessions.addData.done", "sessions.removeData.done"], target: session_id, action: updateData })
 
   // setup various layout related states
   const eInput = useRef<HTMLDivElement | null>(null)
@@ -199,11 +182,6 @@ export default function Chat() {
       fieldFocus({ selector: "#input" })
     }, 200)
   }
-
-  // set focus to input when session changes
-  /* useEffect(() => {
-    fieldFocus({ selector: "#input" })
-  }, [sid]) */
 
   // keep track of input height
   useEffect(() => {
@@ -275,61 +253,6 @@ export default function Chat() {
     }, 200)
   }
 
-  // when processed messages are updated
-  useEffect(() => {
-    // Update participants
-    const p: { [key: string]: React.ReactElement } = {
-      user: <FaUser />,
-      AI: <FaUser />,
-    }
-    if (!processed_messages) return
-    if (!module) return
-
-    processed_messages.forEach((ms) => {
-      const m = ms[1]
-      if (!m.source.match(/user/) && module.specs.id === m.source.replace("ai:", "").split("/")[0]) {
-        const user_variant_settings = _.find(user_state.modules.installed, {
-          id: module.specs.id,
-        })?.meta?.variants?.find((v: any) => v.id === m.source.split("/")[1])
-        const ai = _.find(ai_state, { id: m.source.split("/")[2] })
-        let icon = ai?.meta.avatar || (
-          <img
-            className={`border-2 border-zinc-900 rounded-full w-3 h-3`}
-            /* style={{ borderColor: user_variant_settings?.color || "#00000000" }} */
-            src={getAvatar({ seed: _.find(ai_state, { id: m.source.split("/")[2] })?.meta?.name || "" })}
-          />
-        )
-
-        p[ai?.id || module.specs.id] = icon ? (
-          typeof icon === "string" ? (
-            <img
-              src={icon}
-              className={`border-2 rounded-full w-3 h-3 bg-zinc-200`}
-              style={{ borderColor: user_variant_settings?.color || "#00000000" }}
-            />
-          ) : (
-            icon
-          )
-        ) : (
-          <FaUser />
-        )
-      } else {
-        p["user"] =
-          _.size(user_state.meta?.profile_photos) > 0 ? (
-            <img
-              src={_.first(user_state.meta?.profile_photos) || ""}
-              className="border-2 border-zinc-900/50 rounded-full w-3 h-3"
-            />
-          ) : (
-            <div className="border-2 border-zinc-900/50 rounded-full w-3 h-3">
-              {user_state.meta?.username?.[0].toUpperCase()}
-            </div>
-          )
-      }
-    })
-    setParticipants(p)
-  }, [JSON.stringify(processed_messages)])
-
   // Update local session state when sessions[sid] changes
   const updateSession = async () => {
     // console.log("update")
@@ -353,12 +276,12 @@ export default function Chat() {
       await SessionsActions.updateSessions(new_sessions)
     }
     const workspace = user_state.workspaces.find((w: any) => w.id === workspace_id) as z.infer<typeof WorkspaceS>
-    const s = await SessionState.get()
     const ss = await MessagesState({ session_id: sid })
     const msgs: TextMessageT[] = ss?.get()
-    setSession(s.active[sid])
+    // setSession(s.active[sid])
     setRawMessages(_.uniqBy(msgs || [], "id"))
     setMessagesStates(ss)
+    updateData()
     const app_state = await AppState.get()
     let session_name = ""
     for (const group of workspace.groups) {
@@ -385,10 +308,11 @@ export default function Chat() {
     }
   }
 
+  useEvent({ name: "store_update", target: session_id, action: updateSession })
+
   useEffect(() => {
-    // setAttachedData([])
     updateSession()
-  }, [JSON.stringify([workspace_id, sid, sessions_state.active[sid], gen_in_progress, branch_parent_id])])
+  }, [JSON.stringify([gen_in_progress, branch_parent_id])])
 
   // update raw messages when msg_update_ts changes
   useEffect(() => {
@@ -397,59 +321,35 @@ export default function Chat() {
     setRawMessages(_.uniqBy(msgs || [], "id"))
   }, [msg_update_ts])
 
-  // Build message tree
-  const computeActivePath = (messages: TextMessageT[]): Record<string, string> => {
-    const activePath: Record<string, string> = {}
-
-    // find message with parent_id = "first"
-    const first_msg = _.find(messages, { parent_id: "first" })
-    if (!first_msg) {
-      return activePath
-    }
-    activePath["first"] = first_msg.id
-
-    // find the next message in the chain using first_msg.id and add it to activePath
-    function findNextMessage(msg_id: string) {
-      const next_msgs = _.filter(messages, { parent_id: msg_id })
-      if (next_msgs.length === 0) return
-      // find the first active message
-      const next_msg = _.find(next_msgs, { active: true })
-      if (next_msg) {
-        activePath[msg_id] = next_msg.id
-        findNextMessage(next_msg.id)
-      } else {
-        // find the first message
-        const next_msg = next_msgs[0]
-        activePath[msg_id] = next_msg.id
-        findNextMessage(next_msg.id)
-      }
-    }
-    findNextMessage(first_msg.id)
-
-    return activePath
-  }
-
   // update processed messages
   async function updateMessages() {
     const active_path = computeActivePath(raw_messages || [])
     if (!active_path) return
     let rows = buildMessageTree({ messages: raw_messages || [], first_id: "first", activePath: active_path })
+    emit({
+      type: "chat/processed-messages",
+      data: {
+        target: session_id,
+        messages: rows,
+        module,
+      },
+    })
     setProcessedMessages(rows)
   }
+
+  useEvent({
+    name: "chat/processRawMessages",
+    target: session_id,
+    action: () => {
+      console.log("processRawMessages")
+      updateMessages()
+    },
+  })
 
   // update active path when raw_messages changes
   useEffect(() => {
     updateMessages()
   }, [JSON.stringify([raw_messages])])
-
-  /*  
- // compute sliding window memory when messages change
- useEffect(() => {
-    if (!module) return
-    if (!session?.settings.module.variant) return
-    if (!messages) return
-    compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: messages.map((m) => m[1]) })
-  }, [JSON.stringify([module, session?.settings.module.variant, sid, branch_parent_id])]) */
 
   // Function to handle the window resize event
   const handleResize = () => {
@@ -472,98 +372,6 @@ export default function Chat() {
     }
   }, [])
 
-  // switch active branch
-  const onBranchClick = async (msg_id: string, no_update?: boolean, msgs?: TextMessageT[]) => {
-    const messages = msgs || raw_messages
-    // follow activePath from active_path_branch_id to the end and mark all human messages as inactive
-    function markBranchInactive(msg_id: string) {
-      // find active sibling from the branch
-      const msg = _.find(messages, { id: msg_id })
-      if (msg?.type === "human") {
-        // get all siblings
-        const siblings = _.filter(messages, { parent_id: msg?.parent_id })
-        // mark all siblings as inactive in messages
-        siblings.forEach((sibling) => {
-          sibling.active = false
-          const i = _.findIndex(messages, { id: sibling.id })
-          if (messages && i) messages[i] = sibling
-        })
-        // find all children of the siblings
-        const children = _.filter(messages, (m) => _.includes(_.map(siblings, "id"), m.parent_id))
-        // mark all children as inactive in messages
-        children.forEach((child) => {
-          markBranchInactive(child.id)
-        })
-      } else {
-        // find all children of the message
-        const children = _.filter(messages, (m) => m.parent_id === msg_id)
-        // mark all children as inactive in messages
-        children.forEach((child) => {
-          markBranchInactive(child.id)
-        })
-      }
-    }
-    markBranchInactive(msg_id)
-
-    // mark other messages with same parent_id as not active and the clicked one as active
-    const updated_messages = _.map(messages, (message) => {
-      if (message.parent_id === messages?.find((msg) => msg.id === msg_id)?.parent_id) {
-        message.active = false
-      }
-      if (message.id === msg_id) {
-        message.active = true
-      }
-      return message
-    })
-    /* 
-    TODO: Make this faster to enable visual ques for what is included in the sliding window memory
-    compileSlidingWindowMemory({ model: session?.settings.module.variant, messages: messages }) 
-    */
-    if (no_update) return updated_messages
-
-    const container_e = document.querySelector(".react-auto-scroll__scroll-container") as HTMLElement
-    const offset = container_e.scrollTop
-    setRawMessages(updated_messages)
-    await SessionsActions.updateMessages({ session_id: sid, messages: updated_messages })
-    container_e?.scrollTo({ top: offset })
-    fieldFocus({ selector: "#input" })
-  }
-
-  // create new branch
-  const onNewBranchClick = async (parent_id: string) => {
-    // mark other messages with same parent_id as not active
-    let updated_raw_messages = _.cloneDeep(raw_messages || [])
-    const new_branch_msg: TextMessageT = {
-      _v: 1,
-      id: nanoid(10),
-      created_at: new Date().toISOString(),
-      version: "1.0",
-      type: "human",
-      text: "type new message below...",
-      source: "example",
-      parent_id,
-      signature: "",
-      hash: "1337",
-      active: true,
-    }
-
-    updated_raw_messages = _.map(updated_raw_messages, (message) => {
-      if (message.parent_id === parent_id) {
-        message.active = false
-      }
-      return message
-    })
-    updated_raw_messages.push(new_branch_msg)
-    setBranchMsgId(new_branch_msg.id)
-    setBranchParentId(parent_id)
-
-    // hacky settimeout because react...
-    setTimeout(() => {
-      setRawMessages(updated_raw_messages)
-      fieldFocus({ selector: "#input" })
-    }, 200)
-  }
-
   async function appendOrUpdateProcessedMessage({ message }: { message: TextMessageT }) {
     const ms = await MessagesState({ session_id: sid })
     const raw_messages: TextMessageT[] = ms?.get()
@@ -582,6 +390,14 @@ export default function Chat() {
     }
 
     setProcessedMessages(new_processed_messages)
+    emit({
+      type: "chat/processed-messages",
+      data: {
+        target: session_id,
+        messages: new_processed_messages,
+        module,
+      },
+    })
     return new_processed_messages
   }
 
@@ -589,7 +405,7 @@ export default function Chat() {
     setRawMessages([...(raw_messages || []), message])
   }
 
-  async function send({ message, meta, bid }: { message: string; meta?: TextMessageT["meta"], bid?: string }) {
+  async function send({ message, meta, bid }: { message: string; meta?: TextMessageT["meta"]; bid?: string }) {
     const ai = _.find(ai_state, { id: session?.settings.ai || "c1" })
     if (!ai) return error({ message: "AI not found" })
 
@@ -617,8 +433,16 @@ export default function Chat() {
         active: true,
         parent_id: branch_parent_id || bid || "first",
       }
-      processed_messages_update = await appendOrUpdateProcessedMessage({ message: temp_msg as TextMessageT })
-      // setProcessedMessages([...(processed_messages || []), [[], temp_msg as TextMessageT, []]])
+      const p_msgs: MessageRowT[] = [...(processed_messages || []), [[], temp_msg as TextMessageT, []]]
+      setProcessedMessages(p_msgs)
+      emit({
+        type: "chat/processed-messages",
+        data: {
+          target: session_id,
+          messages: p_msgs,
+          module,
+        },
+      })
       setGenInProgress(true)
     }
 
@@ -673,6 +497,25 @@ export default function Chat() {
     setTimeout(() => fieldFocus({ selector: "#input" }), 200)
   }
 
+  useEvent({
+    name: "sessions.addMessage",
+    target: session_id,
+    action: ({
+      session_id,
+      message,
+      meta,
+      bid,
+    }: {
+      session_id: string
+      message: string
+      meta: TextMessageT["meta"]
+      bid: string
+    }) => {
+      if (session_id !== sid) return
+      send({ message, meta, bid })
+    },
+  })
+
   const AISelectorButton = (
     <label
       tabIndex={0}
@@ -725,19 +568,12 @@ export default function Chat() {
           <div className="Messages flex flex-1 flex-col" style={{ height }}>
             {processed_messages && processed_messages?.length > 0 ? (
               <ConversationTree
+                session_id={sid}
                 rows={processed_messages}
-                onNewBranchClick={onNewBranchClick}
-                onBranchClick={onBranchClick}
-                participants={participants}
                 paddingBottom={input_height + 30}
                 msgs_in_mem={msgs_in_mem}
                 gen_in_progress={gen_in_progress}
                 ai={_.find(ai_state, { id: session.settings.ai }) as AIsT[0]}
-                module={
-                  _.find(user_state?.modules?.installed, {
-                    id: session.settings.module.id,
-                  }) as UserT["modules"]["installed"][0]
-                }
               />
             ) : (
               <div id="BlankChat" className="flex h-full flex-col justify-center items-center">
@@ -761,25 +597,7 @@ export default function Chat() {
                     </div>
                   </div>
                 </div>
-                <div className="flex mt-5 flex-col justify-center items-center gap-4">
-                  <div className="text-xs text-zinc-400">
-                    <KBD fnk={{ windows: "alt", macos: "ctrl" }} ck="T" desc="new session" />
-                  </div>
-                  <div className="text-xs text-zinc-400">
-                    <KBD fnk={{ windows: "alt", macos: "ctrl" }} ck="R" desc="rename session" />
-                  </div>
-                  <div className="text-xs text-zinc-400">
-                    <KBD fnk={{ windows: "alt", macos: "ctrl" }} ck="W" desc="close session" />
-                  </div>
-                  <div className="text-xs text-zinc-400">
-                    <KBD
-                      fnk={{ windows: "shift", macos: "shift" }}
-                      fnk2={{ windows: "alt", macos: "ctrl" }}
-                      ck="D"
-                      desc="delete session"
-                    />
-                  </div>
-                </div>
+                <KBDs />
               </div>
             )}
           </div>
@@ -795,10 +613,18 @@ export default function Chat() {
                     {...d}
                     removeIcon={<TiDelete />}
                     onRemove={() => {
-                      SessionActions.removeData({
+                      emit({
+                        type: "sessions.removeData",
+                        data: {
+                          target: session_id,
+                          session_id: sid,
+                          data_id: d.id,
+                        },
+                      })
+                      /* SessionActions.removeData({
                         session_id: sid,
                         data_id: d.id,
-                      })
+                      }) */
                     }}
                   ></Data>
                 </div>

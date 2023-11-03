@@ -86,9 +86,9 @@ dependencies:
   ethers:
     specifier: ^6.8.0
     version: 6.8.0
-  eventemitter3:
-    specifier: ^5.0.1
-    version: 5.0.1
+  fancy-events:
+    specifier: ^1.2.4
+    version: 1.2.4
   file-type:
     specifier: ^18.5.0
     version: 18.5.0
@@ -3687,10 +3687,6 @@ packages:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
     dev: false
 
-  /eventemitter3@5.0.1:
-    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
-    dev: false
-
   /exenv@1.2.2:
     resolution: {integrity: sha512-Z+ktTxTwv9ILfgKCk32OX3n/doe+OcLTRtqK9pcL+JsP3J1/VW8Uvl4ZjLlKqeW4rzK4oesDOGMEMRIZqtP4Iw==}
     dev: false
@@ -3706,6 +3702,10 @@ packages:
 
   /extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
+    dev: false
+
+  /fancy-events@1.2.4:
+    resolution: {integrity: sha512-bAEZe/5qiifgpuDnqGbBMqe36OZVAzOH/VA0E7UlSAoyIZw4W9mclHrVeA9a3QNAXcZO4u7fgVd4dfQKCInYYQ==}
     dev: false
 
   /fast-fifo@1.3.2:

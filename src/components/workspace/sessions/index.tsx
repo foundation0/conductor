@@ -10,12 +10,38 @@ import { Resizable } from "react-resizable"
 import "react-resizable/css/styles.css"
 import eventEmitter from "@/libraries/events"
 import { Match, Switch } from "react-solid-flow"
+import { initLoaders } from "@/data/loaders"
+import { SessionT, WorkspaceT } from "@/data/schemas/workspace"
 
 export default function Workspace() {
-  const session_id = useParams().session_id
+  const workspace_id = useParams().workspace_id as string
+  const session_id = useParams().session_id as string
   const { setPreference, getPreference } = AppstateActions
   const [open_sidebar, setOpenSidebar] = useState<string>("")
   const [notepadWidth, setNotepadWidth] = useState(400)
+  const [sessions, setSessions] = useState<SessionT[]>([])
+
+  async function updateSessions() {
+    const { AppState, SessionState, UserState, AIState } = await initLoaders()
+    const user_state = await UserState.get()
+    // get all the sessions for this workspace
+    const workspace: WorkspaceT = _.find(user_state.workspaces, { id: workspace_id })
+    if (!workspace) return
+    // recursively fetch all the sessions from workspace.groups.folders.sessions
+    const sessions = _(workspace.groups)
+      .flatMap((group) => {
+        return _.flatMap(group.folders, (folder) => {
+          return folder.sessions
+        })
+      })
+      .compact()
+      .value()
+    if (sessions) setSessions(sessions)
+  }
+
+  useEffect(() => {
+    updateSessions()
+  }, [JSON.stringify([workspace_id, session_id])])
 
   useEffect(() => {
     getPreference({ key: "notepad-width" }).then((width) => {
@@ -45,7 +71,17 @@ export default function Workspace() {
           <Tabs setShowNotepad={() => setSidebar("Notepad")} setShowMembers={() => setSidebar("Members")} />
         </div>
         <div id="ContentViews" className="flex flex-1">
-          {session_id ? <Session session_id={session_id} /> : null}
+          {sessions.map((session) => {
+            return (
+              <Session
+                key={session.id}
+                workspace_id={workspace_id}
+                session_id={session.id}
+                type={"chat"}
+                active={session.id === session_id}
+              />
+            )
+          })}
         </div>
       </div>
       <Resizable

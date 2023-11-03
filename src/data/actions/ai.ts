@@ -1,6 +1,6 @@
 import { initLoaders } from "@/data/loaders"
 import _ from "lodash"
-import eventEmitter from "@/libraries/events"
+import eventEmitter, { listen } from "@/libraries/events"
 import { error, ph } from "@/libraries/logging"
 import { AIS, AIT } from "../schemas/ai"
 import { getId } from "@/security/common"
@@ -8,7 +8,7 @@ import { getActiveUser } from "@/libraries/active_user"
 import UserActions from "@/data/actions/user"
 import { UserT } from "../loaders/user"
 
-const API = {
+const API: { [key: string]: Function } = {
   add: async ({ persona, default_llm_module }: Partial<AIT>) => {
     if (!persona) return error({ message: "Persona is required" })
     if (!default_llm_module) return error({ message: "Default LLM Module is required" })
@@ -103,5 +103,19 @@ const API = {
     await AIState.set(ais, null, true)
   },
 }
+
+listen({
+  type: "ai.*",
+  action: async (data: any, e: any) => {
+    const { callback } = data
+    const method: string = e?.event?.replace("ai.", "")
+    if (method in API) {
+      const response = await API[method](data)
+      callback(response)
+    } else {
+      callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
 
 export default API

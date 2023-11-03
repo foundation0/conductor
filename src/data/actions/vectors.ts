@@ -3,14 +3,14 @@ import { DataS, VIndexS, VIndexT, VectorS, VectorT } from "@/data/schemas/data"
 import _ from "lodash"
 import { nanoid } from "nanoid"
 import { z } from "zod"
-import { emit } from "@/libraries/events"
+import { emit, listen } from "@/libraries/events"
 import { error, ph } from "@/libraries/logging"
 import { VoyVectorStore } from "langchain/vectorstores/voy"
 import { Voy as VoyClient } from "voy-search"
 import { HuggingFaceTransformersEmbeddings } from "langchain/embeddings/hf_transformers"
 import { Document } from "langchain/dist/document"
 
-const API = {
+const API: { [key: string]: Function } = {
   async add({ data_id, vectors }: { data_id: string; vectors: VectorT }) {
     const { VectorsState } = await initLoaders()
     const store = await VectorsState({ id: data_id })
@@ -97,5 +97,19 @@ const API = {
     await store.set(validated?.data)
   },
 }
+
+listen({
+  type: "vectors.*",
+  action: async (data: any, e: any) => {
+    const { callback } = data
+    const method: string = e?.event?.replace("vectors.", "")
+    if (method in API) {
+      const response = await API[method](data)
+      callback(response)
+    } else {
+      callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
 
 export default API

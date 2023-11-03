@@ -4,12 +4,11 @@ import { useDropzone } from "react-dropzone"
 import { processImportedFiles } from "@/libraries/data"
 import { initLoaders } from "@/data/loaders"
 import _ from "lodash"
-import { DataRefT } from "@/data/schemas/workspace"
-import { listen } from "@/libraries/events"
+import { DataRefT, WorkspaceT } from "@/data/schemas/workspace"
+import { emit, listen } from "@/libraries/events"
 import Data from "./data"
 import UserActions from "@/data/actions/user"
 import { useParams } from "react-router-dom"
-import SessionsActions from "@/data/actions/sessions"
 import { queryIndex } from "@/libraries/data"
 import { RxPlus } from "react-icons/rx"
 import { AiFillFolderAdd } from "react-icons/ai"
@@ -31,7 +30,7 @@ export default function DataOrganizer() {
 
   async function updateDataState() {
     const { UserState } = await initLoaders()
-    const workspace_data = _.find((await UserState.get()).workspaces, { id: active_workspace_id })
+    const workspace_data: WorkspaceT = _.find((await UserState.get()).workspaces, { id: active_workspace_id })
     const data = workspace_data?.data || []
     setDataState(data)
     if (index_query.length === 0) setDataList(data)
@@ -66,12 +65,7 @@ export default function DataOrganizer() {
       action: async ({ name, mime }: { name: string; mime: DataTypesTextT | DataTypesBinaryT }) => {
         await updateDataState()
         if (name) setProcessingQueue((q) => q.filter((d) => d.name !== name))
-        const ids = await queryIndex({ update: true, workspace_id: active_workspace_id, source: "workspace" })
-        /* if (ids) {
-          const filtered_list = data_state.filter((d) => _.map(ids, "metadata.id").includes(d.id))
-          if(filtered_list.length > 0) setDataList(filtered_list)
-          // remove from queue
-        } */
+        await queryIndex({ update: true, workspace_id: active_workspace_id, source: "workspace" })
       },
     })
 
@@ -192,7 +186,7 @@ export default function DataOrganizer() {
         <input {...getInputProps()} />
         {
           _(data_list)
-            .sortBy("name")
+            .sortBy("created_at", "desc")
             .map((d: any) => {
               return (
                 <div className="min-w-[50px] max-w-[400px] w-full flex-nowrap" key={d.id}>
@@ -201,10 +195,7 @@ export default function DataOrganizer() {
                     onClick={() => {
                       if (!sid) return error({ message: "no session id" })
                       // console.log('adding to ', sid)
-                      SessionsActions.addData({
-                        session_id: sid,
-                        data: d,
-                      })
+                      emit({ type: "sessions.addData", data: { target: sid, session_id: sid, data: d } })
                     }}
                     onRemove={() => {
                       if (confirm("Are you sure you want to delete this?")) {
@@ -219,10 +210,7 @@ export default function DataOrganizer() {
                         label: "Add item to current session",
                         callback: function () {
                           if (!sid) return error({ message: "no session id" })
-                          SessionsActions.addData({
-                            session_id: sid,
-                            data: d,
-                          })
+                          emit({ type: "sessions.addData", data: { session_id: sid, data: d } })
                         },
                       },
                       {

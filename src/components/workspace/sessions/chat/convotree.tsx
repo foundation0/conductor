@@ -11,33 +11,33 @@ import { AIsT } from "@/data/schemas/ai"
 import { UserT } from "@/data/loaders/user"
 import { ModuleT } from "@/data/schemas/modules"
 import { getAvatar } from "@/libraries/ai"
-import { emit } from "@/libraries/events"
+import { useEvent } from "@/components/hooks/useEvent"
+import { emit, query } from "@/libraries/events"
+import { FaUser } from "react-icons/fa"
+import { Module } from "@/modules"
+import { ChatT } from "@/data/schemas/sessions"
+import { error } from "@/libraries/logging"
+import { buildMessageTree, computeActivePath } from "./branching"
 dayjs.extend(relativeTime)
 
 type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 
 type ConversationTreeProps = {
-  onNewBranchClick?: (parent_id: string) => void
-  onBranchClick?: (msg_id: string) => void
   rows: MessageRowT[] | undefined
-  participants: { [key: string]: ReactElement }
   paddingBottom: number
   msgs_in_mem?: string[]
   ai: AIsT[0]
-  module: ModuleT
   gen_in_progress?: boolean
+  session_id: string
 }
 
 const ConversationTree: React.FC<ConversationTreeProps> = ({
-  onNewBranchClick,
-  onBranchClick,
   rows,
-  participants,
   paddingBottom,
   msgs_in_mem,
   ai,
-  module,
   gen_in_progress,
+  session_id,
 }) => {
   if (!rows) {
     return null
@@ -45,12 +45,121 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
 
   const { ai_state, user_state } = useLoaderData() as { ai_state: AIsT; user_state: UserT }
   const [ago_refresh, setAgoRefresh] = useState(1)
-  const session_id = useParams<{ session_id: string }>().session_id
+  const [session, setSession] = useState<ChatT | undefined>(undefined)
 
+  // setup participants
+  const [participants, setParticipants] = useState<{ [key: string]: React.ReactElement }>({
+    user: <FaUser />,
+    AI: <FaUser />,
+  })
+
+  async function updateParticipants({ session, messages }: { session: ChatT; messages: MessageRowT[] }) {
+    if (!session) return error({ message: "No session" })
+    // const { UserState, SessionsState } = await initLoaders()
+    // const user_state = await UserState()
+    const module: { specs: ModuleT; main: Function } | any = await Module(session.settings.module.id)
+
+    // Update participants
+    const p: { [key: string]: React.ReactElement } = {
+      user: <FaUser />,
+      AI: <FaUser />,
+    }
+    if (!messages) return null
+    /* emit({
+      type: "chat/processRawMessages",
+      data: {
+        target: session_id
+      }
+    }) */
+    if (!module) return error({ message: "No module" })
+
+    messages.forEach((ms) => {
+      const m = ms[1]
+      if (!m.source.match(/user/) && module.specs.id === m.source.replace("ai:", "").split("/")[0]) {
+        const user_variant_settings = _.find(user_state.modules.installed, {
+          id: module.specs.id,
+        })?.meta?.variants?.find((v: any) => v.id === m.source.split("/")[1])
+        const ai = _.find(ai_state, { id: m.source.split("/")[2] })
+        let icon = ai?.meta.avatar || (
+          <img
+            className={`border-2 border-zinc-900 rounded-full w-3 h-3`}
+            /* style={{ borderColor: user_variant_settings?.color || "#00000000" }} */
+            src={getAvatar({ seed: _.find(ai_state, { id: m.source.split("/")[2] })?.meta?.name || "" })}
+          />
+        )
+
+        p[ai?.id || module.specs.id] = icon ? (
+          typeof icon === "string" ? (
+            <img
+              src={icon}
+              className={`border-2 rounded-full w-3 h-3 bg-zinc-200`}
+              style={{ borderColor: user_variant_settings?.color || "#00000000" }}
+            />
+          ) : (
+            icon
+          )
+        ) : (
+          <FaUser />
+        )
+      } else {
+        p["user"] =
+          _.size(user_state.meta?.profile_photos) > 0 ? (
+            <img
+              src={_.first(user_state.meta?.profile_photos) || ""}
+              className="border-2 border-zinc-900/50 rounded-full w-3 h-3"
+            />
+          ) : (
+            <div className="border-2 border-zinc-900/50 rounded-full w-3 h-3">
+              {user_state.meta?.username?.[0].toUpperCase()}
+            </div>
+          )
+      }
+    })
+    setParticipants(p)
+  }
+
+  useEvent({
+    name: "chat/processed-messages",
+    target: session_id,
+    action: async (data: any) => {
+      let ses = session
+      if (!ses) {
+        ses = await query<ChatT>({
+          type: "sessions.getById",
+          data: {
+            session_id,
+          },
+        })
+      }
+      updateParticipants({ ...data, session: ses })
+    },
+  })
+
+  async function init() {
+    const session = await query<ChatT>({
+      type: "sessions.getById",
+      data: {
+        session_id,
+      },
+    })
+    setSession(session)
+    const raw_messages = await query<TextMessageT[]>({
+      type: "sessions.getMessagesBySessionId",
+      data: {
+        session_id,
+      },
+    })
+    const active_path = computeActivePath(raw_messages || [])
+    if (!active_path) return
+    let rows = buildMessageTree({ messages: raw_messages || [], first_id: "first", activePath: active_path })
+    if (!rows) return null
+    updateParticipants({ session, messages: rows })
+  }
   useEffect(() => {
+    init()
     const interval = setInterval(() => setAgoRefresh(ago_refresh + 1), 60000)
     return () => clearInterval(interval)
-  }, [session_id])
+  }, [])
 
   // delay the appearance of the fake AI message
   const [show_loader_msg, setShowLoaderMsg] = useState(false)
@@ -122,11 +231,14 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                           : "opacity-100"
                       }
                     />
-                    {row[1].parent_id !== "first" && row[1].type === "human" && onNewBranchClick ? (
+                    {row[1].parent_id !== "first" && row[1].type === "human" ? (
                       <div
                         className="p-0 ml-1 mr-4 cursor-pointer flex h-full justify-center items-center"
                         onClick={() => {
-                          if (onNewBranchClick) onNewBranchClick(row[1].parent_id)
+                          emit({
+                            type: "chat/new-branch-click",
+                            data: { parent_id: row[1].parent_id, target: session_id },
+                          })
                           fieldFocus({ selector: "#input" })
                         }}
                       >
@@ -143,7 +255,6 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                               type: "sessions/add_message",
                               data: {
                                 session_id,
-                                bid: row[1].id,
                                 meta: {
                                   role: "continue",
                                 },
@@ -161,14 +272,14 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                     className={`flex flex-nowrap flex-col items-start gap-2 branch ${row[2].length > 0 ? "w-1/3" : ""}`}
                   >
                     {row[2].map((msg) => {
-                      if (msg.hash === "1337" || !onBranchClick) return null
+                      if (msg.hash === "1337") return null
                       return (
                         <div key={msg.id} className="tooltip tooltip-top" data-tip={msg.text}>
                           <Message
                             message={msg}
                             isActive={false}
                             onClick={() => {
-                              if (onBranchClick) onBranchClick(msg.id)
+                              emit({ type: "chat/branch-click", data: { msg_id: msg.id, target: session_id } })
                               fieldFocus({ selector: "#input" })
                             }}
                           />

@@ -11,11 +11,11 @@ import { SessionsT } from "@/data/loaders/sessions"
 import SessionsActions from "@/data/actions/sessions"
 import { error } from "@/libraries/logging"
 import config from "@/config"
-import { emit } from "@/libraries/events"
+import { emit, listen } from "@/libraries/events"
 import VectorsActions from "./vectors"
 import DataActions from "./data"
 
-const API = {
+const API: { [key: string]: Function } = {
   updateUser: async function (state: Partial<UserT>) {
     const { UserState } = await initLoaders()
     const s = await UserState.get()
@@ -615,5 +615,19 @@ const API = {
     })
   },
 }
+
+listen({
+  type: "user.*",
+  action: async (data: any, e: any) => {
+    const { callback } = data
+    const method: string = e?.event?.replace("user.", "")
+    if (method in API) {
+      const response = await API[method](data)
+      callback(response)
+    } else {
+      callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
 
 export default API

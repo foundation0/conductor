@@ -1,12 +1,12 @@
 import { initLoaders } from "@/data/loaders"
 import { DataS, DataT } from "@/data/schemas/data"
 import _ from "lodash"
-import { emit } from "@/libraries/events"
+import { emit, listen } from "@/libraries/events"
 import { error } from "@/libraries/logging"
 import { buf2hex, createHash } from "@/security/common"
 import b4a from "b4a"
 
-const API = {
+const API: { [key: string]: Function } = {
   getStore: async ({ id }: { id: string }) => {
     const { DataState } = await initLoaders()
     return await DataState({ id })
@@ -51,5 +51,19 @@ const API = {
     await store.destroy()
   },
 }
+
+listen({
+  type: "data.*",
+  action: async (data: any, e: any) => {
+    const { callback } = data
+    const method: string = e?.event?.replace("data.", "")
+    if (method in API) {
+      const response = await API[method](data)
+      callback(response)
+    } else {
+      callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
 
 export default API

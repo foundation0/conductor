@@ -1,5 +1,5 @@
 import WorkspaceSelector from "@/components/workspace/selector"
-import { Outlet, useBeforeUnload, useLoaderData, useNavigate } from "react-router-dom"
+import { Outlet, useBeforeUnload, useLoaderData, useNavigate, useParams } from "react-router-dom"
 import PromptIcon from "@/assets/prompt.svg"
 import { useLocation } from "react-router-dom"
 import _ from "lodash"
@@ -19,6 +19,8 @@ import config from "@/config"
 import { del as delLS, get as getLS } from "@/data/storage/localStorage"
 import { ConvertGuest } from "@/components/user/convert_guest"
 import { BuyCredits } from "../user/buy_credits"
+import { useEvent } from "../hooks/useEvent"
+import { listen } from "@/libraries/events"
 
 export default function Conductor() {
   const { app_state, user_state, ai_state } = useLoaderData() as {
@@ -42,6 +44,9 @@ export default function Conductor() {
     return true
   }, [])
   useBeforeUnload(unload)
+
+  const workspace_id = useParams().workspace_id as string
+  const session_id = useParams().session_id as string
 
   useEffect(() => {
     // upgrade user's modules

@@ -12,6 +12,7 @@ export const MembersS = z.object({
 
 export const DataRefS = z.object({
   id: z.string(),
+  created_at: z.number().optional(),
   name: z.string(),
   filename: z.string().optional(),
   mime: z.union([DataTypesTextS, DataTypesBinaryS]),
@@ -26,6 +27,7 @@ export const SessionS = z.object({
   excluded_members: z.array(z.string()).optional(),
   icon: z.string().optional(),
 })
+export type SessionT = z.infer<typeof SessionS>
 
 export const FolderS = z.object({
   _v: z.number().default(1),

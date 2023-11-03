@@ -1,11 +1,11 @@
 import { useLoaderData, useNavigate, useParams } from "react-router-dom"
 import _ from "lodash"
 import { NotepadsT } from "@/data/loaders/notepad"
-import { NotepadS } from "@/data/schemas/notepad"
+import { NotepadS, NotepadT } from "@/data/schemas/notepad"
 import { useEffect, useState } from "react"
 import { z } from "zod"
 // @ts-ignore
-import { MdCheck, MdClose, MdSave, MdArrowDownward, MdArrowUpward } from "react-icons/md"
+import { MdCheck, MdClose, MdSave, MdArrowDownward, MdArrowUpward, MdInbox } from "react-icons/md"
 import ReactMarkdown from "react-markdown"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { RxDotsHorizontal } from "react-icons/rx"
@@ -19,6 +19,11 @@ import { copyToClipboard } from "@/libraries/copypasta"
 import { BiTrash } from "react-icons/bi"
 import { UserT } from "@/data/loaders/user"
 import { BiNotepad } from "react-icons/bi"
+import { useEvent } from "@/components/hooks/useEvent"
+import { emit } from "@/libraries/events"
+import { BsInboxFill } from "react-icons/bs"
+import dayjs from "dayjs"
+import { initLoaders } from "@/data/loaders"
 
 export default function Notepad() {
   const { notepad_state, user_state } = useLoaderData() as { notepad_state: NotepadsT; user_state: UserT }
@@ -32,9 +37,22 @@ export default function Notepad() {
   const [edited_clip, setEditedClip] = useState<string>("")
   const [dirty_clip, setDirtyClip] = useState<boolean>(false)
 
-  useEffect(() => {
+  async function updateNotepad() {
+    const { NotepadState } = await initLoaders()
+    const notepad_state = await NotepadState.get()
     setNotepad(notepad_state[session_id || ""])
+  }
+
+  useEffect(() => {
+    updateNotepad()
   }, [JSON.stringify([notepad_state, session_id])])
+
+  useEvent({
+    name: "notepad.add",
+    action: (notepad: NotepadT) => {
+      updateNotepad()
+    },
+  })
 
   const handleEdit = async (c: any) => {
     if (!session_id || edited_clip === c.data) return
@@ -111,7 +129,7 @@ export default function Notepad() {
     }, 200)
   }
 
-  function generateTextFile() {
+  function combineClips(){
     const workspace = _.find(user_state.workspaces, { id: workspace_id })
     if (!notepad || !workspace) return
     let session_name = ""
@@ -122,7 +140,30 @@ export default function Notepad() {
       }
     }
 
-    const text = notepad.clips.map((c) => c.data).join("\n\n")
+    return { text: notepad.clips.map((c) => c.data).join("\n\n"), session_name }
+  }
+
+  function addCombinedToData(){
+    const combined = combineClips()
+    if(!combined) return error({message: "Failed to add to data"})
+    const { text, session_name } = combined
+    emit({
+      type: "data.import",
+      data: {
+        file: {
+          name: session_name ? session_name + ".txt" : "notepad.txt",
+        },
+        mime: "text/plain",
+        content: text,
+        workspace_id,
+      },
+    })
+  }
+
+  function generateTextFile() {
+    const combined = combineClips()
+    if(!combined) return error({message: "Failed to generate text file"})
+    const { text, session_name } = combined
     const element = document.createElement("a")
     const file = new Blob([text], { type: "text/plain" })
     element.href = URL.createObjectURL(file)
@@ -149,6 +190,18 @@ export default function Notepad() {
                 className="bg-zinc-800 border border-zinc-600 text-zinc-300 rounded-md shadow-lg shadow-zinc-900 outline-none"
                 sideOffset={5}
               >
+                <DropdownMenu.Item className="text-xs pl-4 pr-6 py-2 outline-none  hover:text-zinc-200">
+                  <button
+                    className="outline-none"
+                    disabled={notepad?.clips?.length || 0 > 0 ? false : true}
+                    onClick={() => {
+                      if (!notepad) return
+                      addCombinedToData()
+                    }}
+                  >
+                    Combine & add to data
+                  </button>
+                </DropdownMenu.Item>
                 <DropdownMenu.Item className="text-xs pl-4 pr-6 py-2 outline-none  hover:text-zinc-200">
                   <button
                     className="outline-none"
@@ -290,6 +343,30 @@ export default function Notepad() {
                           />
                         )}
                       </div>
+                      <div className="tooltip tooltip-top" data-tip="Add to data">
+                        {used_icon_id === c.id + "data/add" ? (
+                          <MdCheck />
+                        ) : (
+                          <MdInbox
+                            className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                            onClick={async (e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              emit({
+                                type: "data.import",
+                                data: {
+                                  file: {
+                                    name: c.data.split("\n")[0] || `${dayjs().format("YYYY-MM-DD")} - untitled`,
+                                  },
+                                  mime: "text/plain",
+                                  content: c.data,
+                                  workspace_id,
+                                },
+                              })
+                            }}
+                          />
+                        )}
+                      </div>
                     </>
                   )}
                 </div>
@@ -340,7 +417,7 @@ export default function Notepad() {
                                   )}
                                 </div>
                               </div>
-                             <SyntaxHighlighter
+                              <SyntaxHighlighter
                                 children={String(children).replace(/\n$/, "")}
                                 style={vscDarkPlus}
                                 language={match[1]}

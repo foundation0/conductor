@@ -152,7 +152,7 @@ export default function Workspace() {
   }, [])
 
   useEffect(() => {
-    getPreference({ key: "organizer-width" }).then((width) => {
+    getPreference({ key: "organizer-width" }).then((width: string) => {
       if (width) {
         const w = _.toNumber(width)
         setOrganizerWidth(w)

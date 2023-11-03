@@ -3,10 +3,11 @@ import { ClipS, NotepadS } from "@/data/schemas/notepad"
 import _ from "lodash"
 import { nanoid } from "nanoid"
 import { z } from "zod"
-import eventEmitter from "@/libraries/events"
+import { emit, listen, query } from "@/libraries/events"
 import { ph } from "@/libraries/logging"
+import dayjs from "dayjs"
 
-const API = {
+const API: { [key: string]: Function } = {
   add: async ({ session_id, msg_id, type, data }: { session_id: string; msg_id: string; type: string; data: any }) => {
     const { NotepadState } = await initLoaders()
     const notepads = _.cloneDeep(NotepadState.get())
@@ -20,8 +21,11 @@ const API = {
     if (ClipS.safeParse(clip).success !== true) throw new Error("Invalid clip")
     notepads[session_id] = notepads[session_id] || { session_id, clips: [] }
     notepads[session_id].clips.push(clip)
-    eventEmitter.emit("item_added_to_notepad")
-    ph().capture("notepad/item_added")
+    ph().capture("notepad/add")
+    emit({
+      type: "notepad.add",
+      data: notepads[session_id],
+    })
     await NotepadState.set(notepads)
   },
   updateNotepad: async ({ session_id, notepad }: { session_id: string; notepad: z.infer<typeof NotepadS> }) => {
@@ -37,5 +41,19 @@ const API = {
     await NotepadState.set(notepads)
   },
 }
+
+listen({
+  type: "notepad.*",
+  action: async (data: any, e: any) => {
+    const { callback } = data
+    const method: string = e?.event?.replace("notepad.", "")
+    if (method in API) {
+      const response = await API[method](data)
+      callback(response)
+    } else {
+      callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
 
 export default API

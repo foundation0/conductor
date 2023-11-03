@@ -1,8 +1,9 @@
 import { UsersS, PublicUserS } from "@/data/schemas/user"
 import { initLoaders } from "@/data/loaders"
 import { z } from "zod"
+import { listen } from "@/libraries/events"
 
-const API = {
+const API: { [key: string]: Function } = {
   async getUsers(): Promise<z.infer<typeof UsersS>> {
     const { UsersState } = await initLoaders()
     return UsersState.get()
@@ -27,5 +28,19 @@ const API = {
     UsersState.set(users)
   },
 }
+
+listen({
+  type: "users.*",
+  action: async (data: any, e: any) => {
+    const { callback } = data
+    const method: string = e?.event?.replace("users.", "")
+    if (method in API) {
+      const response = await API[method](data)
+      callback(response)
+    } else {
+      callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
 
 export default API

@@ -19,7 +19,7 @@ export function error({ message, data, type }: { message: string; data?: any; ty
 }
 
 export async function info({ message, data }: { message: string; data?: any; type?: string }) {
-  emit({ type: "info", data: { type: "info", message, data } })
+  // emit({ type: "info", data: { type: "info", message, data } })
   if (localStorage?.getItem("debug") === "true") {
     console.log(message, data)
   }

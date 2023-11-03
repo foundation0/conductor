@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react"
 import _ from "lodash"
-import { MessageRowT } from "@/components/workspace/sessions/chat"
+import { MessageRowT } from "@/data/schemas/sessions"
 import { Switch, Match } from "react-solid-flow"
 import { RichTextarea } from "rich-textarea"
 import RewindIcon from "@/assets/icons/rewind.svg"

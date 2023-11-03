@@ -13,7 +13,7 @@ export const TextMessageS = z.object({
   type: z.enum(["human", "ai", "system"]),
   meta: z
     .object({
-      role: z.enum(["msg", "continue", "regen"]).catch("msg"),
+      role: z.enum(["msg", "continue", "regen", "temp"]).catch("msg"),
     })
     .optional(),
   text: z.string().nonempty(),
@@ -24,6 +24,9 @@ export const TextMessageS = z.object({
   signature: z.string().optional(), // optional for now
   hash: z.string().optional(), // optional for now
 })
+export type TextMessageT = z.infer<typeof TextMessageS>
+
+export type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 
 export const CostS = z.object({
   _v: z.number().default(1),
@@ -36,6 +39,7 @@ export const CostS = z.object({
     variant: z.string().optional(),
   }),
 })
+export type CostT = z.infer<typeof CostS>
 
 const ReceiptDetailsS = z.object({
   type: z.string().catch(() => "chat_message"),
@@ -89,3 +93,4 @@ export const SessionsS = z.object({
   _updated: z.number().optional(),
   active: z.record(ChatS),
 })
+export type SessionsT = z.infer<typeof SessionsS>

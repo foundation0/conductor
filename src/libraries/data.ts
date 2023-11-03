@@ -4,7 +4,7 @@ import VectorsActions from "@/data/actions/vectors"
 import UserActions from "@/data/actions/user"
 import { DataT, EmbeddingModelsT, IndexersT, VectorT } from "@/data/schemas/data"
 import { DataRefT } from "@/data/schemas/workspace"
-import { emit } from "./events"
+import { emit, listen } from "./events"
 import { lookup } from "mrmime"
 import async, { mapLimit } from "async"
 import _, { chunk } from "lodash"
@@ -38,148 +38,183 @@ function failedFile({ name }: { name: string }) {
   })
 }
 
-export async function processImportedFiles({ files, workspace_id }: { files: any; workspace_id: string }) {
-  const { worker } = await getWorker({ file: "vector", id: "general" })
+export async function processData(
+  {
+    file,
+    mime,
+    content,
+    workspace_id,
+  }: {
+    file: {
+      name: string
+    }
+    mime: string
+    content: any
+    workspace_id: string
+  },
+  callback?: Function
+) {
+  const text_file = _.keys(DATA_TYPES_TEXT).includes(mime)
+  const binary_file = _.keys(DATA_TYPES_BINARY).includes(mime)
 
-  var q = async.queue(async function ({ file, mime, content }, callback) {
-    const text_file = _.keys(DATA_TYPES_TEXT).includes(mime)
-    const binary_file = _.keys(DATA_TYPES_BINARY).includes(mime)
+  // store the file
+  const data_id = await DataActions.add({
+    _v: 1,
+    meta: {
+      name: file.name,
+    },
+    data: {
+      mime,
+      content,
+    },
+  })
+  if (!data_id) {
+    failedFile({ name: file.name })
+    return error({ message: "failed to add data", data: { file } })
+  }
 
-    // store the file
-    const data_id = await DataActions.add({
-      _v: 1,
-      meta: {
+  emit({
+    type: "data-import/progress",
+    data: {
+      name: file.name,
+      progress: 0.01,
+    },
+  })
+
+  // Vectorize based on file type
+  let chunks: { pageContent: string; metadata: { id: string; name: string; start: number; end: number } }[] = []
+  let embeddings: number[][] = []
+  let embeddings_model: EmbeddingModelsT
+
+  // TEXT/PLAIN
+  if (text_file || mime === "application/epub+zip" || mime === "application/pdf") {
+    const { worker, terminate } = await getWorker({ file: "vector" })
+
+    chunks = await worker.chunkText({
+      type: {
+        id: data_id,
         name: file.name,
-      },
-      data: {
         mime,
-        content,
       },
+      size: 1536,
+      overlap: 200,
+      content,
     })
-    if (!data_id) {
-      failedFile({ name: file.name })
-      return error({ message: "failed to add data", data: { file } })
-    } /* else if(data_id === true) {
-      // this exists already and we should just skip it
-      emit({
-        type: "data-import/done",
-        data: {
-          mime,
-          name: file.name,
-        },
-      })
-      return callback()
-    } */
+    terminate()
+    embeddings_model = "MiniLM-L6-v2"
 
     emit({
       type: "data-import/progress",
       data: {
         name: file.name,
-        progress: 0.05,
+        progress: 0.02,
       },
     })
 
-    // Vectorize based on file type
-    let chunks: { pageContent: string; metadata: { id: string; name: string; start: number; end: number } }[] = []
-    let embeddings: number[][][] = []
-    let embeddings_model: EmbeddingModelsT
+    const batch_size = 5 // Math.ceil(chunks.length / 4)
+    const chunked_chunks = _.chunk(chunks, batch_size)
+    let processed_chunks = 0
 
-    // TEXT/PLAIN
-    if (text_file || mime === "application/epub+zip" || mime === "application/pdf") {
-      // @ts-ignore
-      chunks = await worker.chunkText({
-        type: {
-          id: data_id,
-          name: file.name,
-          mime,
-        },
-        size: 1536,
-        overlap: 200,
-        content,
-      })
-      embeddings_model = "MiniLM-L6-v2"
-
-      emit({
-        type: "data-import/progress",
-        data: {
-          name: file.name,
-          progress: 0.1,
-        },
-      })
-
-      const batch_size = Math.ceil(chunks.length / 8)
-      const chunked_chunks = _.chunk(chunks, batch_size)
-      let processed_chunks = 0
-      if (batch_size > 0 && chunked_chunks.length >= 0) {
-        embeddings = await mapLimit(chunked_chunks, batch_size, async (batch: any) => {
+    if (batch_size > 0 && chunked_chunks.length > 0) {
+      const q = async.queue((data: any, callback: any) => {
+        const { batch } = data
+        getWorker({ file: "vector" }).then(async ({ worker, terminate: _t }) => {
           const vectors = await worker.vectorizeText({
             model: embeddings_model,
             chunks: batch.map((c: any) => c.pageContent),
           })
+          _t()
           processed_chunks += batch_size
+          const progress = (processed_chunks * 0.8) / (chunks.length * 0.8)
           emit({
             type: "data-import/progress",
             data: {
               name: file.name,
-              progress: processed_chunks / (chunks.length * 0.8) > 1 || 1, // 80% of the progress is for vectorization
+              progress: progress <= 1 ? progress : 1, // 80% of the progress is for vectorization
             },
           })
-          return vectors
+          embeddings = [...embeddings, ...vectors]
+          return callback()
         })
-      } else {
-        error({ message: "Couldn't extract any content", data: { chunks } })
-        failedFile({ name: file.name })
+      }, 4)
 
-        return callback()
-      }
-    } else if (binary_file) {
-      error({ message: "not supported mime type", data: { mime, file } })
-      failedFile({ name: file.name })
+      chunked_chunks.forEach((batch: any) => {
+        q.push({ batch })
+      })
 
-      return callback()
+      await q.drain()
     } else {
-      error({ message: "not supported mime type", data: { mime, file } })
+      error({ message: "Couldn't extract any content", data: { chunks } })
       failedFile({ name: file.name })
 
-      return callback()
+      return callback && callback()
     }
+  } else if (binary_file) {
+    error({ message: "not supported mime type", data: { mime, file } })
+    failedFile({ name: file.name })
 
-    const vectors: VectorT = {
-      _v: 1,
-      data_id,
-      model: embeddings_model,
-      locs: chunks.map((c) => c.metadata),
-      vectors: _.flatten(embeddings),
-    }
-    // store the vectors
-    await VectorsActions.add({
-      data_id,
-      vectors,
-    })
+    return callback && callback()
+  } else {
+    error({ message: "not supported mime type", data: { mime, file } })
+    failedFile({ name: file.name })
 
-    // update the workspace vector index
-    // await VectorsActions.updateWorkspaceIndex({ workspace_id, indexer: "voy", vectors, data: chunks })
+    return callback && callback()
+  }
+  const vectors: VectorT = {
+    _v: 1,
+    data_id,
+    model: embeddings_model,
+    locs: chunks.map((c) => c.metadata),
+    vectors: embeddings,
+  }
+  // store the vectors
+  await VectorsActions.add({
+    data_id,
+    vectors,
+  })
 
-    // add the file to the workspace data
-    await UserActions.addDataToWorkspace({
-      workspace_id,
-      data: {
-        id: data_id,
-        name: file.name,
-        mime,
-        filename: file.name,
-      },
-    })
+  // update the workspace vector index
+  // await VectorsActions.updateWorkspaceIndex({ workspace_id, indexer: "voy", vectors, data: chunks })
 
-    emit({
-      type: "data-import/done",
-      data: {
-        mime,
-        name: file.name,
-      },
-    })
-    callback()
-  }, 8)
+  // add the file to the workspace data
+  await UserActions.addDataToWorkspace({
+    workspace_id,
+    data: {
+      id: data_id,
+      name: file.name,
+      mime,
+      filename: file.name,
+    },
+  })
+
+  emit({
+    type: "data-import/done",
+    data: {
+      mime,
+      name: file.name,
+    },
+  })
+  callback && callback()
+}
+
+listen({
+  type: "data.import",
+  action: async (data: {
+    file: {
+        name: string;
+    };
+    mime: string;
+    content: any;
+    workspace_id: string;
+},) => {
+    await processData(data)
+  },
+})
+
+export async function processImportedFiles({ files, workspace_id }: { files: any; workspace_id: string }) {
+  const q = async.queue(async (data: any, callback: any) => {
+    processData({ ...data, workspace_id }, callback)
+  }, 2)
 
   files.forEach((file: any) => {
     if (!file?.name) return error({ message: "no file name" })
@@ -307,8 +342,9 @@ export async function compileDataForIndex({
     const binary_file = _.keys(DATA_TYPES_BINARY).includes(chunk.data?.data?.mime)
     if (binary_file) {
       if (chunk.data?.data?.mime === "application/pdf") {
-        getWorker({ file: "vector", id: "general" }).then(({ worker }) => {
-          worker.extractPDFContent(chunk.data?.data?.content).then((text: any) =>
+        getWorker({ file: "vector" }).then(({ worker, terminate }) => {
+          worker.extractPDFContent(chunk.data?.data?.content).then((text: any) => {
+            terminate()
             chunk_done(null, {
               ...chunk.data,
               data: {
@@ -316,7 +352,7 @@ export async function compileDataForIndex({
                 content: text,
               },
             })
-          )
+          })
         })
       }
     } else {
@@ -353,41 +389,46 @@ export async function queryIndex({
   result_count?: number
   update?: boolean
 }) {
-  const { worker } = await getWorker({ file: "vector", id: `${source}-index` })
-  const data_vectors = await compileDataForIndex({
-    source,
-    workspace_id,
-    group_id,
-    folder_id,
-    session_id,
-  })
-  if (data_vectors && worker) {
-    const q: {
-      query: string
-      id: string
-      indexer: IndexersT
-      content: {
-        vectors: VectorT[]
-        chunks: DataT[]
+  try {
+    const data_vectors = await compileDataForIndex({
+      source,
+      workspace_id,
+      group_id,
+      folder_id,
+      session_id,
+    })
+    if (data_vectors) {
+      const q: {
+        query: string
+        id: string
+        indexer: IndexersT
+        content: {
+          vectors: VectorT[]
+          chunks: DataT[]
+        }
+        model: EmbeddingModelsT
+        result_count?: number
+        update?: boolean
+      } = {
+        query: query || "update", // empty for updates
+        id: workspace_id || group_id || folder_id || session_id || "n/a",
+        indexer: "voy",
+        content: {
+          vectors: data_vectors.vectors,
+          chunks: data_vectors.chunks,
+        },
+        model: "MiniLM-L6-v2",
+        result_count,
+        update,
       }
-      model: EmbeddingModelsT
-      result_count?: number
-      update?: boolean
-    } = {
-      query: query || "update", // empty for updates
-      id: workspace_id || group_id || folder_id || session_id || "n/a",
-      indexer: "voy",
-      content: {
-        vectors: data_vectors.vectors,
-        chunks: data_vectors.chunks,
-      },
-      model: "MiniLM-L6-v2",
-      result_count,
-      update,
+      const { worker, terminate } = await getWorker({ file: "vector", id: `${source}-index` })
+      const results = await worker.queryIndex(q)
+      await terminate()
+      return results
     }
-    // @ts-ignore
-    const results = await worker.queryIndex(q)
-    return results
+  } catch (e) {
+    return error({ message: "failed to query index", data: { e } })
   }
+
   // }
 }

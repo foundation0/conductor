@@ -13,6 +13,7 @@ export const ClipS = z.object({
   data: z.any().optional(),
   bin: z.custom((data) => validateBinary(data)).optional(),
 })
+export type Clip = z.infer<typeof ClipS>
 
 export const NotepadS = z.object({
   _v: z.number().default(1),
@@ -20,5 +21,6 @@ export const NotepadS = z.object({
   session_id: z.string(),
   clips: z.array(ClipS),
 })
+export type NotepadT = z.infer<typeof NotepadS>
 
 export const NotepadsS = z.record(NotepadS)

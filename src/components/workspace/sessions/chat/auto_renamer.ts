@@ -25,9 +25,8 @@ export async function autoRename({
   }
   let has_error = false
   const prompt = {
-    instructions:
-      "Based on the conversation, what three-word title best encapsulates its content? No chat, no verbose. Use the following format to answer: 'Title: {The title}'",
-    user: messages.map((m) => `${m.type}: ${m.text}`).join("\n"),
+    instructions: `Conversation:\n${messages.map((m) => `${m.type}: ${m.text}`).join("\n")}`,
+    user: "Based on the conversation, what three-word title best encapsulates its content? No chat, no verbose. Use the following format to answer: 'Title: {The title}'",
   }
   const memory = await compileSlidingWindowMemory({
     model: "mistralai_mistral-7b-instruct",

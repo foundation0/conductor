@@ -37,7 +37,7 @@
     "dayjs": "^1.11.10",
     "decimal.js": "^10.4.3",
     "ethers": "^6.8.0",
-    "eventemitter3": "^5.0.1",
+    "fancy-events": "^1.2.4",
     "file-type": "^18.5.0",
     "flowbite": "^1.8.1",
     "highlight.js": "^11.9.0",
