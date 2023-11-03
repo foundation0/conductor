@@ -44,7 +44,7 @@ export default function Workspace() {
   }, [JSON.stringify([workspace_id, session_id])])
 
   useEffect(() => {
-    getPreference({ key: "notepad-width" }).then((width) => {
+    getPreference({ key: "notepad-width" }).then((width: string) => {
       if (width) {
         const w = _.toNumber(width)
         setNotepadWidth(w)
