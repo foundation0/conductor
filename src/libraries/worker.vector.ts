@@ -83,7 +83,7 @@ export async function chunkText({
     })
     if (LANGUAGES[type.mime] || type.mime === "text/plain") {
       let lang = LANGUAGES[type.mime]
-      if(type.mime === "text/plain") lang = LANGUAGES["markdown"]
+      if(type.mime === "text/plain") lang = "markdown"
 
       if (!lang) {
         return { error: `Unknown language: ${type.mime}` }
