@@ -23,7 +23,7 @@ const API: { [key: string]: Function } = {
     notepads[session_id].clips.push(clip)
     ph().capture("notepad/add")
     emit({
-      type: "notepad.add",
+      type: "notepad.add.done",
       data: notepads[session_id],
     })
     await NotepadState.set(notepads)
@@ -33,12 +33,20 @@ const API: { [key: string]: Function } = {
     const notepads = _.cloneDeep(NotepadState.get())
     notepads[session_id] = notepad
     await NotepadState.set(notepads)
+    emit({
+      type: "notepad.updateNotepad.done",
+      data: notepads[session_id],
+    })
   },
   deleteClip: async ({ session_id, clip_id }: { session_id: string; clip_id: string }) => {
     const { NotepadState } = await initLoaders()
     const notepads = _.cloneDeep(NotepadState.get())
     notepads[session_id].clips = notepads[session_id].clips.filter((clip: any) => clip.id !== clip_id)
     await NotepadState.set(notepads)
+    emit({
+      type: "notepad.deleteClip.done",
+      data: notepads[session_id],
+    })
   },
 }
 

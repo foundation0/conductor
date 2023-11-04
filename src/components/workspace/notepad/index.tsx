@@ -48,7 +48,7 @@ export default function Notepad() {
   }, [JSON.stringify([notepad_state, session_id])])
 
   useEvent({
-    name: "notepad.add",
+    name: ["notepad.add.done", "notepad.updateNotepad.done", "notepad.deleteClip.done"],
     action: (notepad: NotepadT) => {
       updateNotepad()
     },
