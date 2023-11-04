@@ -70,7 +70,7 @@ export async function addMessage({
   let resend = false
   if (parent_id !== "first") {
     const parent_msg = raw_messages?.find((msg: any) => msg.id === parent_id)
-    if (parent_msg?.type === "human") {
+    if (parent_msg?.type === "human" || meta?.role === "continue") {
       // console.log("resending")
       resend = true
     } else if (!parent_msg && _.size(raw_messages) > 0) {

@@ -322,10 +322,14 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
   }, [msg_update_ts])
 
   // update processed messages
-  async function updateMessages() {
-    const active_path = computeActivePath(raw_messages || [])
+  async function updateMessages({ raw_msgs }: { raw_msgs?: TextMessageT[] } = {}) {
+    const active_path = computeActivePath(raw_msgs || raw_messages || [])
     if (!active_path) return
-    let rows = buildMessageTree({ messages: raw_messages || [], first_id: "first", activePath: active_path })
+    let rows = buildMessageTree({
+      messages: raw_msgs || raw_messages || [],
+      first_id: "first",
+      activePath: active_path,
+    })
     emit({
       type: "chat/processed-messages",
       data: {
@@ -335,6 +339,7 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
       },
     })
     setProcessedMessages(rows)
+    return rows
   }
 
   useEvent({
@@ -405,7 +410,7 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
     setRawMessages([...(raw_messages || []), message])
   }
 
-  async function send({ message, meta, bid }: { message: string; meta?: TextMessageT["meta"]; bid?: string }) {
+  async function send({ message, meta }: { message: string; meta?: TextMessageT["meta"] }) {
     const ai = _.find(ai_state, { id: session?.settings.ai || "c1" })
     if (!ai) return error({ message: "AI not found" })
 
@@ -417,10 +422,14 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
         active_module = await Module(defaultModule.id)
       }
     }
+    const ss = await MessagesState({ session_id: sid })
+    const msgs: TextMessageT[] = ss?.get()
+    // setSession(s.active[sid])
+    const raw_msgs = _.uniqBy(msgs || [], "id")
 
     // Add temp message to processed messages to show it in the UI faster - will get overwritten automatically once raw_messages are updated
-    let processed_messages_update = processed_messages 
-    if (!branch_msg_id) {
+    let processed_messages_update = await updateMessages({ raw_msgs })
+    if (!branch_msg_id && meta?.role !== "continue") {
       const tmp_id = nanoid(10)
       const temp_msg = {
         _v: 1,
@@ -431,7 +440,7 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
         meta: meta || {},
         source: `user:${user_state.id}`,
         active: true,
-        parent_id: branch_parent_id || bid || "first",
+        parent_id: branch_parent_id,
       }
       const p_msgs: MessageRowT[] = [...(processed_messages || []), [[], temp_msg as TextMessageT, []]]
       setProcessedMessages(p_msgs)
@@ -459,7 +468,7 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
       query: [...latest_messages, message].join("\n"),
       source: "session",
       session_id: sid,
-      result_count: 5,
+      result_count: 10,
     })
 
     const msg_ok = await addMessage({
@@ -468,7 +477,7 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
       module: active_module,
       context,
       processed_messages: processed_messages_update || [],
-      branch_parent_id: branch_parent_id || bid || "first",
+      branch_parent_id: branch_parent_id,
       message,
       meta,
       message_id: branch_msg_id || "",
@@ -498,21 +507,11 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
   }
 
   useEvent({
-    name: "sessions.addMessage",
+    name: "chat.send",
     target: session_id,
-    action: ({
-      session_id,
-      message,
-      meta,
-      bid,
-    }: {
-      session_id: string
-      message: string
-      meta: TextMessageT["meta"]
-      bid: string
-    }) => {
+    action: ({ session_id, message, meta }: { session_id: string; message: string; meta: TextMessageT["meta"] }) => {
       if (session_id !== sid) return
-      send({ message, meta, bid })
+      send({ message, meta })
     },
   })
 

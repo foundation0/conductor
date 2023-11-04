@@ -247,13 +247,14 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                         </div>
                       </div>
                     ) : null}
-                    {_.last(rows)?.[1].type === "ai" && _.last(rows)?.[1].id === row[1].id && !gen_in_progress && (
+                    {/* {_.last(rows)?.[1].type === "ai" && _.last(rows)?.[1].id === row[1].id && !gen_in_progress && (
                       <div className="flex flex-1 justify-end text-xs text-zinc-500 hover:text-zinc-100 cursor-pointer transition-all mr-1">
                         <div
                           onClick={() => {
                             emit({
-                              type: "sessions/add_message",
+                              type: "chat.send",
                               data: {
+                                target: session_id,
                                 session_id,
                                 meta: {
                                   role: "continue",
@@ -266,7 +267,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                           continue...
                         </div>
                       </div>
-                    )}
+                    )} */}
                   </div>
                   <div
                     className={`flex flex-nowrap flex-col items-start gap-2 branch ${row[2].length > 0 ? "w-1/3" : ""}`}

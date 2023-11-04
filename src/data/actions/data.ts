@@ -59,9 +59,9 @@ listen({
     const method: string = e?.event?.replace("data.", "")
     if (method in API) {
       const response = await API[method](data)
-      callback(response)
+      callback && callback(response)
     } else {
-      callback({ error: "method not found", data: { ...data, e } })
+      callback && callback({ error: "method not found", data: { ...data, e } })
     }
   },
 })
