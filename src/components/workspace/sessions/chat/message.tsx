@@ -13,6 +13,7 @@ import { GoCodescan } from "react-icons/go"
 import { copyToClipboard } from "@/libraries/copypasta"
 import { BiNotepad } from "react-icons/bi"
 import _ from "lodash"
+import { emit, listen } from "@/libraries/events"
 
 type MessageProps = {
   message: TextMessageT
@@ -36,10 +37,23 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
     if (state && !is_hovering) {
       clearInterval(mouse_over_timer)
       setIsHovering(true)
-    } else if (!state && is_hovering) {
+      emit({ type: "chat/message-hover", data: { id: message.id } })
+    } else if (is_hovering) {
       mouse_over_timer = setTimeout(() => setIsHovering(false), 2000)
     }
   }
+
+  useEffect(() => {
+    const stop_message_hover_listener = listen({
+      type: "chat/message-hover",
+      action: ({ id }: { id: string }) => {
+        if (id !== message.id) setIsHovering(false)
+      },
+    })
+    return () => {
+      stop_message_hover_listener()
+    }
+  }, [])
 
   const selector_delay = 1000
 
@@ -73,10 +87,10 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       <Selection.Root>
         <Selection.Trigger className="flex ph-no-capture">
           <div
-            className={`chat flex flex-col max-w-screen-lg border-2 border-zinc-900/80 py-2 px-4 text-sm rounded-lg justify-start items-start relative transition-all ${
+            className={`chat flex flex-col max-w-screen-lg border-2 border-zinc-900/80  text-sm rounded-lg justify-start items-start relative transition-all ${
               isActive
-                ? " text-white"
-                : "bg-zinc-800 text-zinc-100 text-xs truncate hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden"
+                ? " text-white py-2 px-4 "
+                : "bg-zinc-800 text-zinc-400 text-xs hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden text-left m-0 ml-4 py-1 px-3"
             } ${message.type === "ai" ? "bg-zinc-800" : "border-zinc-800 bg-zinc-800 text-zinc-300"}
           ${className} ${message.hash === "1337" ? "italic text-xs opacity-100" : ""}`}
             onClick={() => {
@@ -190,9 +204,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                 },
               }}
               rehypePlugins={[]}
-            >{`${isActive ? message.text : message.text.slice(0, 50) + "..."} ${
-              message.id === "temp" ? "▮" : ""
-            }`}</ReactMarkdown>
+            >{`${message.text} ${message.id === "temp" ? "▮" : ""}`}</ReactMarkdown>
           </div>
         </Selection.Trigger>
         <Selection.Portal>
@@ -202,6 +214,8 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                 <Toolbar.ToggleItem
                   className="flex-shrink-0 flex-grow-0 basis-auto h-3 px-2 rounded inline-flex leading-none items-center justify-center ml-0.5 outline-none focus:outline-none active:outline-none focus:relative first:ml-0 text-xs cursor-pointer hover:text-zinc-200"
                   value="copy"
+                  onMouseEnter={() => handleMouseHover(true)}
+                  onMouseLeave={() => handleMouseHover(false)}
                 >
                   {used_icon_id ===
                   message.id + createHash({ str: window?.getSelection()?.toString() || "" }) + "copy" ? (
