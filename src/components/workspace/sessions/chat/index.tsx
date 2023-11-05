@@ -50,7 +50,7 @@ import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import Input from "@/components/workspace/sessions/chat/input"
 import { AISelector, AISelectorButton } from "./ai_selector"
 import { emit, query } from "@/libraries/events"
-import { ChatT, MessageRowT } from "@/data/schemas/sessions"
+import { ChatSessionT, MessageRowT } from "@/data/schemas/sessions"
 
 const padding = 50
 
@@ -135,7 +135,7 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
   const [attached_data, setAttachedData] = useState<DataRefT[]>([])
   async function updateData() {
     if (!sid) return
-    const session = await query<ChatT>({ type: "sessions.getById", data: { session_id: sid } })
+    const session = await query<ChatSessionT>({ type: "sessions.getById", data: { session_id: sid } })
     const data = session?.data || []
     if (data) {
       setAttachedData(data)

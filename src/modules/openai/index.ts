@@ -85,7 +85,7 @@ export const specs: z.infer<typeof ModuleS> = {
 
 const InputS = z.object({
   model: z.string().default("gpt-3.5-turbo"),
-  api_key: z.string().nonempty(),
+  api_key: z.string().min(1),
   prompt: z.object({
     instructions: z.string().optional(),
     user: z.string(),

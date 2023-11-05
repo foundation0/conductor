@@ -44,7 +44,7 @@ export let specs: z.infer<typeof ModuleS> = {
 }
 
 const InputS = z.object({
-  user_id: z.string().nonempty(),
+  user_id: z.string().min(1),
   model: z.string().default("openai_gpt-3.5-turbo"),
   prompt: z.object({
     instructions: z.string().optional(),

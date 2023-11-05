@@ -15,7 +15,7 @@ import { useEvent } from "@/components/hooks/useEvent"
 import { emit, query } from "@/libraries/events"
 import { FaUser } from "react-icons/fa"
 import { Module } from "@/modules"
-import { ChatT } from "@/data/schemas/sessions"
+import { ChatSessionT } from "@/data/schemas/sessions"
 import { error } from "@/libraries/logging"
 import { buildMessageTree, computeActivePath } from "./branching"
 import { RxCornerBottomLeft } from "react-icons/rx"
@@ -47,7 +47,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
 
   const { ai_state, user_state } = useLoaderData() as { ai_state: AIsT; user_state: UserT }
   const [ago_refresh, setAgoRefresh] = useState(1)
-  const [session, setSession] = useState<ChatT | undefined>(undefined)
+  const [session, setSession] = useState<ChatSessionT | undefined>(undefined)
 
   // setup participants
   const [participants, setParticipants] = useState<{ [key: string]: React.ReactElement }>({
@@ -55,7 +55,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
     AI: <FaUser />,
   })
 
-  async function updateParticipants({ session, messages }: { session: ChatT; messages: MessageRowT[] }) {
+  async function updateParticipants({ session, messages }: { session: ChatSessionT; messages: MessageRowT[] }) {
     if (!session) return error({ message: "No session" })
     // const { UserState, SessionsState } = await initLoaders()
     // const user_state = await UserState()
@@ -126,7 +126,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
     action: async (data: any) => {
       let ses = session
       if (!ses) {
-        ses = await query<ChatT>({
+        ses = await query<ChatSessionT>({
           type: "sessions.getById",
           data: {
             session_id,
@@ -138,7 +138,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   })
 
   async function init() {
-    const session = await query<ChatT>({
+    const session = await query<ChatSessionT>({
       type: "sessions.getById",
       data: {
         session_id,

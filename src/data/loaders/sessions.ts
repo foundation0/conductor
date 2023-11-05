@@ -1,12 +1,12 @@
 import { store } from "@/data/storage/IDB"
-import { TextMessageS, ChatS, SessionsS } from "@/data/schemas/sessions"
+import { TextMessageS, ChatSessionS, SessionsS } from "@/data/schemas/sessions"
 import * as z from "zod"
 import _ from "lodash"
 import { getActiveUser } from "@/libraries/active_user"
 import config from "@/config"
 
 export type TextMessageT = z.infer<typeof TextMessageS>
-export type ChatT = z.infer<typeof ChatS>
+export type ChatT = z.infer<typeof ChatSessionS>
 export type SessionsT = z.infer<typeof SessionsS>
 
 let cache: SessionsT | null = null
