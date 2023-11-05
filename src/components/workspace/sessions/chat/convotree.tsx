@@ -18,6 +18,8 @@ import { Module } from "@/modules"
 import { ChatT } from "@/data/schemas/sessions"
 import { error } from "@/libraries/logging"
 import { buildMessageTree, computeActivePath } from "./branching"
+import { RxCornerBottomLeft } from "react-icons/rx"
+import { LuGitBranchPlus } from "react-icons/lu"
 dayjs.extend(relativeTime)
 
 type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
@@ -215,7 +217,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                     </div>
                   </div>
                   <div
-                    className={`Message flex ${row[1].type === "human" ? "flex-row" : "flex-col"} flex-grow-1  ${
+                    className={`Message flex ${row[1].type === "human" ? "flex-col" : "flex-col"} gap-1 flex-grow-1  ${
                       row[2].length > 0 ? "max-w-2/3" : ""
                     }`}
                   >
@@ -231,22 +233,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                           : "opacity-100"
                       }
                     />
-                    {row[1].parent_id !== "first" && row[1].type === "human" ? (
-                      <div
-                        className="p-0 ml-1 mr-4 cursor-pointer flex h-full justify-center items-center"
-                        onClick={() => {
-                          emit({
-                            type: "chat/new-branch-click",
-                            data: { parent_id: row[1].parent_id, target: session_id },
-                          })
-                          fieldFocus({ selector: "#input" })
-                        }}
-                      >
-                        <div className="tooltip tooltip-top" data-tip="Start a new branch">
-                          <RiAddCircleFill className="text-zinc-500 hover:text-zinc-100 transition-all" />
-                        </div>
-                      </div>
-                    ) : null}
+
                     {/* {_.last(rows)?.[1].type === "ai" && _.last(rows)?.[1].id === row[1].id && !gen_in_progress && (
                       <div className="flex flex-1 justify-end text-xs text-zinc-500 hover:text-zinc-100 cursor-pointer transition-all mr-1">
                         <div
@@ -268,26 +255,44 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                         </div>
                       </div>
                     )} */}
-                  </div>
-                  <div
-                    className={`flex flex-nowrap flex-col items-start gap-2 branch ${row[2].length > 0 ? "w-1/3" : ""}`}
-                  >
                     {row[2].map((msg) => {
                       if (msg.hash === "1337") return null
                       return (
-                        <div key={msg.id} className="tooltip tooltip-top" data-tip={msg.text}>
+                        <div className="gap-1 p-0 ml-1 flex h-full justify-start align-start">
                           <Message
                             message={msg}
                             isActive={false}
                             onClick={() => {
                               emit({ type: "chat/branch-click", data: { msg_id: msg.id, target: session_id } })
-                              fieldFocus({ selector: "#input" })
+                              // fieldFocus({ selector: "#input" })
                             }}
                           />
                         </div>
                       )
                     })}
+                    {row[1].parent_id !== "first" && row[1].type === "human" ? (
+                      <div
+                        className="gap-1 p-0 ml-1 cursor-pointer flex h-full justify-start align-start"
+                        onClick={() => {
+                          emit({
+                            type: "chat/new-branch-click",
+                            data: { parent_id: row[1].parent_id, target: session_id },
+                          })
+                          fieldFocus({ selector: "#input" })
+                        }}
+                      >
+                        <RxCornerBottomLeft className="w-3 h-3 text-zinc-700" />
+                        <div className="flex flex-row gap-1 items-center text-xs text-zinc-500 hover:text-zinc-100 cursor-pointer transition-all">
+                          {/* <RiAddCircleFill className="w-3 h-3" /> */}
+                          <LuGitBranchPlus className="w-3 h-3" />
+                          <div>Create new thread</div>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
+                  <div
+                    className={`flex flex-nowrap flex-col items-start gap-2 branch ${row[2].length > 0 ? "w-1/3" : ""}`}
+                  ></div>
                 </div>
               </div>
             )
