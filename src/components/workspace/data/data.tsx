@@ -59,7 +59,12 @@ export default function Data({
             !isLoading && "cursor-pointer"
           } text-xs truncate font-semibold text-ellipsis ph-no-capture transition-all`}
         >
-          {name}
+          {name.split(".").length > 1
+            ? name
+                .split(".")
+                .slice(0, name.split(".").length - 1)
+                .join(".")
+            : name}
         </div>
       </div>
       {isLoading && <div className="flex justify-start align-start text-xs">{pr ? _.round(pr * 100) : 0}%</div>}
