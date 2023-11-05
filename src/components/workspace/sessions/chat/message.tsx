@@ -14,6 +14,7 @@ import { copyToClipboard } from "@/libraries/copypasta"
 import { BiNotepad } from "react-icons/bi"
 import _ from "lodash"
 import { emit, listen } from "@/libraries/events"
+import { RxCornerBottomLeft } from "react-icons/rx"
 
 type MessageProps = {
   message: TextMessageT
@@ -82,15 +83,16 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       id={`msg-${message.id}`}
       onMouseEnter={() => handleMouseHover(true)}
       onMouseLeave={() => handleMouseHover(false)}
-      className=""
+      className="flex flex-row"
     >
+      {!isActive && <RxCornerBottomLeft className="w-3 h-3 text-zinc-700 flex-shrink-0" />}
       <Selection.Root>
         <Selection.Trigger className="flex ph-no-capture">
           <div
             className={`chat flex flex-col max-w-screen-lg border-2 border-zinc-900/80  text-sm rounded-lg justify-start items-start relative transition-all ${
               isActive
-                ? " text-white py-2 px-4 "
-                : "bg-zinc-800 text-zinc-400 text-xs hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden text-left m-0 ml-4 py-1 px-3"
+                ? " text-zinc-200 py-2 px-4 "
+                : "bg-zinc-800 text-zinc-400 text-xs hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden text-left m-0 py-1 px-3"
             } ${message.type === "ai" ? "bg-zinc-800" : "border-zinc-800 bg-zinc-800 text-zinc-300"}
           ${className} ${message.hash === "1337" ? "italic text-xs opacity-100" : ""}`}
             onClick={() => {
