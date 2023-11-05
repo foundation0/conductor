@@ -48,7 +48,7 @@ import { SessionsT, TextMessageT } from "@/data/loaders/sessions"
 // Components
 import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import Input from "@/components/workspace/sessions/chat/input"
-import { AISelector } from "./ai_selector"
+import { AISelector, AISelectorButton } from "./ai_selector"
 import { emit, query } from "@/libraries/events"
 import { ChatT, MessageRowT } from "@/data/schemas/sessions"
 
@@ -113,11 +113,13 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
     name: "chat/branch-click",
     target: session_id,
     action: async (data: { msg_id: string; no_update?: boolean; msgs?: TextMessageT[] }) => {
+      const container_e = document.querySelector(".react-auto-scroll__scroll-container") as HTMLElement | null
+      const offset = container_e?.scrollTop || 0
       await onBranchClick({ ...data, session_id })
-      const container_e = document.querySelector(".react-auto-scroll__scroll-container") as HTMLElement
-      const offset = container_e.scrollTop
-      container_e?.scrollTo({ top: offset })
-      fieldFocus({ selector: "#input" })
+      if (container_e) {
+        container_e?.scrollTo({ top: offset })
+      }
+      //fieldFocus({ selector: "#input" })
     },
   })
 
@@ -162,27 +164,6 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
   // setup active module states
   const [module, setModule] = useState<{ specs: z.infer<typeof ModuleS>; main: Function } | undefined>(undefined)
 
-  // change session's active module
-  const handleModuleChange = async ({ value }: { value: string }) => {
-    const new_llm_module = value.split("/")
-    if (!new_llm_module) return error({ message: "Module not found" })
-    // update session default module
-    const new_session = _.cloneDeep(session)
-    new_session.settings.module = { id: new_llm_module[0], variant: new_llm_module[1] }
-
-    // update session in sessions
-    const new_sessions = _.cloneDeep(sessions_state)
-    new_sessions.active[sid] = new_session
-    await SessionsActions.updateSessions(new_sessions)
-
-    navigate(`/c/${workspace_id}/${sid}`)
-
-    // set focus to #input
-    setTimeout(() => {
-      fieldFocus({ selector: "#input" })
-    }, 200)
-  }
-
   // keep track of input height
   useEffect(() => {
     const e_input = eInput.current
@@ -225,33 +206,11 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
     })
   }, [JSON.stringify([session?.settings.module, session])])
 
-  // change session's active ai
-  const handleAIChange = async ({ value }: { value: string }) => {
-    // check that ai is installed
-    const ai = _.find(ai_state, { id: value })
-    if (!ai) return error({ message: "AI not found" })
-
-    // update session default ai
-    const new_session = _.cloneDeep(session)
-    new_session.settings.ai = ai.id
-
-    // update session llm if not locked
-    if (!session.settings.module.locked) {
-      new_session.settings.module = { id: ai.default_llm_module.id, variant: ai.default_llm_module.variant_id || "" }
-    }
-
-    // update session in sessions
-    const new_sessions = _.cloneDeep(sessions_state)
-    new_sessions.active[sid] = new_session
-    await SessionsActions.updateSessions(new_sessions)
-
-    navigate(`/c/${workspace_id}/${sid}`)
-
-    // set focus to #input
-    setTimeout(() => {
-      fieldFocus({ selector: "#input" })
-    }, 200)
-  }
+  useEvent({
+    name: "sessions.updateSessions.done",
+    target: session_id,
+    action: () => updateSession(),
+  })
 
   // Update local session state when sessions[sid] changes
   const updateSession = async () => {
@@ -515,30 +474,6 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
     },
   })
 
-  const AISelectorButton = (
-    <label
-      tabIndex={0}
-      className="flex px-3 py-2 text-white font-semibold border-2 border-zinc-900/80 bg-zinc-800 hover:bg-zinc-700/30 transition-all rounded-xl cursor-pointer w-[300px]"
-    >
-      <div className="flex flex-row flex-grow flex-1 gap-2">
-        <div className="flex flex-col  items-center justify-center">
-          <img
-            src={getAvatar({ seed: _.find(ai_state, { id: session?.settings?.ai })?.meta?.name || "" })}
-            className={`border-0 rounded-full w-8 aspect-square `}
-          />
-        </div>
-        <div className="flex flex-row flex-grow flex-1 items-center text-zinc-500 hover:text-zinc-200 transition-all">
-          <div className="flex flex-col flex-1 text-zinc-200">
-            {_.find(installed_ais, { id: session?.settings?.ai })?.persona.name}
-          </div>
-          <div className="flex flex-col">
-            <TbSelector className="" />
-          </div>
-        </div>
-      </div>
-    </label>
-  )
-
   if (!session || !module) return null
   return (
     <div className="flex flex-1 flex-col relative" ref={eContainer}>
@@ -547,19 +482,13 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
           {processed_messages && processed_messages?.length > 0 ? (
             <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4 pt-2">
               <div className="dropdown">
-                {AISelectorButton}
+                <AISelectorButton session_id={session_id} />
 
                 <div
                   tabIndex={0}
                   className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content md:-left-[25%]"
                 >
-                  <AISelector
-                    installed_ais={installed_ais}
-                    session={session}
-                    user_state={user_state}
-                    handleAIChange={handleAIChange}
-                    handleModuleChange={handleModuleChange}
-                  />
+                  <AISelector installed_ais={installed_ais} session_id={session_id} user_state={user_state} />
                 </div>
               </div>
             </div>
@@ -580,19 +509,13 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
                 <div className="flex text-zinc-500 font-semibold text-sm pb-2">Select AI to chat with...</div>
                 <div className="flex">
                   <div className="dropdown">
-                    {AISelectorButton}
+                    <AISelectorButton session_id={session_id} />
 
                     <div
                       tabIndex={0}
                       className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content md:-left-[25%]"
                     >
-                      <AISelector
-                        installed_ais={installed_ais}
-                        session={session}
-                        user_state={user_state}
-                        handleAIChange={handleAIChange}
-                        handleModuleChange={handleModuleChange}
-                      />
+                      <AISelector installed_ais={installed_ais} session_id={session_id} user_state={user_state} />
                     </div>
                   </div>
                 </div>
