@@ -1,5 +1,5 @@
 import { useLoaderData, useNavigate, useParams } from "react-router-dom"
-import _ from "lodash"
+import _, { update } from "lodash"
 import { NotepadsT } from "@/data/loaders/notepad"
 import { NotepadS, NotepadT } from "@/data/schemas/notepad"
 import { useEffect, useState } from "react"
@@ -20,14 +20,16 @@ import { BiTrash } from "react-icons/bi"
 import { UserT } from "@/data/loaders/user"
 import { BiNotepad } from "react-icons/bi"
 import { useEvent } from "@/components/hooks/useEvent"
-import { emit } from "@/libraries/events"
-import { BsInboxFill } from "react-icons/bs"
+import { emit, query } from "@/libraries/events"
+import SessionsActions from "@/data/actions/sessions"
 import dayjs from "dayjs"
 import { initLoaders } from "@/data/loaders"
 
 export default function Notepad() {
   const { notepad_state, user_state } = useLoaderData() as { notepad_state: NotepadsT; user_state: UserT }
-  const session_id = useParams().session_id as string
+  //const session_id = useParams().session_id as string
+  const sid = useParams().session_id as string
+  const [session_id, setSessionId] = useState<string>(sid)
   const workspace_id = useParams().workspace_id as string
   const [field_edit_id, setFieldEditId] = useState("")
   const [used_icon_id, setUsedIcon] = useState("")
@@ -38,18 +40,37 @@ export default function Notepad() {
   const [dirty_clip, setDirtyClip] = useState<boolean>(false)
 
   async function updateNotepad() {
+    // console.log("update notepad", session_id)
+    if (session_id === undefined) return
     const { NotepadState } = await initLoaders()
     const notepad_state = await NotepadState.get()
-    setNotepad(notepad_state[session_id || ""])
+    // get current session id
+    setNotepad(notepad_state[session_id])
   }
+
+  useEffect(() => {
+    //SessionsActions.getCurrentSessionId({ workspace_id }).then(({ session_id }: { session_id: string }) => {
+    updateNotepad()
+    //setSessionId(session_id)
+    //})
+  }, [])
 
   useEffect(() => {
     updateNotepad()
   }, [JSON.stringify([notepad_state, session_id])])
 
   useEvent({
+    name: "sessions/change",
+    action: ({ session_id }: { session_id: string }) => {
+      // console.log("sessions/change", session_id)
+      setSessionId(session_id)
+    },
+  })
+
+  useEvent({
     name: ["notepad.add.done", "notepad.updateNotepad.done", "notepad.deleteClip.done"],
     action: (notepad: NotepadT) => {
+      // console.log("update")
       updateNotepad()
     },
   })
@@ -129,7 +150,7 @@ export default function Notepad() {
     }, 200)
   }
 
-  function combineClips(){
+  function combineClips() {
     const workspace = _.find(user_state.workspaces, { id: workspace_id })
     if (!notepad || !workspace) return
     let session_name = ""
@@ -139,13 +160,13 @@ export default function Notepad() {
         if (session) session_name = session.name
       }
     }
-
-    return { text: notepad.clips.map((c) => c.data).join("\n\n"), session_name }
+    const text = notepad.clips.map((c) => c.data).join("\n\n")
+    return { text, session_name: text.split("\n")[0] || session_name }
   }
 
-  function addCombinedToData(){
+  function addCombinedToData() {
     const combined = combineClips()
-    if(!combined) return error({message: "Failed to add to data"})
+    if (!combined) return error({ message: "Failed to add to data" })
     const { text, session_name } = combined
     emit({
       type: "data.import",
@@ -162,7 +183,7 @@ export default function Notepad() {
 
   function generateTextFile() {
     const combined = combineClips()
-    if(!combined) return error({message: "Failed to generate text file"})
+    if (!combined) return error({ message: "Failed to generate text file" })
     const { text, session_name } = combined
     const element = document.createElement("a")
     const file = new Blob([text], { type: "text/plain" })

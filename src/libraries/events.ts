@@ -45,7 +45,7 @@ export async function query<T>({
   data,
 }: {
   type: string | string[]
-  data: any
+  data?: any
   callback?: Function
 }): Promise<T> {
   // create unique id
