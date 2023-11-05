@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const ProtocolS = z.object({
-  uid: z.string().nonempty(),
-  user_id: z.string().nonempty(),
-  type: z.string().nonempty(),
+  uid: z.string().min(1),
+  user_id: z.string().min(1),
+  type: z.string().min(1),
 })
 
 export const AuthS = z.object({

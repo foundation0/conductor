@@ -32,22 +32,22 @@ const AISs = [
     _v: z.literal(1),
     id: z
       .string()
-      .nonempty()
+      .min(1)
       .catch(() => getId()),
     status: z.enum(["draft", "published", "fork"]).default("draft"),
     default_llm_module: LLMModuleS,
     associated_data: z.array(AssociatedDatS).optional(),
     meta: z.object({
       type: z.enum(["text"]).default("text"),
-      name: z.string().nonempty(),
+      name: z.string().min(1),
       author: z.string(),
       avatar: z.string().optional(),
       description: z.string().optional(),
       tags: z.array(z.string()).optional(),
     }),
     persona: z.object({
-      name: z.string().nonempty(),
-      description: z.string().nonempty(),
+      name: z.string().min(1),
+      description: z.string().min(1),
       background: z.string().optional(),
       styles: z.array(z.string()).optional(),
       audience: z.string().optional(),

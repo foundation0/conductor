@@ -6,7 +6,7 @@ export const TextMessageS = z.object({
   _v: z.number().default(1),
   id: z
     .string()
-    .nonempty()
+    .min(1)
     .catch(() => nanoid(8)),
   version: z.literal("1.0").catch("1.0"),
   created_at: z.string().catch(() => new Date().toUTCString()),
@@ -16,7 +16,7 @@ export const TextMessageS = z.object({
       role: z.enum(["msg", "continue", "regen", "temp"]).catch("msg"),
     })
     .optional(),
-  text: z.string().nonempty(),
+  text: z.string().min(1),
   context: z.string().optional(),
   active: z.boolean().optional(),
   source: z.string().min(1),
@@ -31,7 +31,7 @@ export type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 export const CostS = z.object({
   _v: z.number().default(1),
   created_at: z.date().catch(() => new Date()),
-  msgs: z.array(z.string()).nonempty(),
+  msgs: z.array(z.string()).min(1),
   cost_usd: z.number().nonnegative(),
   tokens: z.number().nonnegative(),
   module: z.object({
@@ -63,13 +63,13 @@ export const ReceiptS = z.object({
 })
 export type ReceiptT = z.infer<typeof ReceiptS>
 
-export const ChatS = z.object({
+export const ChatSessionS = z.object({
   _v: z.number().default(1),
   _updated: z.number().optional(),
-  id: z.string().nonempty(),
+  id: z.string().min(1),
   type: z
     .string()
-    .nonempty()
+    .min(1)
     .catch(() => "chat"),
   created_at: z.date().catch(() => new Date()),
   settings: z.object({
@@ -86,11 +86,26 @@ export const ChatS = z.object({
   ledger: z.array(CostS).optional().describe("deprecated"),
   messages: z.array(TextMessageS).optional().describe("deprecated"),
 })
-export type ChatT = z.infer<typeof ChatS>
+export type ChatSessionT = z.infer<typeof ChatSessionS>
+
+export const DataSessionS = z.object({
+  _v: z.number().default(1),
+  _updated: z.number().optional(),
+  id: z.string().min(1),
+  type: z
+    .string()
+    .min(1)
+    .catch(() => "data"),
+  created_at: z.date().catch(() => new Date()),
+  settings: z.object({}).optional(),
+  receipts: z.array(ReceiptS).optional(),
+  data: z.array(DataRefS).optional(),
+})
+export type DataSessionT = z.infer<typeof DataSessionS>
 
 export const SessionsS = z.object({
   _v: z.number().default(1),
   _updated: z.number().optional(),
-  active: z.record(ChatS),
+  active: z.record(z.union([ChatSessionS, DataSessionS])),
 })
 export type SessionsT = z.infer<typeof SessionsS>

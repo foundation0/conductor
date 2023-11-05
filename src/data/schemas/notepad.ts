@@ -6,7 +6,7 @@ export const ClipS = z.object({
   _v: z.number().default(1),
   id: z
     .string()
-    .nonempty()
+    .min(1)
     .catch(() => nanoid(10)),
   type: z.string(),
   msg_id: z.string(),
