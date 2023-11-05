@@ -48,8 +48,9 @@ export const DataS = z.object({
   id: z.string(),
   meta: z.object({
     name: z.string(),
+    type: z.enum(["chat", "import"]).catch('chat'),
     filename: z.string().optional(),
-    created_at: z.string().optional(),
+    created_at: z.string().catch(() => new Date().toISOString()),
     updated_at: z.string().optional(),
   }),
   data: z.discriminatedUnion("mime", [TextS, BinaryS]),

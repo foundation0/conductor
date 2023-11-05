@@ -25,7 +25,7 @@ const API: { [key: string]: Function } = {
 
     emit({
       type: "sessions.updateSessions.done",
-      data: parsed.data,
+      data: updated_state,
     })
     return parsed.data
   },
@@ -312,6 +312,11 @@ const API: { [key: string]: Function } = {
         data_id,
       },
     })
+  },
+  async getCurrentSessionId() {
+    const { AppState } = await initLoaders()
+    const as: AppStateT = AppState.get()
+    return { session_id: as.active_sessions[as.active_workspace_id].session_id }
   },
 }
 

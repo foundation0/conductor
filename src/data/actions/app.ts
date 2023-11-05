@@ -9,7 +9,7 @@ import { initLoaders } from "@/data/loaders"
 import UserActions from "@/data/actions/user"
 import { LogItemS } from "@/data/schemas/app"
 import { error } from "@/libraries/logging"
-import { listen } from "@/libraries/events"
+import { emit, listen } from "@/libraries/events"
 
 async function getActiveWorkspace() {
   const { AppState, UserState } = await initLoaders()
@@ -168,6 +168,12 @@ const API: { [key: string]: Function } = {
     if (active_session) {
       // router.navigate({ from: '/c', to: `/c/:session_id`})
     }
+
+    emit({
+      type: "app.changeActiveSession.done",
+      data: active_session,
+    })
+
     return active_session
   },
   getPreference: async function ({ key }: { key: string }) {
