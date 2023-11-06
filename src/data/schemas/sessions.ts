@@ -103,9 +103,12 @@ export const DataSessionS = z.object({
 })
 export type DataSessionT = z.infer<typeof DataSessionS>
 
+export const SessionTypesS = z.union([ChatSessionS, DataSessionS])
+export type SessionTypesT = z.infer<typeof SessionTypesS>
+
 export const SessionsS = z.object({
   _v: z.number().default(1),
   _updated: z.number().optional(),
-  active: z.record(z.union([ChatSessionS, DataSessionS])),
+  active: z.record(SessionTypesS),
 })
 export type SessionsT = z.infer<typeof SessionsS>

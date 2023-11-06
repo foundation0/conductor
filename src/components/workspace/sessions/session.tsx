@@ -20,6 +20,9 @@ export default function Session({
         <Match when={type === "chat"}>
           <Chat session_id={session_id} workspace_id={workspace_id}/>
         </Match>
+        <Match when={type === "data"}>
+          <div>data ${session_id}</div>
+        </Match>
       </Switch>
     </div>
   )

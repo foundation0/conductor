@@ -13,6 +13,11 @@ import { queryIndex } from "@/libraries/data"
 import { RxPlus } from "react-icons/rx"
 import { AiFillFolderAdd } from "react-icons/ai"
 import { DATA_TYPES, DataTypesBinaryT, DataTypesTextT } from "@/data/schemas/data_types"
+import { DataT } from "@/data/schemas/data"
+import { Document, pdfjs } from "react-pdf"
+import b4a from "b4a"
+import * as pdfjsWorker from "pdfjs-dist/build/pdf.worker.js"
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 export default function DataOrganizer() {
   const active_workspace_id = useParams().workspace_id as string
@@ -25,6 +30,21 @@ export default function DataOrganizer() {
   >([])
   const [index_query, setIndexQuery] = useState<string>("")
   const [index_ready, setIndexReady] = useState<boolean>(false)
+
+  const [active_preview_id, setActivePreviewId] = useState<string>("")
+  const [active_preview_data, setActivePreviewData] = useState<DataT["data"] | undefined>()
+
+  async function previewData({ id }: { id: string }) {
+    setActivePreviewId(`preview-${id}`)
+    // fetch the data
+    const { DataState } = await initLoaders()
+    const data_state = await DataState({ id })
+    const data: DataT = await data_state.get()
+    if (!data) return
+    var blob = new Blob([data.data.content], { type: data.data.mime })
+    var objectUrl = URL.createObjectURL(blob)
+    window.open(objectUrl, "_blank", "resizable, width=1020,height=600")
+  }
 
   const supported_file_formats: { [key: string]: string[] } = DATA_TYPES
 
@@ -195,7 +215,10 @@ export default function DataOrganizer() {
                     onClick={() => {
                       if (!sid) return error({ message: "no session id" })
                       // console.log('adding to ', sid)
-                      emit({ type: "sessions.addData", data: { target: sid, session_id: sid, data: d } })
+                      // emit({ type: "sessions.addData", data: { target: sid, session_id: sid, data: d } })
+                      // emit({ type: "sessions/change", data: { session_id: d.id } })
+                      // @ts-ignore
+                      previewData({ id: d.id })
                     }}
                     onRemove={() => {
                       if (confirm("Are you sure you want to delete this?")) {
@@ -231,7 +254,11 @@ export default function DataOrganizer() {
             })
             .value() as ReactNode[]
         }
-
+        <dialog id={active_preview_id} className="modal w-full max-w-2xl">
+          {active_preview_data?.mime === "application/pdf" && (
+            <Document file={active_preview_data?.content} className="w-full h-full" />
+          )}
+        </dialog>
         {isDragActive && (
           <div className="absolute top-0 bottom-0 left-0 right-0 bg-zinc-900/80 rounded-xl flex flex-col align-center justify-center h-full border-2 border-dashed border-zinc-700 gap-2">
             <div className="text-center font-bold text-zinc-200">Drop your files here</div>

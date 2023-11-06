@@ -12,6 +12,7 @@ import eventEmitter from "@/libraries/events"
 import { Match, Switch } from "react-solid-flow"
 import { initLoaders } from "@/data/loaders"
 import { SessionT, WorkspaceT } from "@/data/schemas/workspace"
+import { SessionTypesT, SessionsT } from "@/data/schemas/sessions"
 
 export default function Workspace() {
   const workspace_id = useParams().workspace_id as string
@@ -19,7 +20,7 @@ export default function Workspace() {
   const { setPreference, getPreference } = AppstateActions
   const [open_sidebar, setOpenSidebar] = useState<string>("")
   const [notepadWidth, setNotepadWidth] = useState(400)
-  const [sessions, setSessions] = useState<SessionT[]>([])
+  const [sessions, setSessions] = useState<SessionTypesT[]>([])
 
   async function updateSessions() {
     const { AppState, SessionState, UserState, AIState } = await initLoaders()
@@ -28,7 +29,7 @@ export default function Workspace() {
     const workspace: WorkspaceT = _.find(user_state.workspaces, { id: workspace_id })
     if (!workspace) return
     // recursively fetch all the sessions from workspace.groups.folders.sessions
-    const sessions = _(workspace.groups)
+    const ws_sessions = _(workspace.groups)
       .flatMap((group) => {
         return _.flatMap(group.folders, (folder) => {
           return folder.sessions
@@ -36,6 +37,10 @@ export default function Workspace() {
       })
       .compact()
       .value()
+    const sessions_state: SessionsT = await SessionState.get()
+    const sessions = _.map(ws_sessions, (session) => {
+      return sessions_state?.active[session.id]
+    })
     if (sessions) setSessions(sessions)
   }
 
@@ -77,7 +82,7 @@ export default function Workspace() {
                 key={session.id}
                 workspace_id={workspace_id}
                 session_id={session.id}
-                type={"chat"}
+                type={session.type || "chat"}
                 active={session.id === session_id}
               />
             )
