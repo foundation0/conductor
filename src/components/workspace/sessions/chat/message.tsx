@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { JSXElementConstructor, ReactElement, useEffect, useState } from "react"
 import { TextMessageT } from "@/data/loaders/sessions"
 import ReactMarkdown from "react-markdown"
 import { MdCheck, MdContentCopy } from "react-icons/md"
@@ -15,17 +15,19 @@ import { BiNotepad } from "react-icons/bi"
 import _ from "lodash"
 import { emit, listen } from "@/libraries/events"
 import { RxCornerBottomLeft } from "react-icons/rx"
+import { useEvent } from "@/components/hooks/useEvent"
 
 type MessageProps = {
   message: TextMessageT
   isActive: boolean
   onClick: () => void
   className?: string
+  avatar?: ReactElement<any, string | JSXElementConstructor<any>>
 }
 
 let mouse_over_timer: any = null
 
-const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className }) => {
+const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className, avatar }) => {
   const navigate = useNavigate()
   const workspace_id = useParams().workspace_id
   const session_id = useParams().session_id
@@ -37,24 +39,22 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
   const handleMouseHover = (state: boolean) => {
     if (state && !is_hovering) {
       clearInterval(mouse_over_timer)
-      setIsHovering(true)
       emit({ type: "chat/message-hover", data: { id: message.id } })
-    } else if (is_hovering) {
+      setIsHovering(true)
       mouse_over_timer = setTimeout(() => setIsHovering(false), 2000)
+    } else if (!state && is_hovering) {
+      setIsHovering(false)
+      clearInterval(mouse_over_timer)
     }
   }
 
-  useEffect(() => {
-    const stop_message_hover_listener = listen({
-      type: "chat/message-hover",
-      action: ({ id }: { id: string }) => {
-        if (id !== message.id) setIsHovering(false)
-      },
-    })
-    return () => {
-      stop_message_hover_listener()
-    }
-  }, [])
+  useEvent({
+    name: "chat/message-hover",
+    //target: message.id,
+    action: ({ id }: { id: string }) => {
+      if (id !== message.id) setIsHovering(false)
+    },
+  })
 
   const selector_delay = 1000
 
@@ -85,7 +85,22 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       onMouseLeave={() => handleMouseHover(false)}
       className="flex flex-row"
     >
+      
       {!isActive && <RxCornerBottomLeft className="w-3 h-3 text-zinc-700 flex-shrink-0" />}
+      {avatar && (
+        <div className="flex flex-shrink">
+          <div className="flex">
+            <div className="avatar placeholder">
+              <div className=" text-zinc-200 w-6 h-6 flex ">
+                <span className="text-sm w-full h-full flex justify-center items-center">
+                  {avatar}
+                  {/* <img className={`border-2 border-zinc-900 rounded-full`} src={avatar} /> */}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <Selection.Root>
         <Selection.Trigger className="flex ph-no-capture">
           <div
@@ -225,7 +240,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                   ) : (
                     <div className="tooltip tooltip-top" data-tip="Copy to clipboard">
                       <MdContentCopy
-                        className="h-3.5 w-3.5"
+                        className="h-3 w-3"
                         onClick={() => {
                           copyToClipboard(
                             window?.getSelection()?.toString() || "",
@@ -247,7 +262,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                   ) : (
                     <div className="tooltip tooltip-top" data-tip="Save to notepad">
                       <BiNotepad
-                        className="h-3.5 w-3.5"
+                        className="h-3 w-3"
                         onClick={() => {
                           addToClipboard({
                             text: window?.getSelection()?.toString() || "",

@@ -255,22 +255,24 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                         </div>
                       </div>
                     )} */}
-                    {row[2].map((msg) => {
-                      if (msg.hash === "1337") return null
-                      return (
-                        <div className="gap-1 p-0 ml-1 flex h-full justify-start align-start">
-                          <Message
-                            message={msg}
-                            isActive={false}
-                            onClick={() => {
-                              emit({ type: "chat/branch-click", data: { msg_id: msg.id, target: session_id } })
-                              // fieldFocus({ selector: "#input" })
-                            }}
-                          />
-                        </div>
-                      )
-                    })}
-                    {row[1].parent_id !== "first" && row[1].type === "human" ? (
+                    {rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1]?.length > 0 &&
+                      rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1][2].map((msg) => {
+                        if (msg.hash === "1337") return null
+                        return (
+                          <div className="gap-1 p-0 ml-1 flex h-full justify-start align-start">
+                            <Message
+                              message={msg}
+                              isActive={false}
+                              avatar={participants["user"]}
+                              onClick={() => {
+                                emit({ type: "chat/branch-click", data: { msg_id: msg.id, target: session_id } })
+                                // fieldFocus({ selector: "#input" })
+                              }}
+                            />
+                          </div>
+                        )
+                      })}
+                    {row[1].parent_id !== "first" && row[1].type === "ai" && _.last(rows)?.[1].id !== row[1].id ? (
                       <div
                         className="gap-1 p-0 ml-1 cursor-pointer flex h-full justify-start align-start"
                         onClick={() => {
