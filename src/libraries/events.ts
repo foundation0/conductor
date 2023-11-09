@@ -1,11 +1,8 @@
-//import { EventEmitter } from "eventemitter3"
 import { nanoid } from "nanoid"
-// import mitt from 'mitt'
 import EventEmitter from "fancy-events"
 import { info } from "./logging"
 
 const eventEmitter = new EventEmitter()
-//const eventEmitter = mitt()
 
 export default eventEmitter
 
