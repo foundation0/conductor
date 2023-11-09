@@ -237,7 +237,7 @@ export async function queryIndex({
   const retriever = INDEX_CACHE[id].asRetriever(result_count)
   try {
     const results = await retriever.getRelevantDocuments(query)
-    return results
+    return { results }
   } catch (e) {
     return { error: e }
   }

@@ -39,39 +39,43 @@ export default function Notepad() {
   const [edited_clip, setEditedClip] = useState<string>("")
   const [dirty_clip, setDirtyClip] = useState<boolean>(false)
 
-  async function updateNotepad() {
+  async function updateNotepad({ notepad, session_id }: { notepad?: NotepadT; session_id?: string } = {}) {
+    const _sid = session_id || sid
     // console.log("update notepad", session_id)
-    if (session_id === undefined) return
+    if (notepad && notepad.session_id === _sid) return setNotepad(notepad)
+    if (notepad && notepad.session_id !== _sid) return
+    if (!_sid) return
     const { NotepadState } = await initLoaders()
     const notepad_state = await NotepadState.get()
     // get current session id
-    setNotepad(notepad_state[session_id])
+    setNotepad(notepad_state[_sid])
   }
 
   useEffect(() => {
-    //SessionsActions.getCurrentSessionId({ workspace_id }).then(({ session_id }: { session_id: string }) => {
     updateNotepad()
-    //setSessionId(session_id)
-    //})
   }, [])
 
   useEffect(() => {
-    updateNotepad()
-  }, [JSON.stringify([notepad_state, session_id])])
+    // setSessionId(sid)
+    // updateNotepad()
+  }, [JSON.stringify([notepad_state, session_id, sid])])
 
   useEvent({
     name: "sessions/change",
-    action: ({ session_id }: { session_id: string }) => {
-      // console.log("sessions/change", session_id)
+    // target: session_id,
+    action: function ({ session_id }: { session_id: string }) {
+      console.log("notepad sessions/change", session_id)
       setSessionId(session_id)
+      updateNotepad({ session_id })
     },
   })
 
   useEvent({
-    name: ["notepad.add.done", "notepad.updateNotepad.done", "notepad.deleteClip.done"],
-    action: (notepad: NotepadT) => {
+    name: ["notepad.addClip.done", "notepad.updateNotepad.done", "notepad.deleteClip.done"],
+    target: session_id,
+    action: function ({ notepad, session_id }: { notepad: NotepadT; session_id: string }) {
       // console.log("update")
-      updateNotepad()
+      updateNotepad({ session_id })
     },
   })
 
@@ -161,7 +165,7 @@ export default function Notepad() {
       }
     }
     const text = notepad.clips.map((c) => c.data).join("\n\n")
-    return { text, session_name: text.split("\n")[0] || session_name }
+    return { text, session_name: text.split("\n")[0]?.trim().replace(/^([#]+) /g, "") || session_name }
   }
 
   function addCombinedToData() {
@@ -377,7 +381,7 @@ export default function Notepad() {
                                 type: "data.import",
                                 data: {
                                   file: {
-                                    name: c.data.split("\n")[0] || `${dayjs().format("YYYY-MM-DD")} - untitled`,
+                                    name: c.data.split("\n")[0]?.trim().replace(/^([#]+) /g, "") || `${dayjs().format("YYYY-MM-DD")} - untitled`,
                                   },
                                   mime: "text/plain",
                                   content: c.data,

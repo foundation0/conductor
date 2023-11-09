@@ -61,4 +61,5 @@ export type StreamingT = {
   onData: (data: any) => void
   onClose: (reason: "close" | "error" | "end") => void
   onError: (error: string, data?: any) => void
+  [key: string]: Function
 }

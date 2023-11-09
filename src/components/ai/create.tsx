@@ -210,7 +210,7 @@ export default function CreatePersona() {
         <div className="grid grid-cols-3 gap-3 w-full ">
           <div className="col-span-1">
             <div className={element_class}>
-              <div className="relative flex flex-shrink-0 gap-3 items-end mb-3 p-3 justify-end w-full h-full aspect-square rounded-3xl overflow-hidden border-zinc-700/80 border-0 border-dashed text-zinc-600 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30">
+            {/*   <div className="relative flex flex-shrink-0 gap-3 items-end mb-3 p-3 justify-end w-full h-full aspect-square rounded-3xl overflow-hidden border-zinc-700/80 border-0 border-dashed text-zinc-600 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30">
                 <img
                   src={getAvatar({ seed: values.name })}
                   style={{
@@ -229,12 +229,12 @@ export default function CreatePersona() {
                 <div className="flex aspect-square w-10 bg-zinc-700/30 border border-zinc-600/20 justify-center items-center rounded-xl">
                   <img src={AIIcon} className="w-8 h-8 saturate-0 hover:saturate-100 cursor-pointer" />
                 </div> */}
-              </div>
+              {/* </div>*/}
               <div className="flex flex-1 flex-grow w-full flex-shrink-0 text-lg font-semibold text-zinc-200 items-center">
                 Name{" "}
                 <span className="flex items-center ml-2 text-[10px] font-medium mr-2 px-2.5 py-0 max-h-5 rounded-full bg-green-700 text-gray-300">
                   required
-                </span>
+                </span> 
                 {/* <AI value_name="Name" /> */}
               </div>
               <div className={input + " -mt-0"}>

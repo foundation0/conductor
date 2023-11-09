@@ -10,6 +10,7 @@ const WORKERS: { [key: string]: string } = {
 }
 
 const WORKER_CACHE: { [key: string]: Worker & any } = {}
+const SHARED_WORKER_CACHE: { [key: string]: Worker & any } = {}
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -76,7 +77,7 @@ async function ThreadCache() {
     async release({ file, id, n }: { file: string; id?: string; n: string }) {
       const wid = getWid({ file, id }) // note that n is again random so use the arg one
       if (WORKER_CACHE[n]) {
-        if(!n) throw new Error("No n")
+        if (!n) throw new Error("No n")
         const { _: _w } = WORKER_CACHE[n]
         _w.terminate()
         delete WORKER_CACHE[n]
@@ -90,13 +91,11 @@ async function ThreadCache() {
 
 const THREADS = await ThreadCache()
 
-export async function getWorker<T>({ file, id }: { file: string; id?: string }) {
-  return createWorker<T>({ file, id, n: nanoid(10) })
-  /* const t = await THREADS.use({ file, id })
-  return (
-    (t as { worker: any; terminate: Function; _: Worker; [key: string]: any }) ||
-    (error({ message: "No thread available" }) as any)
-  ) */
+export async function getWorker<T>({ file, id, shared }: { file: string; id?: string; shared?: boolean }) {
+  if (!shared) return createWorker<T>({ file, id, n: nanoid(10) })
+  else {
+    return createSharedWorker<T>({ file, id, n: nanoid(10) })
+  }
 }
 
 export async function createWorker<T>({ file, id, n }: { file: string; id?: string; n: string }) {
@@ -122,4 +121,30 @@ export async function createWorker<T>({ file, id, n }: { file: string; id?: stri
     },
   }
   return WORKER_CACHE[n]
+}
+
+export async function createSharedWorker<T>({ file, id, n }: { file: string; id?: string; n: string }) {
+  const wid = getWid({ file, id })
+  if (SHARED_WORKER_CACHE[wid.id]) return SHARED_WORKER_CACHE[wid.id]
+  const w = new SharedWorker(WORKERS[file], { type: "module" })
+  const cw = Comlink.wrap(w.port)
+
+  let initialized = false
+  while (!initialized) {
+    const promise = new Promise((resolve) => setTimeout(resolve, 100))
+    // @ts-ignore
+    const result = await Promise.race([promise, cw.ping()])
+    if (result === "pong") {
+      initialized = true
+    }
+  }
+  SHARED_WORKER_CACHE[wid.id] = {
+    worker: cw as T,
+    _: w,
+    /* terminate: async () => {
+      w.port.close()
+      delete SHARED_WORKER_CACHE[n]
+    }, */
+  }
+  return SHARED_WORKER_CACHE[wid.id]
 }

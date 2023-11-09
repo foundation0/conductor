@@ -255,17 +255,24 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                         </div>
                       </div>
                     )} */}
-                    {rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1]?.length > 0 &&
-                      rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1][2].map((msg) => {
-                        if (msg.hash === "1337") return null
+                    {rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1]?.[2]?.length > 0 &&
+                      row[1].type === "ai" &&
+                      rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1][2].map((m) => {
+                        if (m.hash === "1337") return null
                         return (
-                          <div className="gap-1 p-0 ml-1 flex h-full justify-start align-start">
+                          <div className="gap-1 p-0 ml-1 flex h-full justify-start align-start" key={`msg-${m.id}`}>
                             <Message
-                              message={msg}
+                              message={m}
                               isActive={false}
                               avatar={participants["user"]}
                               onClick={() => {
-                                emit({ type: "chat/branch-click", data: { msg_id: msg.id, target: session_id } })
+                                emit({
+                                  type: "chat/branch-click",
+                                  data: {
+                                    msg_id: m.id,
+                                    target: session_id,
+                                  },
+                                })
                                 // fieldFocus({ selector: "#input" })
                               }}
                             />
@@ -278,7 +285,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                         onClick={() => {
                           emit({
                             type: "chat/new-branch-click",
-                            data: { parent_id: row[1].parent_id, target: session_id },
+                            data: { parent_id: row[1].id, target: session_id },
                           })
                           fieldFocus({ selector: "#input" })
                         }}

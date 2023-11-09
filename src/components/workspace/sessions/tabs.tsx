@@ -15,6 +15,7 @@ import { BiNotepad } from "react-icons/bi"
 import eventEmitter, { emit } from "@/libraries/events"
 import { getOS } from "@/libraries/utilities"
 import { error } from "@/libraries/logging"
+import { PiChatCircleDotsBold } from "react-icons/pi"
 
 export default function Tabs({
   setShowNotepad: setShowNotepad,
@@ -80,7 +81,7 @@ export default function Tabs({
             data-tip={s.name}
           >
             <div className="flex flex-shrink-0">
-              <RiHashtag className={`w-3.5 h-3.5 pr-1 `} />
+              <PiChatCircleDotsBold className={`w-3.5 h-3.5 pr-1 `} />
             </div>
             <div className="truncate" data-original-text={s.name}>
               {s.name}
@@ -298,7 +299,12 @@ export default function Tabs({
               className={` hover:text-zinc-200 cursor-pointer transition-all ${
                 item_added_to_notepad ? "animate-pulse text-zinc-200" : "text-zinc-500"
               }`}
-              onClick={() => setShowNotepad()}
+              onClick={() => {
+                emit({
+                  type: "notepad/toggle",
+                  data: { target: session_id },
+                })
+              }}
             />
           </div>
           {/* <div className="tooltip tooltip-left" data-tip="Show/hide session members">

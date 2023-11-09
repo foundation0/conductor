@@ -8,6 +8,7 @@ import { comlink } from "vite-plugin-comlink"
 import { faviconsPlugin } from "@darkobits/vite-plugin-favicons"
 import { dataURLLoader } from "./utils/blobToDataURL"
 import { viteStaticCopy } from "vite-plugin-static-copy"
+import { VitePWA } from 'vite-plugin-pwa'
 
 const wasmContentTypePlugin = {
   name: "wasm-content-type-plugin",
@@ -41,7 +42,7 @@ export default defineConfig(({ command, mode }) => {
           },
         },
       }),
-
+      VitePWA({ registerType: 'autoUpdate' }),
       svgr(),
       dataURLLoader,
       comlink(),

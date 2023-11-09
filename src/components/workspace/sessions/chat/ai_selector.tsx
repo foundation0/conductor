@@ -13,6 +13,7 @@ import { initLoaders } from "@/data/loaders"
 import SessionsActions from "@/data/actions/sessions"
 import { TbSelector } from "react-icons/tb"
 import { getAvatar } from "@/libraries/ai"
+import { emit } from "@/libraries/events"
 
 export function AISelector({
   user_state,
@@ -109,6 +110,9 @@ export function AISelector({
     new_sessions.active[session.id] = new_session
     await SessionsActions.updateSessions(new_sessions)
 
+    emit({
+      type: 'sessions/module-change',
+    })
     // navigate(`/c/${workspace_id}/${session.id}`)
     // set focus to #input
     //setTimeout(() => {
@@ -133,6 +137,15 @@ export function AISelector({
     const new_sessions = _.cloneDeep(sessions_state)
     new_sessions.active[session.id] = new_session
     await SessionsActions.updateSessions(new_sessions)
+
+    emit({
+      type: 'sessions/module-change',
+      data: {
+        target: session.id,
+        module_id: new_llm_module[0],
+        variant_id: new_llm_module[1],
+      }
+    })
 
     // navigate(`/c/${workspace_id}/${session.id}`)
 

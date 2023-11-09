@@ -19,6 +19,7 @@ import {
   DataTypesTextS,
   DataTypesTextT,
 } from "@/data/schemas/data_types"
+import { get, set } from "@/data/actions/cache"
 
 function getMimeTypeByFileFormat(file_format: string) {
   for (const mime in DATA_TYPES) {
@@ -201,12 +202,12 @@ listen({
   type: "data.import",
   action: async (data: {
     file: {
-        name: string;
-    };
-    mime: string;
-    content: any;
-    workspace_id: string;
-},) => {
+      name: string
+    }
+    mime: string
+    content: any
+    workspace_id: string
+  }) => {
     await processData(data)
   },
 })
@@ -370,6 +371,8 @@ export async function compileDataForIndex({
   return content
 }
 
+const RESULT_CACHE: { [key: string]: any } = {}
+
 export async function queryIndex({
   query,
   source,
@@ -390,13 +393,24 @@ export async function queryIndex({
   update?: boolean
 }) {
   try {
-    const data_vectors = await compileDataForIndex({
-      source,
-      workspace_id,
-      group_id,
-      folder_id,
-      session_id,
-    })
+    let data_vectors
+    const cache_key = `${source}-${workspace_id}-${group_id}-${folder_id}-${session_id}`
+    const cache = await get(cache_key)
+    if (cache && !update) {
+      if (new Date().getTime() - cache.updated_at > 1000 * 60 * 60 * 24) data_vectors = cache?.data_vectors
+    }
+
+    if (!data_vectors) {
+      data_vectors = await compileDataForIndex({
+        source,
+        workspace_id,
+        group_id,
+        folder_id,
+        session_id,
+      })
+
+      await set({ key: cache_key, value: { data_vectors, updated_at: new Date().getTime() } })
+    }
     if (data_vectors) {
       const q: {
         query: string
@@ -409,6 +423,7 @@ export async function queryIndex({
         model: EmbeddingModelsT
         result_count?: number
         update?: boolean
+        cache?: any
       } = {
         query: query || "update", // empty for updates
         id: workspace_id || group_id || folder_id || session_id || "n/a",
@@ -420,9 +435,10 @@ export async function queryIndex({
         model: "MiniLM-L6-v2",
         result_count,
         update,
+        // cache: cache?.[cache_key] || null,
       }
       const { worker, terminate } = await getWorker({ file: "vector", id: `${source}-index` })
-      const results = await worker.queryIndex(q)
+      const { results, cache_id } = await worker.queryIndex(q)
       await terminate()
       return results
     }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react"
 import _ from "lodash"
-import { MessageRowT } from "@/data/schemas/sessions"
+import { MessageRowT, SessionsT } from "@/data/schemas/sessions"
 import { Switch, Match } from "react-solid-flow"
 import { RichTextarea } from "rich-textarea"
 import RewindIcon from "@/assets/icons/rewind.svg"
@@ -32,7 +32,7 @@ export default function Input({
   disabled?: boolean
   input_text?: string
   setMsgUpdateTs: Function
-  session: ChatT
+  session: SessionsT['active'][0]
 }) {
   const [message, setMessage] = useState<string>("")
   const inputRef = useRef<HTMLTextAreaElement | null>(null)

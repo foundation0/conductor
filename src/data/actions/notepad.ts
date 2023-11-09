@@ -23,8 +23,11 @@ const API: { [key: string]: Function } = {
     notepads[session_id].clips.push(clip)
     ph().capture("notepad/add")
     emit({
-      type: "notepad.add.done",
-      data: notepads[session_id],
+      type: "notepad.addClip.done",
+      data: {
+        notepad: notepads[session_id],
+        target: session_id,
+      },
     })
     await NotepadState.set(notepads)
   },
@@ -35,7 +38,10 @@ const API: { [key: string]: Function } = {
     await NotepadState.set(notepads)
     emit({
       type: "notepad.updateNotepad.done",
-      data: notepads[session_id],
+      data: {
+        notepad: notepads[session_id],
+        target: session_id,
+      },
     })
   },
   deleteClip: async ({ session_id, clip_id }: { session_id: string; clip_id: string }) => {
@@ -45,7 +51,10 @@ const API: { [key: string]: Function } = {
     await NotepadState.set(notepads)
     emit({
       type: "notepad.deleteClip.done",
-      data: notepads[session_id],
+      data: {
+        notepad: notepads[session_id],
+        target: session_id,
+      },
     })
   },
 }

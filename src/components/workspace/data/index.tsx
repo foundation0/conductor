@@ -15,7 +15,7 @@ import { AiFillFolderAdd } from "react-icons/ai"
 import { DATA_TYPES, DataTypesBinaryT, DataTypesTextT } from "@/data/schemas/data_types"
 import { DataT } from "@/data/schemas/data"
 import { Document, pdfjs } from "react-pdf"
-import b4a from "b4a"
+
 import * as pdfjsWorker from "pdfjs-dist/build/pdf.worker.js"
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
@@ -54,6 +54,7 @@ export default function DataOrganizer() {
     const data = workspace_data?.data || []
     setDataState(data)
     if (index_query.length === 0) setDataList(data)
+    return data
   }
 
   async function setupVectorIndex() {
@@ -141,7 +142,7 @@ export default function DataOrganizer() {
         }
       })
     else setDataList(data_state)
-  }, [index_query])
+  }, [JSON.stringify([index_query, active_workspace_id])])
 
   const onDrop = useCallback((acceptedFiles: any, fileRejections: any) => {
     if (fileRejections.length > 0) {
@@ -214,11 +215,7 @@ export default function DataOrganizer() {
                     {...d}
                     onClick={() => {
                       if (!sid) return error({ message: "no session id" })
-                      // console.log('adding to ', sid)
-                      // emit({ type: "sessions.addData", data: { target: sid, session_id: sid, data: d } })
-                      // emit({ type: "sessions/change", data: { session_id: d.id } })
-                      // @ts-ignore
-                      previewData({ id: d.id })
+                      emit({ type: "sessions.addData", data: { target: sid, session_id: sid, data: d } })
                     }}
                     onRemove={() => {
                       if (confirm("Are you sure you want to delete this?")) {
@@ -229,6 +226,13 @@ export default function DataOrganizer() {
                       }
                     }}
                     menu={[
+                      {
+                        label: "View item",
+                        callback: function () {
+                          if (!sid) return error({ message: "no session id" })
+                          previewData({ id: d.id })
+                        },
+                      },
                       {
                         label: "Add item to current session",
                         callback: function () {

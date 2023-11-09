@@ -3,7 +3,6 @@ import _ from "lodash"
 import { z } from "zod"
 import { RxDotsHorizontal, RxPlus } from "react-icons/rx"
 import { MdCheck, MdClose, MdOutlineKeyboardArrowDown, MdOutlineKeyboardArrowRight } from "react-icons/md"
-import { RiHashtag } from "react-icons/ri"
 import { Link, useFetcher, useLoaderData, useNavigate, useParams } from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
@@ -13,10 +12,10 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import UserActions from "@/data/actions/user"
 import { fieldFocus } from "@/libraries/field_focus"
 import { useHotkeys } from "react-hotkeys-hook"
+import { PiChatCircleDotsBold } from "react-icons/pi"
 
 // @ts-ignore
 import EasyEdit from "react-easy-edit"
-import { error } from "@/libraries/logging"
 import { getOS } from "@/libraries/utilities"
 import { emit } from "@/libraries/events"
 
@@ -409,8 +408,8 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                       data-id={session.id}
                     >
                       <div className="flex items-center">
-                        <RiHashtag
-                          className={`w-4 h-4 pr-1 ${session.id === session_id ? " text-zinc-100" : "text-zinc-400 "}`}
+                        <PiChatCircleDotsBold
+                          className={`w-4 h-4 pr-1 ${session.id === session_id ? " text-zinc-100" : "text-zinc-500 "}`}
                         />
                       </div>
                       <Link
