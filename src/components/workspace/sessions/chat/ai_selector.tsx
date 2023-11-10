@@ -14,6 +14,9 @@ import SessionsActions from "@/data/actions/sessions"
 import { TbSelector } from "react-icons/tb"
 import { getAvatar } from "@/libraries/ai"
 import { emit } from "@/libraries/events"
+import useMemory from "@/components/hooks/useMemory"
+import { SessionT } from "@/data/schemas/workspace"
+import { ChatSessionT } from "@/data/schemas/sessions"
 
 export function AISelector({
   user_state,
@@ -24,42 +27,54 @@ export function AISelector({
   session_id: string
   installed_ais: any
 }) {
-  const [show_settings, setShowSettings] = useState(true)
-  const [active_llm_module_text, setActiveLLMModuleText] = useState("")
-  const [session, setSession] = useState<any>({})
-  const [ai_options, setAIOptions] = useState<any>([])
-  const [llm_options, setLLMOptions] = useState<any>([])
+  const mem = useMemory<{
+    show_settings: boolean
+    active_llm_module_text: string
+    ai_options: []
+    llm_options: []
+    session: ChatSessionT
+  }>({
+    id: `${session_id}-input`,
+    state: {
+      show_settings: true,
+      active_llm_module_text: "",
+      ai_options: [],
+      llm_options: [],
+      session: {},
+    },
+  })
+  // const [show_settings, setShowSettings] = useState(true)
+  // const [active_llm_module_text, setActiveLLMModuleText] = useState("")
+  // const [session, setSession] = useState<any>({})
+  // const [ai_options, setAIOptions] = useState<any>([])
+  // const [llm_options, setLLMOptions] = useState<any>([])
 
   function update() {
-    if (_.isEqualWith(session, {})) return
-    const mod = _.find(user_state.modules.installed, { id: session.settings.module.id })
-    const variant = _.find(mod?.meta?.variants, { id: session.settings.module.variant })
+    if (_.isEqualWith(mem.session, {})) return
+    const mod = _.find(user_state.modules.installed, { id: mem.session.settings.module.id })
+    const variant = _.find(mod?.meta?.variants, { id: mem.session.settings.module.variant })
     const active_llm_module_text = `${mod?.meta.name || mod?.meta.vendor.name} / ${variant?.name || variant?.id} ${
       variant?.context_len && `(~${_.round(variant?.context_len / 5, 0)} word memory)`
     }`
-    setActiveLLMModuleText(active_llm_module_text)
+    mem.active_llm_module_text = active_llm_module_text
 
-    setAIOptions(
-      generate_ai_options({
-        user_state,
-        ai_state: installed_ais,
-        selected: `${session.settings.ai}`,
-        return_as_object: true,
-      })
-    )
+    mem.ai_options = generate_ai_options({
+      user_state,
+      ai_state: installed_ais,
+      selected: `${mem.session.settings.ai}`,
+      return_as_object: true,
+    })
 
-    setLLMOptions(
-      generate_llm_module_options({
-        user_state,
-        selected: `${session.settings.module.id}/${session.settings.module.variant}`,
-        return_as_object: true,
-      })
-    )
+    mem.llm_options = generate_llm_module_options({
+      user_state,
+      selected: `${mem.session.settings.module.id}/${mem.session.settings.module.variant}`,
+      return_as_object: true,
+    })
   }
 
   useEffect(() => {
     update()
-  }, [JSON.stringify(session)])
+  }, [JSON.stringify(mem.session)])
 
   useEvent({
     name: "sessions.updateSessions.done",
@@ -67,7 +82,7 @@ export function AISelector({
     action: (session: any) => {
       const s = session?.active[session_id]
       if (!s) return
-      setSession(s)
+      mem.session = s
     },
   })
 
@@ -76,7 +91,7 @@ export function AISelector({
     const sessions_state = await SessionState.get()
     const session = sessions_state.active[session_id]
     if (!session) return
-    setSession(session)
+    mem.session = session
     update()
   }
 
@@ -111,7 +126,7 @@ export function AISelector({
     await SessionsActions.updateSessions(new_sessions)
 
     emit({
-      type: 'sessions/module-change',
+      type: "sessions/module-change",
     })
     // navigate(`/c/${workspace_id}/${session.id}`)
     // set focus to #input
@@ -139,12 +154,12 @@ export function AISelector({
     await SessionsActions.updateSessions(new_sessions)
 
     emit({
-      type: 'sessions/module-change',
+      type: "sessions/module-change",
       data: {
         target: session.id,
         module_id: new_llm_module[0],
         variant_id: new_llm_module[1],
-      }
+      },
     })
 
     // navigate(`/c/${workspace_id}/${session.id}`)
@@ -154,7 +169,7 @@ export function AISelector({
     //   fieldFocus({ selector: "#input" })
     // }, 200)
   }
-  if (_.isEqualWith(session, {})) return
+  if (_.isEqualWith(mem.session, {})) return
   return (
     <div
       id="popoverContent"
@@ -170,7 +185,7 @@ export function AISelector({
             <div className="text-xs font-medium tooltip tooltip-top cursor-pointer hidden" data-tip="Show settings">
               <RiSettings3Fill
                 className="w-4 h-4 text-zinc-500 hover:text-zinc-300 transition-all"
-                onClick={() => setShowSettings(!show_settings)}
+                onClick={() => mem.show_settings = !mem.show_settings}
               />
             </div>
             <Link className="text-xs font-medium tooltip tooltip-top" data-tip="Create new AI" to={`/c/ai/create`}>
@@ -188,16 +203,16 @@ export function AISelector({
           }}
           value={{
             label: `${
-              _.find(installed_ais, { id: session.settings.ai })?.persona.name ||
+              _.find(installed_ais, { id: mem.session.settings.ai })?.persona.name ||
               _.first(_.get(installed_ais, "persona.name")) ||
               "click to select"
             }`,
-            value: `${session.settings.ai}`,
+            value: `${mem.session.settings.ai}`,
           }}
           placeholder="Choose AI..."
-          options={ai_options}
+          options={mem.ai_options}
         ></Select>
-        {show_settings && (
+        {mem.show_settings && (
           <div>
             <div className="text-sm font-semibold text-zinc-500">Reasoning engine in use</div>
             <Select
@@ -209,11 +224,11 @@ export function AISelector({
                 })
               }}
               value={{
-                label: `${active_llm_module_text}`,
-                value: `${session.settings.module.id}/${session.settings.module.variant}`,
+                label: `${mem.active_llm_module_text}`,
+                value: `${mem.session.settings.module.id}/${mem.session.settings.module.variant}`,
               }}
               placeholder="Choose LLM model..."
-              options={llm_options}
+              options={mem.llm_options}
             ></Select>
           </div>
         )}

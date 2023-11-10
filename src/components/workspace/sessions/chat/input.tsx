@@ -8,6 +8,7 @@ import MessageIcon from "@/assets/icons/send.svg"
 import SessionActions from "@/data/actions/sessions"
 import PieIcon from "@/assets/icons/pie.svg"
 import { ChatT } from "@/data/loaders/sessions"
+import { AISelector, AISelectorButton } from "./ai_selector"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
 
@@ -32,7 +33,7 @@ export default function Input({
   disabled?: boolean
   input_text?: string
   setMsgUpdateTs: Function
-  session: SessionsT['active'][0]
+  session: SessionsT["active"][0]
 }) {
   const [message, setMessage] = useState<string>("")
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -141,8 +142,8 @@ export default function Input({
           )}
           <Switch>
             <Match when={!gen_in_progress && _.last(messages)?.[1].hash === "1337"}>
-              <button type="submit" className={button_class}>
-                <img src={MessageIcon} className="w-4 h-4" />
+              <button type="submit" className={button_class + " tooltip tooltip-top"} data-tip="Send message">
+                <img src={MessageIcon} className="w-5 h-5 rotate-90" />
               </button>
             </Match>
             <Match when={gen_in_progress}>
@@ -164,6 +165,7 @@ export default function Input({
             </Match>
             <Match when={!gen_in_progress && (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)}>
               <div className="flex flex-row gap-2">
+                <button>{/* <AISelector session_id={session_id} /> */}</button>
                 <button
                   className="tooltip tooltip-top"
                   data-tip={`Total cost: $${_.sumBy(session.receipts, (l) => l.cost_usd).toFixed(
@@ -192,7 +194,7 @@ export default function Input({
                   <img src={RewindIcon} className="w-5 h-5 saturate-0 hover:saturate-100" />
                 </button>
                 <button type="submit" className={button_class + " tooltip tooltip-top"} data-tip="Send message">
-                  <img src={MessageIcon} className="w-6 h-6 rotate-90" />
+                  <img src={MessageIcon} className="w-5 h-5 rotate-90" />
                 </button>
               </div>
             </Match>
