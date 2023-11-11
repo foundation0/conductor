@@ -459,6 +459,7 @@ const API: { [key: string]: Function } = {
 
     await VectorsActions.delete({ id: data_id })
     await DataActions.delete({ id: data_id })
+    await SessionsActions.findDataAndRemove({ data_id })
 
     emit({
       type: "user/delete_data_from_workspace",

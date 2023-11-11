@@ -313,6 +313,18 @@ const API: { [key: string]: Function } = {
       },
     })
   },
+  async findDataAndRemove({ data_id }: { data_id: any }) {
+    const { SessionState } = await initLoaders()
+    const sessions = SessionState.get()
+    Object.keys(sessions.active).forEach((session_id) => {
+      const session = sessions.active[session_id]
+      if (!session) throw new Error("Session not found")
+      // see if data_id exists in the session
+      if (_.find(session?.data || [], { id: data_id })) {
+        API.removeData({ session_id, data_id })
+      }
+    })
+  },
   async getCurrentSessionId() {
     const { AppState } = await initLoaders()
     const as: AppStateT = AppState.get()

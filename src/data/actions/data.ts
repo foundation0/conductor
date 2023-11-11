@@ -25,7 +25,7 @@ const API: { [key: string]: Function } = {
     // if storage exists, abort and return the id
     const existing_store = await store.get()
     if (existing_store) {
-      if(!confirm("Data with this name already exists, do you want to overwrite?")) return id
+      if (!confirm("Data with this name already exists, do you want to overwrite?")) return id
     }
 
     // validate data
