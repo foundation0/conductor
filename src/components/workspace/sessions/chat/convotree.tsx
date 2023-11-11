@@ -17,7 +17,7 @@ import { FaUser } from "react-icons/fa"
 import { Module } from "@/modules"
 import { ChatSessionT } from "@/data/schemas/sessions"
 import { error } from "@/libraries/logging"
-import { buildMessageTree, computeActivePath } from "./branching"
+import { buildMessageTree, computeActivePath } from "../../../../libraries/branching"
 import { RxCornerBottomLeft } from "react-icons/rx"
 import { LuGitBranchPlus } from "react-icons/lu"
 dayjs.extend(relativeTime)

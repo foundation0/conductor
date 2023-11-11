@@ -34,7 +34,7 @@ import { useEvent } from "@/components/hooks/useEvent"
 import SessionActions from "@/data/actions/sessions"
 import SessionsActions from "@/data/actions/sessions"
 import UserActions from "@/data/actions/user"
-import { computeActivePath, onBranchClick, onNewBranchClick, buildMessageTree } from "./branching"
+import { computeActivePath, onBranchClick, onNewBranchClick, buildMessageTree } from "../../../../libraries/branching"
 
 // Schemas
 import { AIsT } from "@/data/schemas/ai"
