@@ -109,7 +109,7 @@ export function AddExistingUser() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-zinc-800">
+    <div className="flex flex-col h-full bg-zinc-900">
       <div className="flex flex-1 h-full justify-center items-center ">
         <form className="flex flex-col justify-center items-center " onSubmit={handleSubmit}>
           <div className="flex flex-col gap-2">

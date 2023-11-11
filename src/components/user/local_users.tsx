@@ -139,7 +139,7 @@ export function LocalUsersPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-zinc-800">
+    <div className="flex flex-col h-full bg-zinc-900">
       <div className="flex ml-4 mt-4 items-center">
         <img className="w-4 h-4 opacity-60" src={PromptIcon} />
         <div className="text-xs ml-2">{users?.length > 0 ? "Welcome back." : "Welcome, let's get you started."}</div>
