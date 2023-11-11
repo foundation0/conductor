@@ -23,8 +23,10 @@ const API: { [key: string]: Function } = {
     const store = await DataState({ id })
 
     // if storage exists, abort and return the id
-    // const existing_store = await store.get()
-    //if (existing_store) return true
+    const existing_store = await store.get()
+    if (existing_store) {
+      if(!confirm("Data with this name already exists, do you want to overwrite?")) return id
+    }
 
     // validate data
     const validated = DataS.safeParse({ ...data, id })
