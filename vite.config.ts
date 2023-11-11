@@ -8,7 +8,7 @@ import { comlink } from "vite-plugin-comlink"
 import { faviconsPlugin } from "@darkobits/vite-plugin-favicons"
 import { dataURLLoader } from "./utils/blobToDataURL"
 import { viteStaticCopy } from "vite-plugin-static-copy"
-import { VitePWA } from 'vite-plugin-pwa'
+import { VitePWA } from "vite-plugin-pwa"
 
 const wasmContentTypePlugin = {
   name: "wasm-content-type-plugin",
@@ -42,7 +42,12 @@ export default defineConfig(({ command, mode }) => {
           },
         },
       }),
-      VitePWA({ registerType: 'autoUpdate' }),
+      VitePWA({
+        registerType: "autoUpdate",
+        workbox: {
+          maximumFileSizeToCacheInBytes: 10000000,
+        },
+      }),
       svgr(),
       dataURLLoader,
       comlink(),
@@ -70,7 +75,7 @@ export default defineConfig(({ command, mode }) => {
       ...env,
     },
     worker: {
-      plugins: [wasm(),topLevelAwait(), comlink()],
+      plugins: [wasm(), topLevelAwait(), comlink()],
     },
   }
 })
