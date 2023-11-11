@@ -25,13 +25,13 @@ export async function autoRename({
   }
   let has_error = false
   const prompt = {
-    instructions: `Conversation:\n${messages.map((m) => `${m.type}: ${m.text}`).join("\n")}`,
-    user: "Based on the conversation, what three-word title best encapsulates its content? No chat, no verbose. Use the following format to answer: 'Title: {The title}'",
+    // instructions: `Conversation:\n${messages.map((m) => `${m.type}: ${m.text}`).join("\n")}`,
+    user: `Conversation:\n${messages.map((m) => `${m.type}: ${m.text}`).join("\n")}\n\nBased on the conversation, what three-word title best encapsulates its content? No chat, no verbose. Use the following format to answer: 'Title: {The title}'`,
   }
   const memory = await compileSlidingWindowMemory({
     model: "mistralai_mistral-7b-instruct",
     prompt,
-    messages: [],
+    messages,
     module,
   })
   if (!memory) return error({ message: "error compiling memory", data: { module_id: module.specs.id } })
@@ -66,7 +66,12 @@ export async function autoRename({
   }
   if (stream_response) {
     // remove " characters and if response ends with dot, remove that too
-    return stream_response.trim().replace(/"/g, "").replace(/\.$/, "").replace(/title:\s*|Title:\s*/gi, '')
+    return stream_response
+      .trim()
+      .replace(/"/g, "")
+      .replace(/\.$/, "")
+      .replace(/title:\s*|Title:\s*/gi, "")
+      .slice(0, 70)
   } else if (!has_error && !stream_response) {
     error({ message: "no response from the module", data: { module_id: module.specs.id } })
   }
