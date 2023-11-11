@@ -1,23 +1,33 @@
 import _ from "lodash"
 import Session from "./session"
 import Tabs from "./tabs"
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useEffect, useState } from "react"
 import "react-resizable/css/styles.css"
 import eventEmitter from "@/libraries/events"
 import { initLoaders } from "@/data/loaders"
 import { WorkspaceT } from "@/data/schemas/workspace"
 import { SessionTypesT, SessionsT } from "@/data/schemas/sessions"
+import { useEvent } from "@/components/hooks/useEvent"
+import useMemory from "@/components/hooks/useMemory"
 
 export default function Workspace() {
   const workspace_id = useParams().workspace_id as string
   const session_id = useParams().session_id as string
-  const [open_sidebar, setOpenSidebar] = useState<string>("")
-  const [sessions, setSessions] = useState<SessionTypesT[]>([])
-  const [active_sessions, setActiveSessions] = useState<{ [key: string]: boolean }>({})
+  // const [open_sidebar, setOpenSidebar] = useMemory<string>({ id: 'session-index', state: "")
+  const mem = useMemory<{
+    open_sidebar: string
+    sessions: SessionTypesT[]
+    active_sessions: { [key: string]: boolean }
+  }>({
+    id: "session-index",
+    state: { sessions: [], active_sessions: {}, open_sidebar: "" },
+  })
+
+  const navigate = useNavigate()
 
   async function updateSessions() {
-    const { AppState, SessionState, UserState, AIState } = await initLoaders()
+    const { SessionState, UserState } = await initLoaders()
     const user_state = await UserState.get()
     // get all the sessions for this workspace
     const workspace: WorkspaceT = _.find(user_state.workspaces, { id: workspace_id })
@@ -32,23 +42,58 @@ export default function Workspace() {
       .compact()
       .value()
     const sessions_state: SessionsT = await SessionState.get()
-    const sessions = _.map(ws_sessions, (session) => {
+    const _sessions = _.map(ws_sessions, (session) => {
       return sessions_state?.active[session.id]
     })
-    if (sessions) setSessions(sessions)
-    setActiveSessions({ ...active_sessions, [session_id]: true })
+    if (_sessions) mem.sessions = _sessions
+    // if session_id exists in sessions, set it to active
+    const session_index = _.findIndex(mem.sessions, { id: session_id })
+    if (session_index !== -1) mem.active_sessions = { ...mem.active_sessions, [session_id]: true }
+    else handleMissingSession({ session_id })
   }
 
-  useEffect(() => {
+  function update() {
     updateSessions()
-    setActiveSessions({ ...active_sessions, [session_id]: true })
-  }, [JSON.stringify([workspace_id, session_id])])
+    // mem.active_sessions = { ...mem.active_sessions, [session_id]: true }
+  }
+
+  useEffect(() => update(), [])
+  useEffect(() => update(), [JSON.stringify([workspace_id, session_id])])
 
   function setSidebar(sidebar: string) {
     setTimeout(() => eventEmitter.emit("layout_resize"), 200)
-    if (open_sidebar === sidebar) return setOpenSidebar("")
-    setOpenSidebar(sidebar)
+    if (mem.open_sidebar === sidebar) return (mem.open_sidebar = "")
+    mem.open_sidebar = sidebar
   }
+
+  async function handleMissingSession({ session_id }: { session_id: string }) {
+    // get session index from active sessions
+    const session_index = _.findIndex(mem.sessions, { id: session_id })
+    if (session_index !== -1) return
+
+    // delete from open sessions
+    mem.active_sessions = _.omit(mem.active_sessions, session_id)
+
+    // switch to another session
+    let _session = mem.sessions[session_index + 1]
+    if (!_session) {
+      const _session = mem.sessions[session_index - 1]
+      if (!_session) return
+    }
+    return navigate(`/c/${workspace_id}/${_session.id}`)
+  }
+
+  useEvent({
+    name: "sessions.deleteSession.done",
+    action: handleMissingSession,
+  })
+
+  // if session_id doesn't exist in sessions, run handleMissingSession
+  useEffect(() => {
+    const session_index = _.findIndex(mem.sessions, { id: session_id })
+    if (session_index === -1) handleMissingSession({ session_id })
+  }, [JSON.stringify(mem.sessions)])
+
   return (
     <div className="flex flex-1">
       <div id="ContentTabs" className="flex flex-1 gap-1 grow flex-col overflow-hidden">
@@ -56,11 +101,11 @@ export default function Workspace() {
           <Tabs setShowNotepad={() => setSidebar("Notepad")} setShowMembers={() => setSidebar("Members")} />
         </div>
         <div id="ContentViews" className="flex flex-1">
-          {sessions.map((session) => {
+          {mem.sessions.map((session) => {
             return (
               <Session
                 key={session.id}
-                activated={active_sessions[session.id] || false}
+                activated={mem.active_sessions[session.id] || false}
                 workspace_id={workspace_id}
                 session_id={session.id}
                 type={session.type || "chat"}
