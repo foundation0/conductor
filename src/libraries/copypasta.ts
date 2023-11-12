@@ -15,6 +15,13 @@ export const copyToClipboard = async (text: string, id?: string, setUsedIcon?: F
       error({ message: "Clipboard permission denied" })
     }
   } catch (err) {
-    error({ message: "Copy failed", data: err })
+    try {
+      if (typeof navigator?.clipboard?.writeText === "function") {
+        navigator.clipboard.writeText(text)
+        if (id && setUsedIcon) setUsedIcon(id)
+      }
+    } catch (e) {
+      error({ message: "Copy failed", data: err })
+    }
   }
 }
