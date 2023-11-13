@@ -1,6 +1,6 @@
 import { TextMessageT } from "@/data/loaders/sessions"
 import _ from "lodash"
-import { compileSlidingWindowMemory } from "@/libraries/memory"
+import { compileSlidingWindowMemory } from "@/libraries/ai"
 import { error } from "@/libraries/logging"
 import { Module } from "@/modules"
 import SessionsActions from "@/data/actions/sessions"

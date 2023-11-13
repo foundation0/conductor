@@ -1,7 +1,7 @@
 import { TextMessageT } from "@/data/loaders/sessions"
 import SessionsActions from "@/data/actions/sessions"
 import _ from "lodash"
-import { compileSlidingWindowMemory } from "@/libraries/memory"
+import { compileSlidingWindowMemory } from "@/libraries/ai"
 import { error } from "@/libraries/logging"
 import { UserT } from "@/data/loaders/user"
 import { MessageRowT } from "@/data/schemas/sessions"
