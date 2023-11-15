@@ -11,12 +11,16 @@ import { useDropzone } from "react-dropzone"
 import { error } from "@/libraries/logging"
 import { MdOutlineAddAPhoto } from "react-icons/md"
 import Select from "react-select"
+import { mAppT } from "@/data/schemas/memory"
+import useMemory from "../hooks/useMemory"
 
 export default function Settings() {
   const navigate = useNavigate()
   const { user_state } = useLoaderData() as { user_state: UserT }
   const [field_edit_id, setFieldEditId] = useState("")
-  const workspace_id = useParams().workspace_id as string
+  // const workspace_id = useParams().workspace_id as string
+  const mem_app: mAppT = useMemory({ id: "app" })
+  const { workspace_id, session_id } = mem_app
   const [workspace, setWorkspace] = useState(user_state.workspaces.find((w) => w.id === workspace_id))
   const [workspace_i, setWorkspace_i] = useState(user_state.workspaces.findIndex((w) => w.id === workspace_id))
 

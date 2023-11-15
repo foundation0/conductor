@@ -505,7 +505,7 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
   if (!session || !module) return null
   return (
     <Switch>
-      <Match when={stores_mem[session_id]?.status === "ready" || stores_mem[session_id]?.status === "syncing"}>
+      <Match when={stores_mem[session_id]?.status/*  === "ready" || stores_mem[session_id]?.status === "syncing" */}>
         <div className="flex flex-1 flex-col relative" ref={eContainer}>
           <div className="flex flex-1">
             <AutoScroll showOption={false} scrollBehavior="auto" className={`flex flex-1`}>
@@ -620,9 +620,9 @@ export default function Chat({ workspace_id, session_id }: { workspace_id: strin
           )}
         </div>
       </Match>
-      <Match when={stores_mem[session_id]?.status === "error"}>
+      {/* <Match when={stores_mem[session_id]?.status === "error"}>
         <div>Error loading session</div>
-      </Match>
+      </Match> */}
     </Switch>
   )
 }

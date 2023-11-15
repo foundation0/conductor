@@ -215,7 +215,7 @@ const API: { [key: string]: Function } = {
     await AppStateActions.updateAppState(as)
 
     // add to active sessions
-    const res = await API.addSessionToActive({ session: new_session.session, workspace_id })
+    const res = await API.addSessionToActive({ session_id: new_session.session.id, workspace_id })
 
     ph().capture("sessions/create")
     if (typeof res === "object" && "error" in res) return error({ message: "Failed to add a session", data: res })

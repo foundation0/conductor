@@ -11,7 +11,6 @@ import { RiHashtag } from "react-icons/ri"
 import { useAuth } from "@/components/hooks/useAuth"
 import { setActiveUser } from "@/libraries/active_user"
 import { getModules } from "@/modules"
-import { ModuleT } from "@/data/schemas/modules"
 import UserActions from "@/data/actions/user"
 import { AIsT } from "@/data/schemas/ai"
 import AIActions from "@/data/actions/ai"
@@ -19,8 +18,8 @@ import config from "@/config"
 import { del as delLS, get as getLS } from "@/data/storage/localStorage"
 import { ConvertGuest } from "@/components/user/convert_guest"
 import { BuyCredits } from "../user/buy_credits"
-import { useEvent } from "../hooks/useEvent"
-import { listen } from "@/libraries/events"
+import useMemory from "@/components/hooks/useMemory"
+import { mAppT } from "@/data/schemas/memory"
 
 export default function Conductor() {
   const { app_state, user_state, ai_state } = useLoaderData() as {
@@ -33,6 +32,22 @@ export default function Conductor() {
   const auth = useAuth()
   const navigate = useNavigate()
 
+  const workspace_id = useParams().workspace_id as string
+  const session_id = useParams().session_id as string
+
+  const mem: mAppT = useMemory({
+    id: "app",
+    state: {
+      workspace_id,
+      session_id,
+    },
+  })
+
+  useEffect(() => {
+    mem.workspace_id = workspace_id
+    mem.session_id = session_id
+  }, [JSON.stringify([workspace_id, session_id])])
+
   const [guest_mode, setGuestMode] = useState<boolean>(getLS({ key: "guest-mode" }))
 
   const unload = useCallback(() => {
@@ -44,9 +59,6 @@ export default function Conductor() {
     return true
   }, [])
   useBeforeUnload(unload)
-
-  const workspace_id = useParams().workspace_id as string
-  const session_id = useParams().session_id as string
 
   useEffect(() => {
     // upgrade user's modules

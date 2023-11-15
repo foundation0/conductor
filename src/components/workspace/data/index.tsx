@@ -17,10 +17,14 @@ import { DataT } from "@/data/schemas/data"
 import { Document, pdfjs } from "react-pdf"
 
 import * as pdfjsWorker from "pdfjs-dist/build/pdf.worker.js"
+import { mAppT } from "@/data/schemas/memory"
+import useMemory from "@/components/hooks/useMemory"
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 export default function DataOrganizer() {
-  const active_workspace_id = useParams().workspace_id as string
+  // const workspace_id = useParams().workspace_id as string
+  const mem_app: mAppT = useMemory({ id: "app" })
+  const { workspace_id, session_id } = mem_app
 
   const [sid, setSid] = useState<string>(useParams().session_id as string)
   const [data_state, setDataState] = useState<DataRefT[]>([])
@@ -50,7 +54,7 @@ export default function DataOrganizer() {
 
   async function updateDataState() {
     const { UserState } = await initLoaders()
-    const workspace_data: WorkspaceT = _.find((await UserState.get()).workspaces, { id: active_workspace_id })
+    const workspace_data: WorkspaceT = _.find((await UserState.get()).workspaces, { id: workspace_id })
     const data = workspace_data?.data || []
     setDataState(data)
     if (index_query.length === 0) setDataList(data)
@@ -58,7 +62,7 @@ export default function DataOrganizer() {
   }
 
   async function setupVectorIndex() {
-    await queryIndex({ update: true, workspace_id: active_workspace_id, source: "workspace" })
+    await queryIndex({ update: true, workspace_id: workspace_id, source: "workspace" })
     setIndexReady(true)
   }
 
@@ -86,7 +90,7 @@ export default function DataOrganizer() {
       action: async ({ name, mime }: { name: string; mime: DataTypesTextT | DataTypesBinaryT }) => {
         await updateDataState()
         if (name) setProcessingQueue((q) => q.filter((d) => d.name !== name))
-        await queryIndex({ update: true, workspace_id: active_workspace_id, source: "workspace" })
+        await queryIndex({ update: true, workspace_id: workspace_id, source: "workspace" })
       },
     })
 
@@ -130,19 +134,19 @@ export default function DataOrganizer() {
 
   useEffect(() => {
     setup()
-  }, [active_workspace_id])
+  }, [workspace_id])
 
   // Query index
   useEffect(() => {
     if (index_query)
-      queryIndex({ workspace_id: active_workspace_id, source: "workspace", query: index_query }).then((ids) => {
+      queryIndex({ workspace_id: workspace_id, source: "workspace", query: index_query }).then((ids) => {
         if (ids) {
           const filtered_list = data_state.filter((d) => _.map(ids, "metadata.id").includes(d.id))
           setDataList(filtered_list)
         }
       })
     else setDataList(data_state)
-  }, [JSON.stringify([index_query, active_workspace_id])])
+  }, [JSON.stringify([index_query, workspace_id])])
 
   const onDrop = useCallback((acceptedFiles: any, fileRejections: any) => {
     if (fileRejections.length > 0) {
@@ -153,7 +157,7 @@ export default function DataOrganizer() {
         })
       })
     } else {
-      processImportedFiles({ files: acceptedFiles, workspace_id: active_workspace_id })
+      processImportedFiles({ files: acceptedFiles, workspace_id: workspace_id })
     }
   }, [])
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -220,7 +224,7 @@ export default function DataOrganizer() {
                     onRemove={() => {
                       if (confirm("Are you sure you want to delete this?")) {
                         UserActions.deleteDataFromWorkspace({
-                          workspace_id: active_workspace_id,
+                          workspace_id: workspace_id,
                           data_id: d.id,
                         })
                       }
@@ -245,7 +249,7 @@ export default function DataOrganizer() {
                         callback: function () {
                           if (confirm("Are you sure you want to delete this?")) {
                             UserActions.deleteDataFromWorkspace({
-                              workspace_id: active_workspace_id,
+                              workspace_id: workspace_id,
                               data_id: d.id,
                             })
                           }

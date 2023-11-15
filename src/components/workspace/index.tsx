@@ -28,17 +28,22 @@ import {
 import AppstateActions from "@/data/actions/app"
 import { Resizable } from "react-resizable"
 import "react-resizable/css/styles.css"
-import eventEmitter from "@/libraries/events"
+import eventEmitter, { emit } from "@/libraries/events"
+import useMemory from "@/components/hooks/useMemory"
+import { mAppT } from "@/data/schemas/memory"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
 export default function Workspace() {
+  const mem_app: mAppT = useMemory({ id: "app" })
+  const { workspace_id, session_id } = mem_app
+
   const { app_state, user_state } = useLoaderData() as LoaderT
   const [run_onboarding, setRunOnboarding] = useState(false)
   const { setPreference, getPreference } = AppstateActions
   const [organizer_width, setOrganizerWidth] = useState(250)
 
-  const workspace_id = useParams().workspace_id
+  // const workspace_id = useParams().workspace_id
   const navigate = useNavigate()
 
   // set focus to input when window regains focus
@@ -61,7 +66,7 @@ export default function Workspace() {
   }, [workspace_id])
 
   // if there is no session selected, select the first one from the first group's first folder
-  const session_id = useParams().session_id
+  // const session_id = useParams().session_id
   useEffect(() => {
     if (!session_id) {
       // use lodash chaining to get the first session id
@@ -77,6 +82,9 @@ export default function Workspace() {
         .value()
       navigate(`/c/${workspace_id}/${first_session_id}`)
     }
+    emit({
+      type: "workspace/change",
+    })
   }, [workspace_id])
 
   const [active_sidebar_tab, setActiveSidebarTab] = useState("sessions")

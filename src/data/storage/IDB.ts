@@ -255,7 +255,7 @@ export const store = async <TData>({
       // If a key pair exists, encrypt the data and save it to the cloud storage
       if (key_pair && remote_key && name !== "users" && !local_only && !skip_sync) {
         const enc_data = await processForRemote({ data: vstate.data, key_pair, enc_key })
-        await setCF({ key: remote_key, value: enc_data })
+        setCF({ key: remote_key, value: enc_data })
       }
 
       // Save the data to the local storage
