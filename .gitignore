@@ -3,3 +3,4 @@ node_modules
 dist
 **/*:Zone.Identifier
 **/.DS_Store
+vite.config.ts.timestamp.*
