@@ -114,7 +114,7 @@ const API: { [key: string]: Function } = {
   changeActiveSession: async function ({ session_id }: { session_id: string }) {
     const { AppState } = await initLoaders()
 
-    const app_state: AppStateT = AppState.get()
+    const app_state: AppStateT = await AppState.get()
 
     const active_workspace = await getActiveWorkspace()
     if (!active_workspace) {

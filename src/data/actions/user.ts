@@ -615,6 +615,16 @@ const API: { [key: string]: Function } = {
       },
     })
   },
+  async getSessions({ workspace_id } : { workspace_id: string }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const workspace: WorkspaceT = _.find(user_state.workspaces, { id: workspace_id })
+    if (!workspace) return
+    const sessions = _.flatten(
+      workspace.groups.map((group) => group.folders.map((folder) => folder.sessions))
+    )
+    return { sessions: _.flatten(sessions) }
+  }
 }
 
 listen({

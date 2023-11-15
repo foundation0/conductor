@@ -60,7 +60,6 @@ export default function Session({
       }
     },
   })
-
   return (
     <div className={`flex flex-1 flex-row ${session_id !== (useParams().session_id as string) && "hidden"}`}>
       <div

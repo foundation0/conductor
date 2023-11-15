@@ -11,7 +11,7 @@ import { error, ph } from "@/libraries/logging"
 import { z } from "zod"
 import config from "@/config"
 import { emit, listen } from "@/libraries/events"
-import { DataRefT } from "../schemas/workspace"
+import { DataRefT, SessionT } from "../schemas/workspace"
 
 const API: { [key: string]: Function } = {
   updateSessions: async function (state: Partial<SessionsT>) {
@@ -165,7 +165,25 @@ const API: { [key: string]: Function } = {
   clearMessages: async function ({ session_id }: { session_id: string }) {
     const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })
-    await messages_state.set([], null, true)
+    const messages: TextMessageT[] = messages_state.get()
+    const updated_messages = messages.map((m) => ({ ...m, status: "deleted" }))
+    await messages_state.set(updated_messages, null, true)
+    emit({
+      type: "sessions.clearMessages.done",
+      data: { target: session_id },
+    })
+  },
+  async deleteMessage({ session_id, message_id }: { session_id: string; message_id: string }) {
+    const { MessagesState } = await initLoaders()
+    const messages_state = await MessagesState({ session_id })
+    const messages: TextMessageT[] = messages_state.get()
+    // mark message status as deleted
+    const updated_messages = messages.map((m) => (m.id === message_id ? { ...m, status: "deleted" } : m))
+    await messages_state.set(updated_messages, null, true)
+    emit({
+      type: "sessions.deleteMessage.done",
+      data: { target: session_id },
+    })
   },
   addSession: async ({
     workspace_id,
@@ -196,11 +214,25 @@ const API: { [key: string]: Function } = {
     })
     await AppStateActions.updateAppState(as)
 
-    // create session
+    // add to active sessions
+    const res = await API.addSessionToActive({ session: new_session.session, workspace_id })
+
+    ph().capture("sessions/create")
+    if (typeof res === "object" && "error" in res) return error({ message: "Failed to add a session", data: res })
+    emit({
+      type: "sessions.addSession.done",
+      data: new_session,
+    })
+    return new_session
+  },
+  async addSessionToActive({ session_id, workspace_id }: { session_id: string; workspace_id: string }) {
+    const { SessionState, UserState, AppState } = await initLoaders()
+    const active_workspace = _.find(UserState.get().workspaces, { id: workspace_id })
+    if (!active_workspace) throw new Error("Active workspace not found")
     const sessions = SessionState.get()
-    sessions.active[new_session.session.id] = {
+    sessions.active[session_id] = {
       _v: 1,
-      id: new_session.session.id,
+      id: session_id,
       type: "chat",
       created_at: new Date(),
       settings: {
@@ -210,14 +242,7 @@ const API: { [key: string]: Function } = {
         },
       },
     }
-    const res = await API.updateSessions(sessions)
-    ph().capture("sessions/create")
-    if (typeof res === "object" && "error" in res) return error({ message: "Failed to add a session", data: res })
-    emit({
-      type: "sessions.addSession.done",
-      data: new_session,
-    })
-    return new_session
+    return API.updateSessions(sessions)
   },
   deleteSession: async ({
     workspace_id,
@@ -329,6 +354,16 @@ const API: { [key: string]: Function } = {
     const { AppState } = await initLoaders()
     const as: AppStateT = AppState.get()
     return { session_id: as.active_sessions[as.active_workspace_id].session_id }
+  },
+  async getMessages({ session_id, remove_deleted }: { session_id: string; remove_deleted?: boolean }) {
+    const { MessagesState } = await initLoaders()
+    const messages_state = await MessagesState({ session_id })
+    const msgs = messages_state.get()
+    const unique_msgs = _(msgs || [])
+      .uniqBy("id")
+      .value()
+    if (!remove_deleted) return unique_msgs
+    return unique_msgs.filter((m) => m.status !== "deleted")
   },
 }
 

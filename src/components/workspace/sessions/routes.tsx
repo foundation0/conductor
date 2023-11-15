@@ -18,7 +18,6 @@ export const SessionR = {
     let response = { ok: false }
     switch (request.method.toLowerCase()) {
       case "put":
-        // Create new folder
         const s = await SessionActions.addSession({
           group_id: formData.get("group_id") as string,
           workspace_id: formData.get("workspace_id") as string,
@@ -27,11 +26,7 @@ export const SessionR = {
         response.ok = true
         emit({ type: "sessions/change", data: { session_id: s.session.id } })
         return redirect(`/c/${formData.get("workspace_id")}/${s.session.id}`)
-      case "post":
-        // Update folder
-        break
       case "delete":
-        // Delete folder
         await SessionActions.deleteSession({
           folder_id: formData.get("folder_id") as string,
           group_id: formData.get("group_id") as string,

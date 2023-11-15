@@ -78,6 +78,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
     }
   }
   // console.log(new Date().getTime(), selection_open, is_hovering)
+
   return (
     <div
       id={`msg-${message.id}`}

@@ -9,6 +9,7 @@ import SessionActions from "@/data/actions/sessions"
 import PieIcon from "@/assets/icons/pie.svg"
 import { ChatT } from "@/data/loaders/sessions"
 import { AISelector, AISelectorButton } from "./ai_selector"
+import { emit } from "@/libraries/events"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
 
@@ -186,7 +187,13 @@ export default function Input({
                   onClick={async (e) => {
                     e.preventDefault()
                     if (confirm("Are you sure you want to clear the message history? You can't undo this.")) {
-                      await SessionActions.clearMessages({ session_id })
+                      // await SessionActions.clearMessages({ session_id })
+                      await emit({
+                        type: 'sessions.clearMessages',
+                        data: {
+                          session_id
+                        }
+                      })
                       setMsgUpdateTs(new Date().getTime())
                     }
                   }}

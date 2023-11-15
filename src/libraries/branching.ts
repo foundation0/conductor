@@ -2,7 +2,7 @@ import { TextMessageT } from "@/data/loaders/sessions"
 import { nanoid } from "nanoid"
 import { initLoaders } from "@/data/loaders"
 import _ from "lodash"
-import { emit } from "@/libraries/events"
+import { emit, query } from "@/libraries/events"
 import { fieldFocus } from "@/libraries/field_focus"
 import { error } from "@/libraries/logging"
 import SessionsActions from "@/data/actions/sessions"
@@ -22,6 +22,7 @@ export const onNewBranchClick = async ({ session_id, parent_id }: { session_id: 
     created_at: new Date().toISOString(),
     version: "1.0",
     type: "human",
+    status: "pending",
     text: "type new message below...",
     meta: {
       role: "temp",
@@ -76,12 +77,15 @@ export const onBranchClick = async ({
 }) => {
   let messages = msgs
   if (!messages) {
-    const { MessagesState } = await initLoaders()
-    const ss = await MessagesState({ session_id })
-    const msgs: TextMessageT[] = ss?.get()
-    messages = _.uniqBy(msgs || [], "id")
+    messages = await query({
+      type: "sessions.getMessages",
+      data: {
+        session_id,
+      }
+    })
   }
   if (!messages) return error({ message: "Session messages not found" })
+  
   // follow activePath from active_path_branch_id to the end and mark all human messages as inactive
   function markBranchInactive(msg_id: string) {
     // find active sibling from the branch
