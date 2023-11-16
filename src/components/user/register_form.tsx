@@ -68,7 +68,7 @@ export function RegisterForm({ convert_guest }: { convert_guest?: boolean }) {
     ph().capture("auth/_registration")
     setTimeout(() => {
       auth.signin({ username: created_user.user.meta?.username || username, password }, () => {
-        window.location.reload()
+        navigate('/c/')
       })
     }, 200)
   }
@@ -90,11 +90,11 @@ export function RegisterForm({ convert_guest }: { convert_guest?: boolean }) {
     }
   }, [])
 
-  return (
+  /* return (
     <form className="flex flex-col w-full justify-center items-center max-w-screen-sm">
       <div className="text-lg font-semibold text-zinc-400 mb-5">Conductor is in private beta, contact Marko for access</div>
     </form>
-  )
+  ) */
 
   return (
     <form className="flex flex-col w-full justify-start items-start max-w-screen-sm" onSubmit={handleSubmit}>
