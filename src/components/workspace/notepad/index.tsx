@@ -24,13 +24,18 @@ import { emit, query } from "@/libraries/events"
 import SessionsActions from "@/data/actions/sessions"
 import dayjs from "dayjs"
 import { initLoaders } from "@/data/loaders"
+import { mAppT } from "@/data/schemas/memory"
+import useMemory from "@/components/hooks/useMemory"
 
 export default function Notepad() {
   const { notepad_state, user_state } = useLoaderData() as { notepad_state: NotepadsT; user_state: UserT }
   //const session_id = useParams().session_id as string
-  const sid = useParams().session_id as string
-  const [session_id, setSessionId] = useState<string>(sid)
-  const workspace_id = useParams().workspace_id as string
+  // const sid = useParams().session_id as string
+  const mem_app: mAppT = useMemory({ id: "app" })
+  const { workspace_id, session_id } = mem_app
+  
+  // const [session_id, setSessionId] = useState<string>(sid)
+  // const workspace_id = useParams().workspace_id as string
   const [field_edit_id, setFieldEditId] = useState("")
   const [used_icon_id, setUsedIcon] = useState("")
   const navigate = useNavigate()
@@ -40,7 +45,7 @@ export default function Notepad() {
   const [dirty_clip, setDirtyClip] = useState<boolean>(false)
 
   async function updateNotepad({ notepad, session_id }: { notepad?: NotepadT; session_id?: string } = {}) {
-    const _sid = session_id || sid
+    const _sid = session_id
     // console.log("update notepad", session_id)
     if (notepad && notepad.session_id === _sid) return setNotepad(notepad)
     if (notepad && notepad.session_id !== _sid) return
@@ -58,14 +63,13 @@ export default function Notepad() {
   useEffect(() => {
     // setSessionId(sid)
     // updateNotepad()
-  }, [JSON.stringify([notepad_state, session_id, sid])])
+  }, [JSON.stringify([notepad_state, session_id])])
 
   useEvent({
     name: "sessions/change",
     // target: session_id,
     action: function ({ session_id }: { session_id: string }) {
       console.log("notepad sessions/change", session_id)
-      setSessionId(session_id)
       updateNotepad({ session_id })
     },
   })

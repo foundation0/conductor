@@ -1,0 +1,1 @@
+export type mAppT = { workspace_id: string; session_id: string }

@@ -76,7 +76,12 @@ export async function getCF({ key }: { key: string }) {
     const res = await fetch(`${config.DB.URI}${key}`)
     if (res.ok) {
       const data = await res.arrayBuffer()
-      return unpack(new Uint8Array(data))
+      try {
+        const unpacked = unpack(new Uint8Array(data))
+        return unpacked
+      } catch (err: any) {
+        return error({ message: err?.message, data: err })
+      }
     } else {
       return null
     }

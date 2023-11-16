@@ -10,13 +10,18 @@ import { useEffect } from "react"
 import _ from "lodash"
 import { MdSettings } from "react-icons/md"
 import { BsDiscord } from "react-icons/bs"
+import { mAppT } from "@/data/schemas/memory"
+import useMemory from "../hooks/useMemory"
 
 export default function WorkspaceSelector() {
   const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
   if (!app_state || !user_state) return null
   const location: Location = useLocation()
 
-  const workspace_id = useParams().workspace_id
+  // const workspace_id = useParams().workspace_id
+  const mem_app: mAppT = useMemory({ id: "app" })
+  const { workspace_id, session_id } = mem_app
+  
   useEffect(() => {
     if (!workspace_id) return
     AppStateActions.updateAppState({ active_workspace_id: workspace_id })

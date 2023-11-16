@@ -17,7 +17,10 @@ import { PiChatCircleDotsBold } from "react-icons/pi"
 // @ts-ignore
 import EasyEdit from "react-easy-edit"
 import { getOS } from "@/libraries/utilities"
-import { emit } from "@/libraries/events"
+import { emit, query } from "@/libraries/events"
+import { useEvent } from "@/components/hooks/useEvent"
+import useMemory from "@/components/hooks/useMemory"
+import { mAppT } from "@/data/schemas/memory"
 
 type GroupT = z.infer<typeof GroupS>
 type LoaderT = { app_state: AppStateT; user_state: UserT }
@@ -25,11 +28,26 @@ type LoaderT = { app_state: AppStateT; user_state: UserT }
 export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   const { app_state, user_state } = useLoaderData() as LoaderT
 
+  const mem: { groups: GroupT[] } = useMemory({ id: "session-organizer", state: { groups } })
+
   const [field_edit_id, setFieldEditId] = useState("")
   const fetcher = useFetcher()
-  const workspace_id = useParams().workspace_id
-  const session_id = useParams().session_id
+  
+  const mem_app: mAppT = useMemory({ id: "app" })
+  const { workspace_id, session_id } = mem_app
+  
+  // const workspace_id = useParams().workspace_id
+  // const session_id = useParams().session_id
   const navigate = useNavigate()
+
+  const updateGroups = async () => {
+    const groups: GroupT[] = await query({
+      type: "user.getGroups",
+      data: { workspace_id },
+    })
+    if (!groups) return
+    mem.groups = groups
+  }
 
   const toggleFolder = ({ folder_id, group_id }: { group_id: string; folder_id: string }) => {
     // check if folder is already open
@@ -117,26 +135,30 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
     }
   }, [field_edit_id])
 
+  useEffect(() => {
+    updateGroups()
+  }, [workspace_id])
+
   // keyboard shortcut for renaming a session
   useHotkeys(getOS() === "macos" ? "ctrl+r" : "alt+r", () => {
     if (field_edit_id || !session_id) return
     setFieldEditId(session_id || "")
   })
 
-  
-
-  /* TODO
-  // alt+up and alt+down to navigate between open sessions
-  useHotkeys("alt+up", () => {
-
+  useEvent({
+    name: [
+      "sessions.addSession.done",
+      "sessions.updateSession.done",
+      "sessions.updateSessions.done",
+      "app.changeActiveSession.done",
+      "app.removeOpenSession.done",
+    ],
+    action: updateGroups,
   })
-  useHotkeys("alt+down", () => {
-    
-  })
- */
+
   return (
     <div className="OrganizerTree flex w-full flex-col gap-8">
-      {groups.map((group) => (
+      {mem.groups.map((group) => (
         <div key={group.id} className="OrganizerGroup flex flex-col gap-2">
           <div className="flex flex-row items-center">
             <div

@@ -109,12 +109,20 @@ const API: { [key: string]: Function } = {
 
     await AppState.set(app_state)
 
+    emit({
+      type: "app.removeOpenSession.done",
+      data: {
+        session_id,
+        new_active_tab,
+      },
+    })
+
     return open_sessions_for_workspace[new_active_tab]
   },
   changeActiveSession: async function ({ session_id }: { session_id: string }) {
     const { AppState } = await initLoaders()
 
-    const app_state: AppStateT = AppState.get()
+    const app_state: AppStateT = await AppState.get()
 
     const active_workspace = await getActiveWorkspace()
     if (!active_workspace) {

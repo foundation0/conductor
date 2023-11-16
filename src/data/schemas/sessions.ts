@@ -16,13 +16,15 @@ export const TextMessageS = z.object({
       role: z.enum(["msg", "continue", "regen", "temp"]).catch("msg"),
     })
     .optional(),
+  status: z.enum(["pending", "sent", "ready", "read", "deleted"]).catch("ready"),
   text: z.string().min(1),
   context: z.string().optional(),
-  active: z.boolean().optional(),
   source: z.string().min(1),
   parent_id: z.string().catch("first"),
   signature: z.string().optional(), // optional for now
   hash: z.string().optional(), // optional for now
+  // deprecated
+  active: z.boolean().optional(),
 })
 export type TextMessageT = z.infer<typeof TextMessageS>
 

@@ -16,6 +16,8 @@ import _ from "lodash"
 import { emit, listen } from "@/libraries/events"
 import { RxCornerBottomLeft } from "react-icons/rx"
 import { useEvent } from "@/components/hooks/useEvent"
+import { mAppT } from "@/data/schemas/memory"
+import useMemory from "@/components/hooks/useMemory"
 
 type MessageProps = {
   message: TextMessageT
@@ -29,9 +31,11 @@ let mouse_over_timer: any = null
 
 const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className, avatar }) => {
   const navigate = useNavigate()
-  const workspace_id = useParams().workspace_id
-  const session_id = useParams().session_id
-
+  // const workspace_id = useParams().workspace_id
+  // const session_id = useParams().session_id
+  const mem_app: mAppT = useMemory({ id: "app" })
+  const { workspace_id, session_id } = mem_app
+  
   const [used_icon_id, setUsedIcon] = useState("")
 
   const [is_hovering, setIsHovering] = useState(false)
@@ -74,10 +78,10 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       if (icon_id) setUsedIcon(icon_id)
       await NotepadActions.add({ session_id, data: text, msg_id, type: "text" })
       setTimeout(closeSelection, selector_delay)
-      // if (workspace_id) navigate(`/c/${workspace_id}/${session_id}`)
     }
   }
   // console.log(new Date().getTime(), selection_open, is_hovering)
+
   return (
     <div
       id={`msg-${message.id}`}

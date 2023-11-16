@@ -182,6 +182,10 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
             // filter out the "continue" messages
             return r[1]?.meta?.role !== "continue"
           })
+          .filter((r) => {
+            // filter out deleted messages
+            return r[1]?.status !== "deleted"
+          })
           .map((row, index) => {
             let sender = ""
             let ai_image: ReactElement<any, string | JSXElementConstructor<any>> = <></>
@@ -332,6 +336,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                   message={{
                     id: "loader",
                     text: "thinking...",
+                    status: "ready",
                     type: "ai" as const,
                     source: "ai:",
                     created_at: "",

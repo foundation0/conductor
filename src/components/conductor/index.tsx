@@ -11,7 +11,6 @@ import { RiHashtag } from "react-icons/ri"
 import { useAuth } from "@/components/hooks/useAuth"
 import { setActiveUser } from "@/libraries/active_user"
 import { getModules } from "@/modules"
-import { ModuleT } from "@/data/schemas/modules"
 import UserActions from "@/data/actions/user"
 import { AIsT } from "@/data/schemas/ai"
 import AIActions from "@/data/actions/ai"
@@ -19,8 +18,9 @@ import config from "@/config"
 import { del as delLS, get as getLS } from "@/data/storage/localStorage"
 import { ConvertGuest } from "@/components/user/convert_guest"
 import { BuyCredits } from "../user/buy_credits"
-import { useEvent } from "../hooks/useEvent"
-import { listen } from "@/libraries/events"
+import useMemory from "@/components/hooks/useMemory"
+import { mAppT } from "@/data/schemas/memory"
+import { error } from "@/libraries/logging"
 
 export default function Conductor() {
   const { app_state, user_state, ai_state } = useLoaderData() as {
@@ -33,6 +33,36 @@ export default function Conductor() {
   const auth = useAuth()
   const navigate = useNavigate()
 
+  let workspace_id = useParams().workspace_id as string
+  let session_id = useParams().session_id as string
+
+  const mem: mAppT = useMemory({
+    id: "app",
+    state: {
+      workspace_id,
+      session_id,
+    },
+  })
+
+  useEffect(() => {
+    if (!workspace_id) {
+      // get the first workspace and its first session
+      const workspace = user_state.workspaces[0]
+      workspace_id = workspace?.id
+      const group = workspace?.groups[0]
+      const folder = group?.folders[0]
+      const session = _.get(folder, "sessions[0]")
+      if (!session) {
+        error({ message: "No session found in workspace", data: { workspace } })
+        return
+      }
+      session_id = session?.id
+      if(window.location.pathname === '/c/') navigate(`/c/${workspace_id}/${session_id}`)
+    }
+    mem.workspace_id = workspace_id
+    mem.session_id = session_id
+  }, [JSON.stringify([workspace_id, session_id])])
+
   const [guest_mode, setGuestMode] = useState<boolean>(getLS({ key: "guest-mode" }))
 
   const unload = useCallback(() => {
@@ -44,9 +74,6 @@ export default function Conductor() {
     return true
   }, [])
   useBeforeUnload(unload)
-
-  const workspace_id = useParams().workspace_id as string
-  const session_id = useParams().session_id as string
 
   useEffect(() => {
     // upgrade user's modules
@@ -68,12 +95,6 @@ export default function Conductor() {
       if (!ais?.find((ai) => ai.id === "c1")) {
         ais.push({ id: "c1", status: "active" })
       }
-
-      // upgrade all workspace default llms to use ule
-      // const upgraded_workspaces = user_state.workspaces.map((w) => {
-      //   w.defaults.llm_module = { id: config.defaults.llm_module.id, variant: config.defaults.llm_module.variant_id }
-      //   return w
-      // })
 
       UserActions.updateUser({ modules: { installed: module_specs }, ais })
 

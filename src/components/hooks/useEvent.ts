@@ -16,7 +16,7 @@ export const useEvent = ({ name, action, target }: { name: string | string[]; ac
           if(ts - (last_triggered[Array.isArray(name) ? name.join() : name] || 0) > 100) {
             last_triggered[Array.isArray(name) ? name.join() : name] = ts
             if (!target) return action(data)
-            if (target && target === data.target) return action(data)
+            if (target && target === data?.target) return action(data)
           }
         },
       })

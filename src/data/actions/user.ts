@@ -53,6 +53,13 @@ const API: { [key: string]: Function } = {
 
     return API.updateUser(us)
   },
+  async getGroups({ workspace_id }: { workspace_id: string }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const workspace: WorkspaceT = _.find(user_state.workspaces, { id: workspace_id })
+    if (!workspace) return
+    return workspace.groups || []
+  },
   deleteGroup: async ({ workspace_id, group_id }: { workspace_id: string; group_id: string }) => {
     if (!workspace_id || !group_id)
       return error({ message: "Missing workspace_id or group_id", data: { workspace_id, group_id } })
@@ -200,7 +207,6 @@ const API: { [key: string]: Function } = {
 
     emit({ type: "user/delete_folder", data: { workspace_id, folder_id, group_id } })
   },
-
   addSession: async function ({
     active_workspace,
     group_id,
@@ -262,7 +268,6 @@ const API: { [key: string]: Function } = {
 
     return { session: new_session, group_id, folder_id }
   },
-
   addWorkspace: async function ({ name }: { name: string }) {
     const { UserState, AppState } = await initLoaders()
     const user_state = await UserState.get()
@@ -336,7 +341,6 @@ const API: { [key: string]: Function } = {
 
     return new_workspace
   },
-
   renameItem: async function ({
     new_name,
     group_id,
@@ -614,6 +618,14 @@ const API: { [key: string]: Function } = {
         data_id,
       },
     })
+  },
+  async getSessions({ workspace_id }: { workspace_id: string }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const workspace: WorkspaceT = _.find(user_state.workspaces, { id: workspace_id })
+    if (!workspace) return
+    const sessions = _.flatten(workspace.groups.map((group) => group.folders.map((folder) => folder.sessions)))
+    return { sessions: _.flatten(sessions) }
   },
 }
 

@@ -1,5 +1,5 @@
 import { OpenSessionS } from "@/data/schemas/app"
-import { FolderS, GroupS, WorkspaceS } from "@/data/schemas/workspace"
+import { FolderS, GroupS, SessionT, WorkspaceS } from "@/data/schemas/workspace"
 import { useEffect, useRef, useState } from "react"
 import { z } from "zod"
 import _ from "lodash"
@@ -12,40 +12,75 @@ import { Link } from "react-router-dom"
 import AppStateActions from "@/data/actions/app"
 import { useHotkeys } from "react-hotkeys-hook"
 import { BiNotepad } from "react-icons/bi"
-import eventEmitter, { emit } from "@/libraries/events"
+import eventEmitter, { emit, query } from "@/libraries/events"
 import { getOS } from "@/libraries/utilities"
 import { error } from "@/libraries/logging"
 import { PiChatCircleDotsBold } from "react-icons/pi"
+import { useEvent } from "@/components/hooks/useEvent"
+import { mAppT } from "@/data/schemas/memory"
+import useMemory from "@/components/hooks/useMemory"
 
-export default function Tabs({
-  setShowNotepad: setShowNotepad,
-  setShowMembers,
-}: {
-  setShowNotepad: () => void
-  setShowMembers: () => void
-}) {
+export default function Tabs() {
   const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
 
   const [open_tabs, setOpenTabs] = useState<any>(null)
   const [item_added_to_notepad, setItemAddedToNotepad] = useState(false)
 
   const navigate = useNavigate()
-  const fetcher = useFetcher()
-  const workspace_id = useParams().workspace_id as string
-  const session_id = useParams().session_id as string
 
-  useEffect(() => {
-    eventEmitter.on("item_added_to_notepad", () => {
-      setItemAddedToNotepad(true)
-      setTimeout(() => {
-        setItemAddedToNotepad(false)
-      }, 2000)
+  const mem_app: mAppT = useMemory({ id: "app" })
+  const { workspace_id, session_id } = mem_app
+  if(!workspace_id || !session_id) return null
+  // const workspace_id = useParams().workspace_id as string
+  // const session_id = useParams().session_id as string
+
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const resizeHandler = () => {
+    const e = document.getElementById("Tabs")
+    if (e && containerRef.current) {
+      const parentWidth = e.offsetWidth
+      const tabs_actions_e = document.getElementById("TabsActions")
+      if (!tabs_actions_e) return
+      const tabs_width = parentWidth - tabs_actions_e?.offsetWidth
+      const tabs_count = document.querySelectorAll("#OpenTabs a").length + 1
+      Array.from(document.querySelectorAll("#OpenTabs a")).forEach((child: Element) => {
+        const relativeWidth = tabs_width / tabs_count
+        ;(child as HTMLElement).style.width = `${relativeWidth}px`
+      })
+    }
+  }
+
+  async function createNewSession() {
+    // get folder_id based on active session_id
+    const group = _.find(
+      user_state.workspaces.flatMap((ws) => ws.groups),
+      (g) => g.folders.find((f) => f?.sessions?.find((s) => s.id === session_id))
+    ) as z.infer<typeof GroupS>
+
+    const folder = group.folders.find((f) => f?.sessions?.find((s) => s.id === session_id)) as z.infer<typeof FolderS>
+
+    const new_session: { session: SessionT } = await query({
+      type: "sessions.addSession",
+      data: {
+        group_id: group?.id || "",
+        workspace_id: workspace_id || "",
+        folder_id: folder?.id || "",
+      },
     })
 
-    eventEmitter.on("layout_resize", () => {
-      resizeHandler()
-    })
-  }, [])
+    /* fetcher.submit(
+      {
+        workspace_id: workspace_id || "",
+        group_id: group?.id || "",
+        folder_id: folder?.id || "",
+      },
+      {
+        method: "PUT",
+        action: `/c/workspace/session`,
+      }
+    ) */
+  }
 
   // Generate visible tabs
   const generateVisibleTabs = () => {
@@ -189,7 +224,7 @@ export default function Tabs({
   })
 
   // keyboard shortcut for deleting a session
-  useHotkeys(getOS() === "macos" ? "shift+ctrl+d" : "shift+alt+d", () => {
+  useHotkeys(getOS() === "macos" ? "shift+ctrl+d" : "shift+alt+d", async () => {
     if (!session_id) return
     if (app_state.open_sessions.length === 1) {
       return error({ message: "You can't delete the last session." })
@@ -199,57 +234,36 @@ export default function Tabs({
       const session_index = _.findIndex(app_state.open_sessions, { session_id })
       // get the previous session from open sessions
       const next_session = app_state.open_sessions[session_index === 0 ? session_index + 1 : session_index - 1]
-
-      fetcher.submit(
-        {
-          workspace_id: workspace_id || "",
-          session_id: session_id || "",
-          group_id: session.group_id || "",
+      await query({
+        type: "sessions.deleteSession",
+        data: {
           folder_id: session.folder_id || "",
+          group_id: session.group_id || "",
+          workspace_id: session.workspace_id || "",
+          session_id: session.session_id || "",
         },
-        {
-          method: "DELETE",
-          action: "/c/workspace/session",
-        }
-      )
+      })
       navigate(`/c/${workspace_id}/${next_session.session_id}`)
     }
   })
 
   // keyboard shortcut for creating new session
-  useHotkeys(getOS() === "macos" ? "ctrl+t" : "alt+t", () => {
+  useHotkeys(getOS() === "macos" ? "ctrl+t" : "alt+t", async () => {
     if (!session_id) return
     const session = _.find(app_state.open_sessions, { session_id })
-    fetcher.submit(
-      {
+    const new_session: { session: SessionT } = await query({
+      type: "sessions.addSession",
+      data: {
+        group_id: session?.group_id || "",
         workspace_id: workspace_id || "",
         folder_id: session?.folder_id || "",
-        group_id: session?.group_id || "",
       },
-      {
-        method: "PUT",
-        action: `/c/workspace/session`,
-      }
-    )
+    })
+    setTimeout(() => {
+      navigate(`/c/${workspace_id}/${new_session?.session.id}`)
+    }, 200)
   })
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const prevParentWidth = useRef<number | null>(null)
-
-  const resizeHandler = () => {
-    const e = document.getElementById("Tabs")
-    if (e && containerRef.current) {
-      const parentWidth = e.offsetWidth
-      const tabs_actions_e = document.getElementById("TabsActions")
-      if (!tabs_actions_e) return
-      const tabs_width = parentWidth - tabs_actions_e?.offsetWidth
-      const tabs_count = document.querySelectorAll("#OpenTabs a").length + 1
-      Array.from(document.querySelectorAll("#OpenTabs a")).forEach((child: Element) => {
-        const relativeWidth = tabs_width / tabs_count
-        ;(child as HTMLElement).style.width = `${relativeWidth}px`
-      })
-    }
-  }
   useEffect(() => {
     resizeHandler()
     window.addEventListener("resize", resizeHandler)
@@ -258,27 +272,30 @@ export default function Tabs({
     }
   }, [])
 
-  async function createNewSession() {
-    // get folder_id based on active session_id
-    const group = _.find(
-      user_state.workspaces.flatMap((ws) => ws.groups),
-      (g) => g.folders.find((f) => f?.sessions?.find((s) => s.id === session_id))
-    ) as z.infer<typeof GroupS>
+  useEvent({
+    name: "layout_resize",
+    action: resizeHandler,
+  })
 
-    const folder = group.folders.find((f) => f?.sessions?.find((s) => s.id === session_id)) as z.infer<typeof FolderS>
+  useEvent({
+    name: "notepad.addClip.done",
+    action: () => {
+      setItemAddedToNotepad(true)
+      setTimeout(() => {
+        setItemAddedToNotepad(false)
+      }, 2000)
+    },
+  })
 
-    fetcher.submit(
-      {
-        workspace_id: workspace_id || "",
-        group_id: group?.id || "",
-        folder_id: folder?.id || "",
-      },
-      {
-        method: "PUT",
-        action: `/c/workspace/session`,
-      }
-    )
-  }
+  useEvent({
+    name: [
+      "sessions.addSession.done",
+      "sessions.updateSession.done",
+      "app.changeActiveSession.done",
+      "app.removeOpenSession.done",
+    ],
+    action: generateVisibleTabs,
+  })
 
   return (
     <>

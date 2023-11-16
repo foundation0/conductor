@@ -2,10 +2,9 @@ import generate_llm_module_options from "@/libraries/generate_llm_module_options
 import generate_ai_options from "@/libraries/generate_ai_options"
 import { UserT } from "@/data/loaders/user"
 import Select from "react-select"
-import { MdSettingsSuggest } from "react-icons/md"
 import { RiAddCircleFill, RiSettings3Fill } from "react-icons/ri"
-import { Link, useParams } from "react-router-dom"
-import _, { set } from "lodash"
+import { Link } from "react-router-dom"
+import _ from "lodash"
 import { useEffect, useState } from "react"
 import { useEvent } from "@/components/hooks/useEvent"
 import { error } from "@/libraries/logging"
@@ -15,7 +14,6 @@ import { TbSelector } from "react-icons/tb"
 import { getAvatar } from "@/libraries/ai"
 import { emit } from "@/libraries/events"
 import useMemory from "@/components/hooks/useMemory"
-import { SessionT } from "@/data/schemas/workspace"
 import { ChatSessionT } from "@/data/schemas/sessions"
 
 export function AISelector({
@@ -43,11 +41,6 @@ export function AISelector({
       session: {},
     },
   })
-  // const [show_settings, setShowSettings] = useState(true)
-  // const [active_llm_module_text, setActiveLLMModuleText] = useState("")
-  // const [session, setSession] = useState<any>({})
-  // const [ai_options, setAIOptions] = useState<any>([])
-  // const [llm_options, setLLMOptions] = useState<any>([])
 
   function update() {
     if (_.isEqualWith(mem.session, {})) return
@@ -75,6 +68,11 @@ export function AISelector({
   useEffect(() => {
     update()
   }, [JSON.stringify(mem.session)])
+
+  useEvent({
+    name: "modules/update",
+    action: update,
+  })
 
   useEvent({
     name: "sessions.updateSessions.done",
@@ -128,11 +126,6 @@ export function AISelector({
     emit({
       type: "sessions/module-change",
     })
-    // navigate(`/c/${workspace_id}/${session.id}`)
-    // set focus to #input
-    //setTimeout(() => {
-    //  fieldFocus({ selector: "#input" })
-    // }, 200)
   }
 
   // change session's active module
@@ -161,13 +154,6 @@ export function AISelector({
         variant_id: new_llm_module[1],
       },
     })
-
-    // navigate(`/c/${workspace_id}/${session.id}`)
-
-    // set focus to #input
-    // setTimeout(() => {
-    //   fieldFocus({ selector: "#input" })
-    // }, 200)
   }
   if (_.isEqualWith(mem.session, {})) return
   return (
@@ -185,7 +171,7 @@ export function AISelector({
             <div className="text-xs font-medium tooltip tooltip-top cursor-pointer hidden" data-tip="Show settings">
               <RiSettings3Fill
                 className="w-4 h-4 text-zinc-500 hover:text-zinc-300 transition-all"
-                onClick={() => mem.show_settings = !mem.show_settings}
+                onClick={() => (mem.show_settings = !mem.show_settings)}
               />
             </div>
             <Link className="text-xs font-medium tooltip tooltip-top" data-tip="Create new AI" to={`/c/ai/create`}>
@@ -256,7 +242,6 @@ export const AISelectorButton = function ({ session_id }: { session_id: string }
 
   useEvent({
     name: "sessions.updateSessions.done",
-    // target: session_id,
     action: () => {
       init()
     },
