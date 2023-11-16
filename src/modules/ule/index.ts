@@ -1,5 +1,5 @@
 import * as z from "zod"
-import { LLMVariantS, ModuleS, StreamingS } from "@/data/schemas/modules"
+import { ModuleS, StreamingS } from "@/data/schemas/modules"
 import { TextMessageS } from "@/data/schemas/sessions"
 import _ from "lodash"
 // @ts-ignore

@@ -13,6 +13,7 @@ import { PEClient, PEClientNS } from "@/libraries/pe"
 
 import { error } from "@/libraries/logging"
 import config from "@/config"
+import { emit } from "@/libraries/events"
 
 export const MODULES: any = {
   // openai: OpenAI,
@@ -118,6 +119,9 @@ export const Module = async (mod: string, factory_state: boolean = false) => {
         mm.specs.settings = { ...mm.specs.settings, ...installed_module.settings }
         // mm.specs.meta.variants = _.uniqBy(installed_module.meta.variants, "id")
       }
+      emit({
+        type: "modules/update",
+      })
     }
   }
   return mm as {
