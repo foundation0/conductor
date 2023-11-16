@@ -12,23 +12,27 @@ export function AIToInstruction({ ai }: { ai: AIT }) {
   Your name: ${ai.meta.name}
   Who you are: ${ai.persona.description}
   ${ai.persona.background ? `Your background: ${ai.persona.background}` : ""}
-  ${ai.persona.styles ? `How you communicate: ${ai.persona.styles.join(", ")}` : ""}
+  ${ai.persona.styles && ai.persona.styles.length > 0 ? `How you communicate: ${ai.persona.styles.join(", ")}` : ""}
   ${ai.persona.audience ? `Who you write for: ${ai.persona.audience}` : ""}
   ${
-    ai.persona.responsibilities
+    ai.persona.responsibilities && ai.persona.responsibilities.length > 0
       ? `Your responsibilities (FOLLOW ALWAYS, IMPORTANT): ${ai.persona.responsibilities.join(", ")}`
       : ""
   }
-  ${ai.persona.limitations ? `Your limitations (FOLLOW ALWAYS, IMPORTANT): ${ai.persona.limitations.join(", ")}` : ""}
   ${
-    ai.persona.traits
+    ai.persona.limitations && ai.persona.limitations.length > 0
+      ? `Your limitations (FOLLOW ALWAYS, IMPORTANT): ${ai.persona.limitations.join(", ")}`
+      : ""
+  }
+  ${
+    ai.persona.traits && ai.persona.traits.length > 0
       ? `Your traits (FOLLOW ALWAYS, IMPORTANT): ${ai.persona.traits.map((t) => t.skill).join(", ")}`
       : ""
   }
 
   ### EXAMPLE RESPONSES ###
   ${
-    ai.persona.response_examples
+    ai.persona.response_examples && ai.persona.response_examples.length > 0
       ? `${ai.persona.response_examples.map((e) => `User:\n${e?.message}\nYou:\n${e?.response}\n\n`).join(", ")}`
       : ""
   }
