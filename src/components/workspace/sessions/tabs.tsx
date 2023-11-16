@@ -30,6 +30,7 @@ export default function Tabs() {
 
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
+  if(!workspace_id || !session_id) return null
   // const workspace_id = useParams().workspace_id as string
   // const session_id = useParams().session_id as string
 
