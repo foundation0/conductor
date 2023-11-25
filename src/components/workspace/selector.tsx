@@ -1,7 +1,7 @@
 import { HiPlus } from "react-icons/hi"
 import { For } from "react-solid-flow"
 import PromptIcon from "@/assets/prompt.svg"
-import { Location, useLoaderData, useLocation, useParams } from "react-router-dom"
+import { Location, useLoaderData, useLocation } from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import AppStateActions from "@/data/actions/app"

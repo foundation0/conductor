@@ -311,7 +311,6 @@ export async function addMessage({
           costs: { input: variant?.cost_input || 0, output: variant?.cost_output || 0 },
         }) */
 
-        /* 
         if (!receipt)
           return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
         console.log(
@@ -320,8 +319,8 @@ export async function addMessage({
         SessionsActions.addCost({
           session_id,
           receipt,
-        }) 
-        */
+        })
+
         const data: { session_id: string; message: Partial<TextMessageT> } = {
           session_id,
           message: {

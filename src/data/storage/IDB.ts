@@ -11,6 +11,7 @@ import config from "@/config"
 import { verify } from "@noble/secp256k1"
 import { emit, listen } from "@/libraries/events"
 import { createMemoryState, getMemoryState } from "@/libraries/memory"
+import { get as getLS, set as setLS } from "@/data/storage/localStorage"
 
 // Function to merge the current state with the updated state
 export const mergeState = <T>(state: T, updated_state: T): T => {
@@ -79,9 +80,20 @@ export async function getRemote({
     error({ message: "no remote key" })
     return
   }
+
+  const lasted_checked = getLS({ key: `${remote_key}-last_checked` })
+  if (lasted_checked) {
+    const now = new Date().getTime()
+    const diff = now - lasted_checked
+    if (diff < config.DB.CF.sync_interval) {
+      return
+    }
+  }
+
   // Set the store status to "checking_update"
   mem[name] = { status: "checking_update", updated_at: new Date().getTime() }
 
+  
   // Get the store from the cloud storage
   getCF({ key: remote_key })
     .then(async (cf_store: any) => {

@@ -25,28 +25,44 @@ import { buyCreditsWithStripe } from "@/libraries/payments"
 import { getModules } from "@/modules"
 import { get as getLS } from "@/data/storage/localStorage"
 import humanize from "humanize"
+import useMemory from "../hooks/useMemory"
 
 export default function Settings(props: any) {
   const navigate = useNavigate()
   let auth = useAuth()
   const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
-  const [field_edit_id, setFieldEditId] = useState("")
+  /* const [field_edit_id, setFieldEditId] = useState("")
   const [balance, setBalance] = useState<number | string>("loading...")
   const [bytes_balance, setBytesBalance] = useState<number | string>("loading...")
   const [wallet_status, setWalletStatus] = useState<string>("loading...")
 
-  const [module_list, setModuleList] = useState<any[]>([])
+  const [module_list, setModuleList] = useState<any[]>([]) */
+
+  const mem: {
+    field_edit_id: string,
+    balance: number | string,
+    bytes_balance: number | string,
+    wallet_status: string,
+    module_list: any[],
+  } = useMemory({ id: 'conductor/settings', state: {
+    field_edit_id: "",
+    balance: "loading...",
+    bytes_balance: "loading...",
+    wallet_status: "loading...",
+    module_list: [],
+  }})
+  const { field_edit_id, balance, bytes_balance, wallet_status, module_list } = mem
 
   // initialization
   useEffect(() => {
     getBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
-      setBalance(balance)
+      mem.balance = balance
     })
     getBytesBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
-      setBytesBalance(balance)
+      mem.bytes_balance = balance
     })
     getWalletStatus({ public_key: user_state.public_key, master_key: user_state.master_key }).then((wallet_status) => {
-      setWalletStatus(wallet_status)
+      mem.wallet_status = wallet_status
     })
     // getFreeBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((free_balance) => {
     //   console.log("free balance", free_balance)
@@ -56,7 +72,7 @@ export default function Settings(props: any) {
 
   const updateModules = async () => {
     const mods = await getModules()
-    setModuleList(mods)
+    mem.module_list = mods
   }
   const handleEdit = async ({ value, name, module_id }: { value: string; name: string; module_id?: string }) => {
     // field name is concatenated with . to denote nested fields
@@ -195,18 +211,18 @@ export default function Settings(props: any) {
                   <div
                     className="flex flex-grow text-end text-sm justify-center items-center mr-2"
                     onClick={() => {
-                      setFieldEditId("name")
+                      mem.field_edit_id = "name"
                       return false
                     }}
                   >
                     <EasyEdit
                       type="text"
                       onSave={(data: any) => {
-                        setFieldEditId("")
+                        mem.field_edit_id = ""
                         handleEdit({ value: data, name: `meta.name` })
                       }}
-                      onCancel={() => setFieldEditId("")}
-                      onBlur={() => setFieldEditId("")}
+                      onCancel={() => mem.field_edit_id = ""}
+                      onBlur={() => mem.field_edit_id = ""}
                       cancelOnBlur={true}
                       saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
                       cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
@@ -223,18 +239,18 @@ export default function Settings(props: any) {
                   <div
                     className="flex flex-grow text-end text-sm justify-center items-center mr-2"
                     onClick={() => {
-                      setFieldEditId("email")
+                      mem.field_edit_id = "email"
                       return false
                     }}
                   >
                     <EasyEdit
                       type="text"
                       onSave={(data: any) => {
-                        setFieldEditId("")
+                        mem.field_edit_id = ""
                         handleEdit({ value: data, name: `meta.email` })
                       }}
-                      onCancel={() => setFieldEditId("")}
-                      onBlur={() => setFieldEditId("")}
+                      onCancel={() => mem.field_edit_id = ""}
+                      onBlur={() => mem.field_edit_id = ""}
                       cancelOnBlur={true}
                       saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
                       cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
@@ -344,7 +360,7 @@ export default function Settings(props: any) {
                     {module.meta?.description || "No description"}
                   </div>
 
-                  <ModuleSettings {...{ module, index: index - 1, setFieldEditId, handleEdit, EditComponent }} />
+                  <ModuleSettings {...{ module, index: index - 1, handleEdit, EditComponent }} />
                 </div>
               )
             })}

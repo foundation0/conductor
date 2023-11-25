@@ -8,6 +8,7 @@ import { HiPlus } from "react-icons/hi"
 import { useNavigate } from "react-router-dom"
 import { zodToJsonSchema } from "zod-to-json-schema"
 import { Match, Switch } from "react-solid-flow"
+import useMemory from "../hooks/useMemory"
 
 function getZodKeys({ schema }: { schema: any }) {
   const json_sc: any = zodToJsonSchema(schema)
@@ -28,21 +29,25 @@ function getZodKeys({ schema }: { schema: any }) {
 export function ModuleSettings({
   module,
   index,
-  setFieldEditId,
   handleEdit,
   EditComponent,
 }: {
   module: any
   index: number
-  setFieldEditId: any
   handleEdit: any
   EditComponent: any
 }) {
-  const navigate = useNavigate()
+  const mem: {
+    field_edit_id: string
+  } = useMemory({ id: "conductor/settings" })
   const [expanded_models, setExpandedModels] = useState<string[]>([
     ...module.meta.variants.map((v: any) => v.id),
     "new-variant",
   ])
+
+  function setFieldEditId(id: string) {
+    mem.field_edit_id = id
+  }
 
   function humanizeVariableName(string: string) {
     if (!string) return

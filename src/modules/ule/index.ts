@@ -112,15 +112,15 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
     const messages: any = [
       {
         type: "system",
-        text: prompt.instructions || "",
+        text: prompt.instructions || "You are a helpful assistant",
       },
       ...history.map((message) => {
-        if (message.type === "human") {
+        if (message.type === "human" && message.text) {
           return {
             type: "user",
             text: message.text,
           }
-        } else if (message.type === "ai") {
+        } else if (message.type === "ai" && message.text) {
           return {
             type: "assistant",
             text: message.text,
@@ -128,8 +128,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
         }
       }),
     ]
-
-    if (messages[messages.length - 1].type === "assistant" || messages.length === 1) {
+    if (messages[messages.length - 1]?.type === "assistant" || messages.length === 1) {
       messages.push({
         type: "user",
         text: prompt.user,

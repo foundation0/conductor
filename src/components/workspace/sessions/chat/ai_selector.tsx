@@ -47,7 +47,7 @@ export function AISelector({
     const mod = _.find(user_state.modules.installed, { id: mem.session.settings.module.id })
     const variant = _.find(mod?.meta?.variants, { id: mem.session.settings.module.variant })
     const active_llm_module_text = `${mod?.meta.name || mod?.meta.vendor.name} / ${variant?.name || variant?.id} ${
-      variant?.context_len && `(~${_.round(variant?.context_len / 5, 0)} word memory)`
+      variant?.context_len && `(~${_.round(variant?.context_len * 0.8, 0)} word memory)`
     }`
     mem.active_llm_module_text = active_llm_module_text
 

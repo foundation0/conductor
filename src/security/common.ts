@@ -11,6 +11,7 @@ import { pack, unpack } from "msgpackr"
 import { KeyPairS, SecurePasswordS, VerifyPasswordS, EncryptS, DecryptS } from "@/data/schemas/security"
 import { error } from "@/libraries/logging"
 import sodium from "sodium-javascript"
+
 type Hex = Uint8Array | string
 ;(async () => {
   if (typeof sodium["init"] === "function") await sodium.init()

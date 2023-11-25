@@ -21,9 +21,7 @@ import { z } from "zod"
 import { error, ph } from "./logging"
 import { generateUser } from "./user"
 import UsersActions from "@/data/actions/users"
-import { set as setLS } from "@/data/storage/localStorage"
 import { UserT } from "@/data/loaders/user"
-import { getRemoteKey } from "@/data/storage/IDB"
 
 interface AuthContextType {
   user: any

@@ -1,5 +1,6 @@
 import config from "@/config"
 import _ from "lodash"
+import { sleep } from "./utilities"
 
 type PEArgsT = {
   host: string
@@ -11,7 +12,7 @@ type PEArgsT = {
 export async function PEClient<T>({ host, onData, onDone, onError }: PEArgsT): Promise<{
   close: () => void
   abort: (params: { user_id: string }) => void
-  compute: (request: T) => void
+  compute: (request: T) => any
 }> {
   let request_id: string = ""
   let ws: WebSocket
@@ -22,7 +23,8 @@ export async function PEClient<T>({ host, onData, onDone, onError }: PEArgsT): P
     abort: ({ user_id }: { user_id: string }) => {
       ws.send(JSON.stringify({ request_id, user_id, type: "Abort" }))
     },
-    compute: (request: T) => {
+    compute: async (request: T) => {
+
       // check if websocket is already open
       if (!ws || ws?.readyState !== 1) {
         // open websocket connection to host/PE

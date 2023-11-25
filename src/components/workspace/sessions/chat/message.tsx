@@ -1,8 +1,8 @@
 import React, { JSXElementConstructor, ReactElement, useEffect, useState } from "react"
 import { TextMessageT } from "@/data/loaders/sessions"
 import ReactMarkdown from "react-markdown"
-import { MdCheck, MdContentCopy } from "react-icons/md"
-import { useNavigate, useParams } from "react-router-dom"
+import { MdCheck, MdContentCopy, MdEdit } from "react-icons/md"
+import { useNavigate } from "react-router-dom"
 import NotepadActions from "@/data/actions/notepad"
 import * as Selection from "selection-popover"
 import * as Toolbar from "@radix-ui/react-toolbar"
@@ -13,7 +13,7 @@ import { GoCodescan } from "react-icons/go"
 import { copyToClipboard } from "@/libraries/copypasta"
 import { BiNotepad } from "react-icons/bi"
 import _ from "lodash"
-import { emit, listen } from "@/libraries/events"
+import { emit } from "@/libraries/events"
 import { RxCornerBottomLeft } from "react-icons/rx"
 import { useEvent } from "@/components/hooks/useEvent"
 import { mAppT } from "@/data/schemas/memory"
@@ -35,7 +35,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
   // const session_id = useParams().session_id
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
-  
+
   const [used_icon_id, setUsedIcon] = useState("")
 
   const [is_hovering, setIsHovering] = useState(false)
@@ -45,7 +45,7 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       clearInterval(mouse_over_timer)
       emit({ type: "chat/message-hover", data: { id: message.id } })
       setIsHovering(true)
-      mouse_over_timer = setTimeout(() => setIsHovering(false), 2000)
+      mouse_over_timer = setTimeout(() => setIsHovering(false), 10000)
     } else if (!state && is_hovering) {
       setIsHovering(false)
       clearInterval(mouse_over_timer)
@@ -89,7 +89,6 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       onMouseLeave={() => handleMouseHover(false)}
       className="flex flex-row"
     >
-      
       {!isActive && <RxCornerBottomLeft className="w-3 h-3 text-zinc-700 flex-shrink-0" />}
       {avatar && (
         <div className="flex flex-shrink">
@@ -121,7 +120,10 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
             }}
           >
             {is_hovering && isActive && (
-              <div className="flex gap-3 border-2 border-zinc-900/70 backdrop-blur bg-zinc-900/50 absolute right-1 -top-9 text-xs overflow-visible whitespace-nowrap py-1.5 px-3 rounded-t-xl  mt-2">
+              <div
+                className="flex gap-3 border-2 border-zinc-900/70 backdrop-blur bg-zinc-900/50 absolute right-1 -top-9 text-xs overflow-visible whitespace-nowrap py-1.5 px-3 rounded-t-xl  mt-2"
+                onMouseEnter={() => handleMouseHover(true)}
+              >
                 <div className="tooltip-top tooltip" data-tip="Copy message to clipboard">
                   {used_icon_id === message.id + "all/copy" ? (
                     <MdCheck />
@@ -149,6 +151,18 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                       }}
                     />
                   )}
+                </div>
+                <div className="tooltip tooltip-top" data-tip="Editing coming soon">
+                  <MdEdit
+                    className="h-3 w-3 cursor-not-allowed hover:text-zinc-200 text-zinc-400"
+                    /* onClick={() => {
+                        addToClipboard({
+                          text: message.text || "",
+                          msg_id: message.id,
+                          icon_id: message.id + "all/clip",
+                        })
+                      }} */
+                  />
                 </div>
               </div>
             )}

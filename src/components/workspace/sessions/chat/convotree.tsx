@@ -238,10 +238,11 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                       }
                     />
 
-                    {/* {_.last(rows)?.[1].type === "ai" && _.last(rows)?.[1].id === row[1].id && !gen_in_progress && (
-                      <div className="flex flex-1 justify-end text-xs text-zinc-500 hover:text-zinc-100 cursor-pointer transition-all mr-1">
-                        <div
-                          onClick={() => {
+                    {_.last(rows)?.[1].type === "ai" && _.last(rows)?.[1].id === row[1].id && !gen_in_progress && (
+                      <div className="flex flex-1 justify-end text-xs text-zinc-500 hover:text-zinc-100 cursor-not-allowed transition-all mr-1">
+                        <div className="tooltip tooltip-top" data-tip="Coming soon">
+                          <div
+                          /* onClick={() => {
                             emit({
                               type: "chat.send",
                               data: {
@@ -253,12 +254,13 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                                 message: "continue",
                               },
                             })
-                          }}
-                        >
-                          continue...
+                          }} */
+                          >
+                            continue...
+                          </div>
                         </div>
                       </div>
-                    )} */}
+                    )}
                     {rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1]?.[2]?.length > 0 &&
                       row[1].type === "ai" &&
                       rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1][2].map((m) => {

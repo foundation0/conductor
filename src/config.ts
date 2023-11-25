@@ -39,6 +39,7 @@ const config = {
   DB: {
     URI: override("DB_URI") || import.meta.env.PROD ? "https://db.promptc0.com/" : "http://localhost:6002/",
     CF: {
+      sync_interval: 1000 * 60,
       get_limit: 1000,
       set_limit: 60000,
     },
