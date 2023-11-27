@@ -26,6 +26,7 @@ import { getModules } from "@/modules"
 import { get as getLS } from "@/data/storage/localStorage"
 import humanize from "humanize"
 import useMemory from "../hooks/useMemory"
+import CallHistory from "./call_history"
 
 export default function Settings(props: any) {
   const navigate = useNavigate()
@@ -313,6 +314,12 @@ export default function Settings(props: any) {
               </div>
             </div>
           </div>
+        </div>
+        <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
+          Computation log
+        </div>
+        <div className="flex flex-row w-full gap-2">
+          <CallHistory />
         </div>
         {/* <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
           Modules

@@ -162,6 +162,12 @@ const API: { [key: string]: Function } = {
       data: { receipt },
     })
   },
+  async getAllReceipts(){
+    const { SessionState } = await initLoaders()
+    const sessions: SessionsT = SessionState.get()
+    const receipts = _.flatten(Object.values(sessions.active).map((s) => s.receipts || []))
+    return receipts
+  },
   clearMessages: async function ({ session_id }: { session_id: string }) {
     const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })

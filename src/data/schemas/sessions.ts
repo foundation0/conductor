@@ -61,6 +61,7 @@ export const ReceiptS = z.object({
   vendor: z.string(),
   model: z.string(),
   cost_usd: z.number(),
+  received_at: z.date().catch(() => new Date()),
   details: ReceiptDetailsS,
 })
 export type ReceiptT = z.infer<typeof ReceiptS>
