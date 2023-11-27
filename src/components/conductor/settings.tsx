@@ -20,7 +20,7 @@ import { LuSettings2 } from "react-icons/lu"
 import { BiBlock } from "react-icons/bi"
 import { parseBoolean, parseNumber } from "@/libraries/utilities"
 import { getBalance, getBytesBalance, getFreeBalance, getWalletStatus } from "@/components/user/wallet"
-import { ModuleSettings } from "./module_settings"
+import { ModuleSettings } from "../modules/module_settings"
 import { buyCreditsWithStripe } from "@/libraries/payments"
 import { getModules } from "@/modules"
 import { get as getLS } from "@/data/storage/localStorage"
@@ -39,18 +39,21 @@ export default function Settings(props: any) {
   const [module_list, setModuleList] = useState<any[]>([]) */
 
   const mem: {
-    field_edit_id: string,
-    balance: number | string,
-    bytes_balance: number | string,
-    wallet_status: string,
-    module_list: any[],
-  } = useMemory({ id: 'conductor/settings', state: {
-    field_edit_id: "",
-    balance: "loading...",
-    bytes_balance: "loading...",
-    wallet_status: "loading...",
-    module_list: [],
-  }})
+    field_edit_id: string
+    balance: number | string
+    bytes_balance: number | string
+    wallet_status: string
+    module_list: any[]
+  } = useMemory({
+    id: "conductor/settings",
+    state: {
+      field_edit_id: "",
+      balance: "loading...",
+      bytes_balance: "loading...",
+      wallet_status: "loading...",
+      module_list: [],
+    },
+  })
   const { field_edit_id, balance, bytes_balance, wallet_status, module_list } = mem
 
   // initialization
@@ -221,8 +224,8 @@ export default function Settings(props: any) {
                         mem.field_edit_id = ""
                         handleEdit({ value: data, name: `meta.name` })
                       }}
-                      onCancel={() => mem.field_edit_id = ""}
-                      onBlur={() => mem.field_edit_id = ""}
+                      onCancel={() => (mem.field_edit_id = "")}
+                      onBlur={() => (mem.field_edit_id = "")}
                       cancelOnBlur={true}
                       saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
                       cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
@@ -249,8 +252,8 @@ export default function Settings(props: any) {
                         mem.field_edit_id = ""
                         handleEdit({ value: data, name: `meta.email` })
                       }}
-                      onCancel={() => mem.field_edit_id = ""}
-                      onBlur={() => mem.field_edit_id = ""}
+                      onCancel={() => (mem.field_edit_id = "")}
+                      onBlur={() => (mem.field_edit_id = "")}
                       cancelOnBlur={true}
                       saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
                       cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
@@ -311,7 +314,7 @@ export default function Settings(props: any) {
             </div>
           </div>
         </div>
-        <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
+        {/* <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
           Modules
         </div>
         <div className="flex flex-row w-full gap-2">
@@ -368,14 +371,14 @@ export default function Settings(props: any) {
             className="w-1/2 bg-zinc-900 rounded-lg p-3 flex flex-col justify-center items-center cursor-not-allowed border-zinc-700 border border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500 tooltip tooltip-top"
             data-tip="Coming soon"
           >
-            {/* <HiPlus className="w-8 h-8 rounded-full border border-dashed border-zinc-600 m-2 p-1" /> */}
+            
             <img
               src={IntersectIcon}
               className="w-10 h-10 rounded-full border-2 border-dashed border-zinc-700 m-2 p-1 saturate-0 hover:saturate-50"
             />
             <div className="text-xs font-semibold">Browser module marketplace</div>
           </div>
-        </div>
+        </div> */}
         <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
           AIs
         </div>
