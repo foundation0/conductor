@@ -24,7 +24,7 @@ const API: { [key: string]: Function } = {
     if (!parsed.success) throw new Error("Invalid state")
     await UserState.set(parsed.data)
 
-    emit({ type: "user/update", data: parsed.data })
+    emit({ type: "user.update.done", data: parsed.data })
 
     return parsed.data
   },
@@ -49,7 +49,7 @@ const API: { [key: string]: Function } = {
       return workspace
     })
 
-    emit({ type: "user/add_group", data: { workspace_id, group: new_group } })
+    emit({ type: "user.addGroup.done", data: { workspace_id, group: new_group } })
 
     return API.updateUser(us)
   },
@@ -106,7 +106,7 @@ const API: { [key: string]: Function } = {
     as.open_folders = new_open_folders
     await AppStateActions.updateAppState(as)
 
-    emit({ type: "user/delete_group", data: { workspace_id, group_id } })
+    emit({ type: "user.deleteGroup.done", data: { workspace_id, group_id } })
   },
   addFolder: async ({ name, group_id, workspace_id }: { workspace_id: string; group_id: string; name?: string }) => {
     const { UserState, AppState } = await initLoaders()
@@ -141,7 +141,7 @@ const API: { [key: string]: Function } = {
     ]
     await AppStateActions.updateAppState(as)
 
-    emit({ type: "user/add_folder", data: { workspace_id, group_id, folder: new_folder } })
+    emit({ type: "user.addFolder.done", data: { workspace_id, group_id, folder: new_folder } })
   },
   deleteFolder: async ({
     workspace_id,
@@ -205,7 +205,7 @@ const API: { [key: string]: Function } = {
     as.open_folders = new_open_folders
     await AppStateActions.updateAppState(as)
 
-    emit({ type: "user/delete_folder", data: { workspace_id, folder_id, group_id } })
+    emit({ type: "user.deleteFolder.done", data: { workspace_id, folder_id, group_id } })
   },
   addSession: async function ({
     active_workspace,
@@ -264,7 +264,7 @@ const API: { [key: string]: Function } = {
 
     await UserState.set(updated_state)
 
-    emit({ type: "user/add_session", data: { session: new_session, group_id, folder_id } })
+    emit({ type: "user.addSession.done", data: { session: new_session, group_id, folder_id } })
 
     return { session: new_session, group_id, folder_id }
   },
@@ -337,7 +337,7 @@ const API: { [key: string]: Function } = {
     }
     await SessionState.set(new_sessions)
 
-    emit({ type: "user/add_workspace", data: { workspace: new_workspace } })
+    emit({ type: "user.addWorkspace.done", data: { workspace: new_workspace } })
 
     return new_workspace
   },
@@ -423,7 +423,7 @@ const API: { [key: string]: Function } = {
     }
     await UserState.set(us)
 
-    emit({ type: "user/rename_item", data: { group_id, folder_id, session_id, new_name } })
+    emit({ type: "user.renameItem.done", data: { group_id, folder_id, session_id, new_name } })
   },
   async addDataToWorkspace({ workspace_id, data }: { workspace_id: string; data: DataRefT }) {
     const { UserState } = await initLoaders()
@@ -441,7 +441,7 @@ const API: { [key: string]: Function } = {
     await UserState.set(parsed.data)
 
     emit({
-      type: "user/add_data_to_workspace",
+      type: "user.addDataToWorkspace.done",
       data: {
         workspace_id,
         data,
@@ -466,7 +466,7 @@ const API: { [key: string]: Function } = {
     await SessionsActions.findDataAndRemove({ data_id })
 
     emit({
-      type: "user/delete_data_from_workspace",
+      type: "user.deleteDataFromWorkspace.done",
       data: {
         workspace_id,
         data_id,
@@ -494,7 +494,7 @@ const API: { [key: string]: Function } = {
     await UserState.set(parsed.data)
 
     emit({
-      type: "user/add_data_to_group",
+      type: "user.addDataToGroup.done",
       data: {
         workspace_id,
         group_id,
@@ -525,7 +525,7 @@ const API: { [key: string]: Function } = {
     await UserState.set(parsed.data)
 
     emit({
-      type: "user/delete_data_from_group",
+      type: "user.deleteDataFromGroup.done",
       data: {
         workspace_id,
         group_id,
@@ -570,7 +570,7 @@ const API: { [key: string]: Function } = {
     await UserState.set(parsed.data)
 
     emit({
-      type: "user/add_data_to_folder",
+      type: "user.addDataToFolder.done",
       data: {
         workspace_id,
         group_id,
@@ -610,7 +610,7 @@ const API: { [key: string]: Function } = {
     await UserState.set(parsed.data)
 
     emit({
-      type: "user/delete_data_from_folder",
+      type: "user.deleteDataFromFolder.done",
       data: {
         workspace_id,
         group_id,
@@ -636,9 +636,9 @@ listen({
     const method: string = e?.event?.replace("user.", "")
     if (method in API) {
       const response = await API[method](data)
-      callback(response)
+      if (typeof callback === "function") callback(response)
     } else {
-      callback({ error: "method not found", data: { ...data, e } })
+      if (typeof callback === "function") callback({ error: "method not found", data: { ...data, e } })
     }
   },
 })
