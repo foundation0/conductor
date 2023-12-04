@@ -1,7 +1,7 @@
 import { HiPlus } from "react-icons/hi"
 import { For } from "react-solid-flow"
 import PromptIcon from "@/assets/prompt.svg"
-import { Location, useLoaderData, useLocation, useParams } from "react-router-dom"
+import { Location, useLoaderData, useLocation } from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import AppStateActions from "@/data/actions/app"
@@ -12,6 +12,9 @@ import { MdSettings } from "react-icons/md"
 import { BsDiscord } from "react-icons/bs"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "../hooks/useMemory"
+import ShapesIcon from "@/assets/icons/shapes.svg"
+import { PiUserCircleDuotone } from "react-icons/pi"
+import { FaUser } from "react-icons/fa"
 
 export default function WorkspaceSelector() {
   const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
@@ -21,7 +24,6 @@ export default function WorkspaceSelector() {
   // const workspace_id = useParams().workspace_id
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
-  
   useEffect(() => {
     if (!workspace_id) return
     AppStateActions.updateAppState({ active_workspace_id: workspace_id })
@@ -88,8 +90,8 @@ export default function WorkspaceSelector() {
               </Link>
             </div>
           </div>
-          <div id="GlobalActions" className="flex flex-col justify-center items-center gap-2 mb-2">
-            <div className="flex rounded-full h-12 w-12 justify-center items-center">
+          <div id="GlobalActions" className="flex flex-col justify-center items-center gap-3 mb-4">
+            <div className="flex rounded-full justify-center items-center">
               <div className="tooltip tooltip-right" data-tip="Questions? Problems? Ideas? Join our Discord!">
                 <Link
                   to={`https://discord.gg/PFMtbdrvXw`}
@@ -100,9 +102,26 @@ export default function WorkspaceSelector() {
                 </Link>
               </div>
             </div>
-            <div className="flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl overflow-hidden cursor-pointer   hover:bg-zinc-850   text-zinc-400 hover:text-zinc-200 transition-all">
+            <div className="flex rounded-full justify-center items-center">
+              <div className="tooltip tooltip-right" data-tip="View available and installed modules">
+                <Link
+                  to={`/c/modules`}
+                  className={`flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850  hover:border-zinc-500 text-zinc-400 hover:text-zinc-200 saturate-0 hover:saturate-100 transition-all 
+                  ${location.pathname === "/conductor/modules" ? "saturate-100" : ""}`}
+                >
+                  <div className="">
+                    <img src={ShapesIcon} className="w-6 h-6 " />
+                  </div>
+                </Link>
+              </div>
+            </div>
+            <div className="flex rounded-full justify-center items-center">
               <div className="tooltip tooltip-right h-full" data-tip="Global settings and your profile">
-                <Link to={`/c/settings`}>
+                <Link
+                  to={`/c/settings`}
+                  className={`flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850  hover:border-zinc-500 text-zinc-400 hover:text-zinc-200 saturate-0 hover:saturate-100 transition-all 
+                  ${location.pathname === "/conductor/modules" ? "saturate-100" : ""}`}
+                >
                   {_.get(user_state, "meta.profile_photos[0]") ? (
                     <img
                       src={_.get(user_state, "meta.profile_photos[0]")}
@@ -111,7 +130,9 @@ export default function WorkspaceSelector() {
                       } hover:opacity-100`}
                     />
                   ) : (
-                    <MdSettings className="w-4 h-4 " />
+                    <div className="w-10 h-10 flex justify-center items-center">
+                      <FaUser className="w-4 h-4 " />
+                    </div>
                   )}
                 </Link>
               </div>

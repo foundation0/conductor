@@ -4,21 +4,14 @@ import { initLoaders } from "@/data/loaders"
 import { UserT } from "@/data/loaders/user"
 import _ from "lodash"
 
-// import built-in
-// import * as OpenAI from "@/modules/openai/"
-// import * as OpenAICostEstimator from "@/modules/openai-cost-estimator"
-// import * as CPULLM from "@/modules/cpu-llm"
 import * as ULE from "@/modules/ule"
-import { PEClient, PEClientNS } from "@/libraries/pe"
+import { PEClient } from "@/libraries/pe"
 
 import { error } from "@/libraries/logging"
 import config from "@/config"
 import { emit } from "@/libraries/events"
 
 export const MODULES: any = {
-  // openai: OpenAI,
-  // "openai-cost-estimator": OpenAICostEstimator,
-  // "cpu-llm": CPULLM,
   ule: ULE,
 }
 
@@ -28,6 +21,8 @@ const CACHE: {
     value: any
   }
 } = {}
+
+let updated_mods = await fetch(`https://services.foundation0.net/models.json`).then((r) => r.json())
 
 export const Module = async (mod: string, factory_state: boolean = false) => {
   if (!mod) return null
@@ -52,33 +47,10 @@ export const Module = async (mod: string, factory_state: boolean = false) => {
       // if installed_module is ULE, fetch updated info
       if (installed_module.id === "ule") {
         const cached_ule_models = CACHE[installed_module.id]
+        if(!updated_mods) {
+          updated_mods = await fetch(`https://services.foundation0.net/models.json`).then((r) => r.json())
+        }
         if (!cached_ule_models || (cached_ule_models?.created_at || 0) < Date.now() - 1000 * 60 * 5) {
-          let updated_mods = await new Promise(async (resolve) => {
-            let output: any = []
-            const ULE = await PEClient({
-              host: `${config.services.ule_URI}/PE`,
-              onData: (data) => {
-                output = [...output, ...data]
-              },
-              onDone: (data) => {
-                resolve(output)
-              },
-              onError: (err) => {
-                const error = {
-                  code: err.code || "unknown",
-                  message: err.error || err.message || err || "unknown",
-                  status: "error",
-                  surpress: false,
-                }
-                if (error.message === "canceled") return resolve(output)
-              },
-            })
-            ULE.compute({
-              type: "GetPricing",
-              user_id: user_state.id,
-            })
-          })
-
           CACHE[installed_module.id] = {
             created_at: Date.now(),
             value: updated_mods,

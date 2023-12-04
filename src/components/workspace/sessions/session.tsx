@@ -1,5 +1,5 @@
 import Chat from "@/components/workspace/sessions/chat"
-import eventEmitter, { emit } from "@/libraries/events"
+import { emit } from "@/libraries/events"
 import { useEffect, useState } from "react"
 import { Resizable } from "react-resizable"
 import { useParams } from "react-router-dom"

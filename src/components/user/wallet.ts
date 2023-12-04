@@ -1,6 +1,7 @@
 import config from "@/config"
-import { GetBalanceT, GetWalletStatusT } from "@/data/schemas/pe"
-import { PEClient, PEClientNS } from "@/libraries/pe"
+import { GetBalanceT, AuthGetT } from "@/data/schemas/pe"
+import { getActiveUser } from "@/libraries/active_user"
+import { PEClient } from "@/libraries/pe"
 import { hex2buf, keyPair, signMessage, buf2hex, getAddress } from "@/security/common"
 import _ from "lodash"
 import { nanoid } from "nanoid"
@@ -36,7 +37,7 @@ export async function getBalance({
   let b: any = await new Promise(async (resolve) => {
     let output: any = {}
     const ULE = await PEClient({
-      host: `${config.services.ule_URI}/PE`,
+      host: `${config.services.ule_URI}`,
       onData: (data) => {
         output = { ...output, ...data }
       },
@@ -56,7 +57,7 @@ export async function getBalance({
     ULE.compute(payload)
   })
   const { balance } = b
-  return balance.toFixed(2) || "error"
+  return parseFloat(balance).toFixed(2) || "error"
 }
 export async function getBytesBalance({
   public_key,
@@ -89,7 +90,7 @@ export async function getBytesBalance({
   let b: any = await new Promise(async (resolve) => {
     let output: any = {}
     const ULE = await PEClient({
-      host: `${config.services.ule_URI}/PE`,
+      host: `${config.services.ule_URI}`,
       onData: (data) => {
         output = { ...output, ...data }
       },
@@ -109,7 +110,7 @@ export async function getBytesBalance({
     ULE.compute(payload)
   })
   const { balance } = b
-  return _.isNumber(balance) ? balance : "error"
+  return _.isNumber(balance) ? balance : parseInt(balance) || "error"
 }
 
 export async function getFreeBalance({
@@ -141,7 +142,7 @@ export async function getFreeBalance({
   }
 
   // send request to the server
-  const response = await fetch(config.services.wallet_URI + "/PE", {
+  const response = await fetch(config.services.ule_URI, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -153,7 +154,7 @@ export async function getFreeBalance({
 
   const free_balance = await response?.json()
 
-  return free_balance || "error"
+  return parseFloat(free_balance) || "error"
 }
 
 export async function getWalletStatus({
@@ -173,7 +174,7 @@ export async function getWalletStatus({
   const signature = await signMessage(nonce, secret_key)
 
   // create request payload
-  const payload: GetWalletStatusT = {
+  const payload: AuthGetT = {
     uid: nanoid(),
     user_id,
     auth: {
@@ -188,7 +189,7 @@ export async function getWalletStatus({
   let s: any = await new Promise(async (resolve) => {
     let output: any = {}
     const ULE = await PEClient({
-      host: `${config.services.ule_URI}/PE`,
+      host: `${config.services.ule_URI}`,
       onData: (data) => {
         output = { ...output, ...data }
       },
@@ -210,4 +211,97 @@ export async function getWalletStatus({
 
   const { status } = s
   return status || "error"
+}
+
+export async function getAllCharges({
+  public_key,
+  master_key,
+  offset = 0,
+  limit = 10,
+}: {
+  public_key: string
+  master_key: string
+  offset?: number
+  limit?: number
+}): Promise<string> {
+  const user_id = getAddress({ public_key: hex2buf({ input: public_key }) })
+
+  // generate a random nonce for signing
+  const nonce = nanoid()
+
+  // generate a signature for the nonce
+  const { secret_key } = keyPair({ seed: hex2buf({ input: master_key }) })
+  const signature = await signMessage(nonce, secret_key)
+
+  // create request payload
+  const payload: AuthGetT = {
+    uid: nanoid(),
+    user_id,
+    auth: {
+      c: nonce,
+      s: buf2hex({ input: signature }),
+      pk: public_key,
+    },
+    params: { limit, offset },
+    type: "GetAllCharges",
+  }
+
+  // send request to the server
+  let s: any = await new Promise(async (resolve) => {
+    let output: any = {}
+    const ULE = await PEClient({
+      host: `${config.services.ule_URI}`,
+      onData: (data) => {
+        output = data
+      },
+      onDone: (data) => {
+        resolve(output)
+      },
+      onError: (err) => {
+        const error = {
+          code: err.code || "unknown",
+          message: err.error || err.message || err || "unknown",
+          status: "error",
+          surpress: false,
+        }
+        if (error.message === "canceled") return resolve(output)
+      },
+    })
+    ULE.compute(payload)
+  })
+
+  return s || "error"
+}
+
+export async function getPricing(): Promise<string | number> {
+  const user = getActiveUser()
+  // create request payload
+  const payload = {
+    user_id: user?.id,
+    type: "GetPricing",
+  }
+
+  let b: any = await new Promise(async (resolve) => {
+    let output: any = []
+    const ULE = await PEClient({
+      host: `${config.services.ule_URI}`,
+      onData: (data) => {
+        output = data
+      },
+      onDone: (data) => {
+        resolve(output)
+      },
+      onError: (err) => {
+        const error = {
+          code: err.code || "unknown",
+          message: err.error || err.message || err || "unknown",
+          status: "error",
+          surpress: false,
+        }
+        if (error.message === "canceled") return resolve(output)
+      },
+    })
+    ULE.compute(payload)
+  })
+  return b
 }

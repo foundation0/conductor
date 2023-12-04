@@ -19,11 +19,11 @@ export const GetBalanceS = ProtocolS.extend({
 })
 export type GetBalanceT = z.infer<typeof GetBalanceS>
 
-export const GetWalletStatusS = ProtocolS.extend({
+export const AuthGetS = ProtocolS.extend({
   auth: AuthS,
   params: z.object({}).optional(),
 })
-export type GetWalletStatusT = z.infer<typeof GetWalletStatusS>
+export type AuthGetT = z.infer<typeof AuthGetS>
 
 export const CreatePaymentIntentS = ProtocolS.extend({
   params: z.object({

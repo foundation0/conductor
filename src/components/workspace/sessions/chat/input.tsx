@@ -5,10 +5,7 @@ import { Switch, Match } from "react-solid-flow"
 import { RichTextarea } from "rich-textarea"
 import RewindIcon from "@/assets/icons/rewind.svg"
 import MessageIcon from "@/assets/icons/send.svg"
-import SessionActions from "@/data/actions/sessions"
 import PieIcon from "@/assets/icons/pie.svg"
-import { ChatT } from "@/data/loaders/sessions"
-import { AISelector, AISelectorButton } from "./ai_selector"
 import { emit } from "@/libraries/events"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
@@ -148,21 +145,16 @@ export default function Input({
               </button>
             </Match>
             <Match when={gen_in_progress}>
-              <span
-                className="tooltip tooltip-top"
-                data-tip="Temporarily disabled due to technical issues with LLM provider"
+              <button
+                onClick={() => {
+                  if (typeof genController?.abort === "function") genController.abort()
+                }}
+                disabled={false}
+                type="submit"
+                className={button_class}
               >
-                <button
-                  onClick={() => {
-                    // if (typeof genController?.abort === "function") genController.abort()
-                  }}
-                  disabled={true}
-                  type="submit"
-                  className={button_class}
-                >
-                  Stop
-                </button>
-              </span>
+                Stop
+              </button>
             </Match>
             <Match when={!gen_in_progress && (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)}>
               <div className="flex flex-row gap-2">
@@ -170,7 +162,7 @@ export default function Input({
                 <button
                   className="tooltip tooltip-top"
                   data-tip={`Total cost: $${_.sumBy(session.receipts, (l) => l.cost_usd).toFixed(
-                    2
+                    8
                   )}\nTotal tokens used: ${_.sumBy(
                     session.receipts,
                     (l) => l.details.input.tokens + l.details.output.tokens
@@ -189,10 +181,10 @@ export default function Input({
                     if (confirm("Are you sure you want to clear the message history? You can't undo this.")) {
                       // await SessionActions.clearMessages({ session_id })
                       await emit({
-                        type: 'sessions.clearMessages',
+                        type: "sessions.clearMessages",
                         data: {
-                          session_id
-                        }
+                          session_id,
+                        },
                       })
                       setMsgUpdateTs(new Date().getTime())
                     }

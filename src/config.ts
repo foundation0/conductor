@@ -39,12 +39,13 @@ const config = {
   DB: {
     URI: override("DB_URI") || import.meta.env.PROD ? "https://db.promptc0.com/" : "http://localhost:6002/",
     CF: {
+      sync_interval: 1000 * 60,
       get_limit: 1000,
       set_limit: 60000,
     },
   },
   services: {
-    ule_URI: override("ULE_URI") || import.meta.env.PROD ? "wss://ule.promptc0.com" : "ws://localhost:7001",
+    ule_URI: override("ULE_URI") || import.meta.env.PROD ? "wss://ule.services.foundation0.net" : "ws://localhost:7001",
     wallet_URI:
       override("WALLET_URI") || import.meta.env.PROD ? "https://wallet.promptc0.com" : "http://localhost:6001",
   },

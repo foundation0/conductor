@@ -20,43 +20,50 @@ import { LuSettings2 } from "react-icons/lu"
 import { BiBlock } from "react-icons/bi"
 import { parseBoolean, parseNumber } from "@/libraries/utilities"
 import { getBalance, getBytesBalance, getFreeBalance, getWalletStatus } from "@/components/user/wallet"
-import { ModuleSettings } from "./module_settings"
+import { ModuleSettings } from "../modules/module_settings"
 import { buyCreditsWithStripe } from "@/libraries/payments"
 import { getModules } from "@/modules"
 import { get as getLS } from "@/data/storage/localStorage"
 import humanize from "humanize"
+import useMemory from "../hooks/useMemory"
+import CallHistory from "./call_history"
+import { emit } from "@/libraries/events"
+import { mBalancesT } from "@/data/schemas/memory"
 
 export default function Settings(props: any) {
   const navigate = useNavigate()
   let auth = useAuth()
   const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
-  const [field_edit_id, setFieldEditId] = useState("")
+  /* const [field_edit_id, setFieldEditId] = useState("")
   const [balance, setBalance] = useState<number | string>("loading...")
   const [bytes_balance, setBytesBalance] = useState<number | string>("loading...")
   const [wallet_status, setWalletStatus] = useState<string>("loading...")
 
-  const [module_list, setModuleList] = useState<any[]>([])
+  const [module_list, setModuleList] = useState<any[]>([]) */
+
+  const mem: {
+    field_edit_id: string
+    module_list: any[]
+  } = useMemory({
+    id: "conductor/settings",
+    state: {
+      field_edit_id: "",
+      module_list: [],
+    },
+  })
+  const { field_edit_id, module_list } = mem
+
+  const mem_balance: mBalancesT = useMemory({ id: 'balances' })
+  const { credits, bytes, status } = mem_balance
 
   // initialization
   useEffect(() => {
-    getBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
-      setBalance(balance)
-    })
-    getBytesBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
-      setBytesBalance(balance)
-    })
-    getWalletStatus({ public_key: user_state.public_key, master_key: user_state.master_key }).then((wallet_status) => {
-      setWalletStatus(wallet_status)
-    })
-    // getFreeBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((free_balance) => {
-    //   console.log("free balance", free_balance)
-    // })
     updateModules()
   }, [])
 
   const updateModules = async () => {
     const mods = await getModules()
-    setModuleList(mods)
+    mem.module_list = mods
   }
   const handleEdit = async ({ value, name, module_id }: { value: string; name: string; module_id?: string }) => {
     // field name is concatenated with . to denote nested fields
@@ -195,18 +202,18 @@ export default function Settings(props: any) {
                   <div
                     className="flex flex-grow text-end text-sm justify-center items-center mr-2"
                     onClick={() => {
-                      setFieldEditId("name")
+                      mem.field_edit_id = "name"
                       return false
                     }}
                   >
                     <EasyEdit
                       type="text"
                       onSave={(data: any) => {
-                        setFieldEditId("")
+                        mem.field_edit_id = ""
                         handleEdit({ value: data, name: `meta.name` })
                       }}
-                      onCancel={() => setFieldEditId("")}
-                      onBlur={() => setFieldEditId("")}
+                      onCancel={() => (mem.field_edit_id = "")}
+                      onBlur={() => (mem.field_edit_id = "")}
                       cancelOnBlur={true}
                       saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
                       cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
@@ -223,18 +230,18 @@ export default function Settings(props: any) {
                   <div
                     className="flex flex-grow text-end text-sm justify-center items-center mr-2"
                     onClick={() => {
-                      setFieldEditId("email")
+                      mem.field_edit_id = "email"
                       return false
                     }}
                   >
                     <EasyEdit
                       type="text"
                       onSave={(data: any) => {
-                        setFieldEditId("")
+                        mem.field_edit_id = ""
                         handleEdit({ value: data, name: `meta.email` })
                       }}
-                      onCancel={() => setFieldEditId("")}
-                      onBlur={() => setFieldEditId("")}
+                      onCancel={() => (mem.field_edit_id = "")}
+                      onBlur={() => (mem.field_edit_id = "")}
                       cancelOnBlur={true}
                       saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
                       cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
@@ -258,7 +265,7 @@ export default function Settings(props: any) {
               <div className="flex flex-row w-full gap-4 h-8">
                 <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Status</div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
-                  {wallet_status === "no_wallet" ? "waiting for funds" : wallet_status}
+                  {status === "no_wallet" ? "waiting for funds" : status}
                 </div>
               </div>
             </div>
@@ -281,7 +288,7 @@ export default function Settings(props: any) {
                   </span>
                 </div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
-                  {_.isNumber(balance) ? `$${balance}` : balance}
+                  {credits}
                 </div>
               </div>
             </div>
@@ -289,13 +296,19 @@ export default function Settings(props: any) {
               <div className="flex flex-row w-full gap-4 h-8">
                 <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Stored bytes </div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
-                  {_.isNumber(bytes_balance) ? `${humanize.filesize(bytes_balance)}` : bytes_balance}
+                  {humanize.filesize(bytes)}
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
+          Computation log
+        </div>
+        <div className="flex flex-row w-full gap-2">
+          <CallHistory />
+        </div>
+        {/* <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
           Modules
         </div>
         <div className="flex flex-row w-full gap-2">
@@ -344,7 +357,7 @@ export default function Settings(props: any) {
                     {module.meta?.description || "No description"}
                   </div>
 
-                  <ModuleSettings {...{ module, index: index - 1, setFieldEditId, handleEdit, EditComponent }} />
+                  <ModuleSettings {...{ module, index: index - 1, handleEdit, EditComponent }} />
                 </div>
               )
             })}
@@ -352,14 +365,14 @@ export default function Settings(props: any) {
             className="w-1/2 bg-zinc-900 rounded-lg p-3 flex flex-col justify-center items-center cursor-not-allowed border-zinc-700 border border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500 tooltip tooltip-top"
             data-tip="Coming soon"
           >
-            {/* <HiPlus className="w-8 h-8 rounded-full border border-dashed border-zinc-600 m-2 p-1" /> */}
+            
             <img
               src={IntersectIcon}
               className="w-10 h-10 rounded-full border-2 border-dashed border-zinc-700 m-2 p-1 saturate-0 hover:saturate-50"
             />
             <div className="text-xs font-semibold">Browser module marketplace</div>
           </div>
-        </div>
+        </div> */}
         <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
           AIs
         </div>

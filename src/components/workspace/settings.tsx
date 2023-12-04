@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { useFetcher, useLoaderData, useNavigate, useParams } from "react-router-dom"
+import { useFetcher, useLoaderData, useNavigate } from "react-router-dom"
 import { UserT } from "@/data/loaders/user"
 import UserActions from "@/data/actions/user"
 import _ from "lodash"

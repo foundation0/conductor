@@ -287,6 +287,7 @@ export async function addMessage({
           onData,
           onClose: () => {},
           onError: async (data: any) => {
+            
             emit({
               type: "generation/abort",
               data: {
@@ -295,7 +296,11 @@ export async function addMessage({
             })
             has_error = true
             await reset()
-            if (!data.surpress) error({ message: data.message || data.code, data })
+            if(data?.message === "Insufficient funds") {
+              return emit({ type: "insufficient_funds"})
+            } else {
+              if (!data.surpress) error({ message: data.message || data.code, data })
+            }
             onError && onError()
           },
         }
@@ -311,7 +316,6 @@ export async function addMessage({
           costs: { input: variant?.cost_input || 0, output: variant?.cost_output || 0 },
         }) */
 
-        /* 
         if (!receipt)
           return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
         console.log(
@@ -320,8 +324,8 @@ export async function addMessage({
         SessionsActions.addCost({
           session_id,
           receipt,
-        }) 
-        */
+        })
+
         const data: { session_id: string; message: Partial<TextMessageT> } = {
           session_id,
           message: {

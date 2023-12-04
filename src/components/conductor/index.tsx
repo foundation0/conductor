@@ -17,10 +17,13 @@ import AIActions from "@/data/actions/ai"
 import config from "@/config"
 import { del as delLS, get as getLS } from "@/data/storage/localStorage"
 import { ConvertGuest } from "@/components/user/convert_guest"
-import { BuyCredits } from "../user/buy_credits"
+import { BuyCredits } from "@/components/modals/buy_credits"
 import useMemory from "@/components/hooks/useMemory"
-import { mAppT } from "@/data/schemas/memory"
+import { mAppT, mBalancesT } from "@/data/schemas/memory"
 import { error } from "@/libraries/logging"
+import { getBalance, getBytesBalance, getWalletStatus } from "@/components/user/wallet"
+import { emit } from "@/libraries/events"
+import { PricingTable } from "../modals/pricing_table"
 
 export default function Conductor() {
   const { app_state, user_state, ai_state } = useLoaderData() as {
@@ -44,6 +47,44 @@ export default function Conductor() {
     },
   })
 
+  const mem_balances: mBalancesT = useMemory({
+    id: "balances",
+    state: {
+      credits: 0,
+      bytes: 0,
+      status: "active",
+    },
+  })
+
+  // Fetch balances
+  useEffect(() => {
+    getBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
+      if (typeof balance === "object" && "error" in balance) {
+        console.error(balance)
+        return
+      }
+      if (!_.isNumber(balance)) balance = parseFloat(balance)
+      mem_balances.credits = balance
+      if (balance <= 0) emit({ type: "insufficient_funds" })
+    })
+    getBytesBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
+      if (typeof balance === "object" && "error" in balance) {
+        console.error(balance)
+        return
+      }
+      if (!_.isNumber(balance)) balance = parseFloat(balance)
+      mem_balances.bytes = balance
+    })
+    getWalletStatus({ public_key: user_state.public_key, master_key: user_state.master_key }).then((wallet_status) => {
+      if (typeof wallet_status === "object" && "error" in wallet_status) {
+        console.error(wallet_status)
+        return
+      }
+
+      mem_balances.status = wallet_status as "active" | "inactive" | "suspended"
+    })
+  }, [])
+
   useEffect(() => {
     if (!workspace_id) {
       // get the first workspace and its first session
@@ -57,7 +98,7 @@ export default function Conductor() {
         return
       }
       session_id = session?.id
-      if(window.location.pathname === '/c/') navigate(`/c/${workspace_id}/${session_id}`)
+      if (window.location.pathname === "/c/") navigate(`/c/${workspace_id}/${session_id}`)
     }
     mem.workspace_id = workspace_id
     mem.session_id = session_id
@@ -170,7 +211,7 @@ export default function Conductor() {
           </div>
         </div>
       )}
-      <main id="Conductor" className={`flex flex-row flex-1 m-0 p-0 h-[100dvh] dark bg-[#111]/60 mt-0.5`}>
+      <main id="Conductor" className={`flex flex-row flex-1 m-0 p-0 h-full h-[100dvh] dark bg-[#111]/60 mt-0.5`}>
         <WorkspaceSelector />
         <div id="WorkspaceView" className="flex flex-1 m-0.5 overflow-hidden">
           {location.pathname !== "/c/" ? (
@@ -195,7 +236,10 @@ export default function Conductor() {
           )}
         </div>
         <ConvertGuest />
-        <BuyCredits />
+        <div className="models">
+          <BuyCredits />
+          <PricingTable />
+        </div>
       </main>
     </div>
   )

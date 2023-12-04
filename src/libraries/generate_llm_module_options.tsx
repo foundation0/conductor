@@ -51,7 +51,7 @@ export default function generate_llm_module_options({
       return {
         value: `${mod.id}/${mod.variant}`,
         label: `${mod.name || mod.id} / ${mod.variant_name} ${
-          mod.context_len && include_limits ? `(~${_.round(mod.context_len / 5, 0)} word memory)` : ""
+          mod.context_len && include_limits ? `(~${_.round(mod.context_len * 0.8, 0)} word memory)` : ""
         }`,
       }
     })
@@ -64,7 +64,7 @@ export default function generate_llm_module_options({
         /* selected={selected === `{"id": "${mod.id}", "variant": "${mod.variant}"}`} */
       >
         {`${mod.id} / ${mod.variant} ${
-          mod.context_len && include_limits ? `(~${_.round(mod.context_len / 5, 0)} word memory)` : ""
+          mod.context_len && include_limits ? `(~${_.round(mod.context_len * 0.8, 0)} word memory)` : ""
         }`}
         {!mod.has_api_key ? " (no api key)" : ""}
       </option>

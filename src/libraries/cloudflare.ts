@@ -4,7 +4,6 @@ import { unpack } from "msgpackr"
 import { buf2hex, createHash } from "@/security/common"
 import pDebounce from "p-debounce"
 import { get as getLS, set as setLS } from "@/data/storage/localStorage"
-import b4a from "b4a"
 
 export function keyHash(str: string) {
   return buf2hex({ input: createHash({ str }) })
@@ -14,6 +13,12 @@ type SetT = { key: string; value: Uint8Array | Buffer }
 
 const setters = new Map()
 export function set({ key, value }: SetT) {
+  const last_size = getLS({ key: `${key}-last_size` }) || 0
+  const current_size = value.byteLength
+  if (last_size === current_size) {
+    info({ message: `skipping CF setter for ${key}` })
+    return Promise.resolve(true)
+  }
   const guest_mode = getLS({ key: "guest-mode" })
   if (!guest_mode && !setters.has(key)) {
     info({ message: `setting up CF setter for ${key}` })
@@ -61,6 +66,7 @@ export async function setCF({ value, key }: SetT) {
       body: value,
     })
     if (res.ok) {
+      setLS({ key: `${key}-last_size`, value: value.byteLength})
       const data = await res.text()
       return data
     } else {
@@ -78,6 +84,7 @@ export async function getCF({ key }: { key: string }) {
       const data = await res.arrayBuffer()
       try {
         const unpacked = unpack(new Uint8Array(data))
+        setLS({ key: `${key}-last_checked`, value: new Date().getTime()})
         return unpacked
       } catch (err: any) {
         return error({ message: err?.message, data: err })

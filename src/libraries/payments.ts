@@ -14,7 +14,7 @@ export async function buyCreditsWithStripe({ user_id }: { user_id: string }) {
   }
 
   // Create the PaymentIntent and obtain clientSecret from your server endpoint
-  const res = await fetch(`${config.services.wallet_URI}/PE`, {
+  const res = await fetch(`${config.services.wallet_URI}/createCheckoutSession`, {
     method: "POST",
     body: JSON.stringify(checkout_payload),
   })
