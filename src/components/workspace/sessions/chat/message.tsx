@@ -35,7 +35,6 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
   // const session_id = useParams().session_id
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
-
   const [used_icon_id, setUsedIcon] = useState("")
 
   const [is_hovering, setIsHovering] = useState(false)

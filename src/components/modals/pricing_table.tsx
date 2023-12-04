@@ -48,8 +48,8 @@ export function PricingTable() {
   }, [])
 
   return (
-    <dialog id="PricingTable" className="ModuleSetting modal w-full w-max-4xl h-max-[80dvh] relative">
-      <div className="modal-box bg-zinc-800/95 border-t border-t-zinc-600">
+    <dialog id="PricingTable" className="ModuleSetting modal w-full w-max-4xl h-max-[80dvh]">
+      <div className="modal-box bg-zinc-800/95 border-t border-t-zinc-600 relative">
         <div className="absolute right-3 top-3">
           <MdClose
             className="cursor-pointer h-3 w-3 text-zinc-300 transition-all hover:text-zinc-100 hover:bg-zinc-700 rounded-full"

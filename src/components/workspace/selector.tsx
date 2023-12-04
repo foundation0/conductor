@@ -24,7 +24,6 @@ export default function WorkspaceSelector() {
   // const workspace_id = useParams().workspace_id
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
-
   useEffect(() => {
     if (!workspace_id) return
     AppStateActions.updateAppState({ active_workspace_id: workspace_id })
