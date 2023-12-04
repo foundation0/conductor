@@ -8,12 +8,10 @@ import AppStateActions from "@/data/actions/app"
 import { Link } from "react-router-dom"
 import { useEffect } from "react"
 import _ from "lodash"
-import { MdSettings } from "react-icons/md"
 import { BsDiscord } from "react-icons/bs"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "../hooks/useMemory"
 import ShapesIcon from "@/assets/icons/shapes.svg"
-import { PiUserCircleDuotone } from "react-icons/pi"
 import { FaUser } from "react-icons/fa"
 
 export default function WorkspaceSelector() {
@@ -62,13 +60,13 @@ export default function WorkspaceSelector() {
                 // }
                 return (
                   <div className="tooltip tooltip-right relative" data-tip={`Open ${workspace.name}`}>
-                    {workspace.id === workspace_id && (
+                    {location.pathname.startsWith(`/c/${workspace.id}`) && (
                       <div className="absolute -left-3 top-1/4 h-1/2 flex justify-center items-center bg-zinc-300 w-2 rounded-full"></div>
                     )}
                     <Link
                       to={`/c/${workspace.id}/${session_id}`}
                       className={`flex items-center justify-center w-12 h-12 p-0 px-0 rounded-xl overflow-hidden font-semibold text-zinc-500 transition-all ${
-                        workspace_id === workspace.id ? "bg-zinc-800 " : "cursor-pointer opacity-50 hover:opacity-100"
+                        location.pathname.startsWith(`/c/${workspace.id}`) ? "bg-zinc-800 " : "cursor-pointer opacity-50 hover:opacity-100"
                       }`}
                     >
                       {workspace.icon ? (
@@ -106,8 +104,8 @@ export default function WorkspaceSelector() {
               <div className="tooltip tooltip-right" data-tip="View available and installed modules">
                 <Link
                   to={`/c/modules`}
-                  className={`flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850  hover:border-zinc-500 text-zinc-400 hover:text-zinc-200 saturate-0 hover:saturate-100 transition-all 
-                  ${location.pathname === "/conductor/modules" ? "saturate-100" : ""}`}
+                  className={`flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850 hover:border-zinc-500 text-zinc-400 hover:text-zinc-200 saturate-0 hover:saturate-100 transition-all 
+                  ${location.pathname === "/c/modules" ? "saturate-100 border-zinc-500" : ""}`}
                 >
                   <div className="">
                     <img src={ShapesIcon} className="w-6 h-6 " />
@@ -119,8 +117,8 @@ export default function WorkspaceSelector() {
               <div className="tooltip tooltip-right h-full" data-tip="Global settings and your profile">
                 <Link
                   to={`/c/settings`}
-                  className={`flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850  hover:border-zinc-500 text-zinc-400 hover:text-zinc-200 saturate-0 hover:saturate-100 transition-all 
-                  ${location.pathname === "/conductor/modules" ? "saturate-100" : ""}`}
+                  className={`flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850 hover:border-zinc-500 text-zinc-400 hover:text-zinc-200 saturate-0 hover:saturate-100 transition-all 
+                  ${location.pathname === "/c/settings" ? "saturate-100 border-zinc-500" : ""}`}
                 >
                   {_.get(user_state, "meta.profile_photos[0]") ? (
                     <img
