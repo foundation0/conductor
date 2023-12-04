@@ -268,7 +268,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                         return (
                           <div className="gap-1 p-0 ml-1 flex h-full justify-start align-start" key={`msg-${m.id}`}>
                             <Message
-                              message={m}
+                              message={{ ...m, text: m.text.length > 80 ? `${m.text.slice(0, 80)}...` : m.text }}
                               isActive={false}
                               avatar={participants["user"]}
                               onClick={() => {
