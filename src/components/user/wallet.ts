@@ -1,6 +1,7 @@
 import config from "@/config"
 import { GetBalanceT, AuthGetT } from "@/data/schemas/pe"
-import { PEClient, PEClientNS } from "@/libraries/pe"
+import { getActiveUser } from "@/libraries/active_user"
+import { PEClient } from "@/libraries/pe"
 import { hex2buf, keyPair, signMessage, buf2hex, getAddress } from "@/security/common"
 import _ from "lodash"
 import { nanoid } from "nanoid"
@@ -270,4 +271,37 @@ export async function getAllCharges({
   })
 
   return s || "error"
+}
+
+export async function getPricing(): Promise<string | number> {
+  const user = getActiveUser()
+  // create request payload
+  const payload = {
+    user_id: user?.id,
+    type: "GetPricing",
+  }
+
+  let b: any = await new Promise(async (resolve) => {
+    let output: any = []
+    const ULE = await PEClient({
+      host: `${config.services.ule_URI}`,
+      onData: (data) => {
+        output = data
+      },
+      onDone: (data) => {
+        resolve(output)
+      },
+      onError: (err) => {
+        const error = {
+          code: err.code || "unknown",
+          message: err.error || err.message || err || "unknown",
+          status: "error",
+          surpress: false,
+        }
+        if (error.message === "canceled") return resolve(output)
+      },
+    })
+    ULE.compute(payload)
+  })
+  return b
 }

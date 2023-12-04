@@ -27,6 +27,8 @@ import { get as getLS } from "@/data/storage/localStorage"
 import humanize from "humanize"
 import useMemory from "../hooks/useMemory"
 import CallHistory from "./call_history"
+import { emit } from "@/libraries/events"
+import { mBalancesT } from "@/data/schemas/memory"
 
 export default function Settings(props: any) {
   const navigate = useNavigate()
@@ -41,48 +43,21 @@ export default function Settings(props: any) {
 
   const mem: {
     field_edit_id: string
-    balance: number | string
-    bytes_balance: number | string
-    wallet_status: string
     module_list: any[]
   } = useMemory({
     id: "conductor/settings",
     state: {
       field_edit_id: "",
-      balance: "loading...",
-      bytes_balance: "loading...",
-      wallet_status: "loading...",
       module_list: [],
     },
   })
-  const { field_edit_id, balance, bytes_balance, wallet_status, module_list } = mem
+  const { field_edit_id, module_list } = mem
+
+  const mem_balance: mBalancesT = useMemory({ id: 'balances' })
+  const { credits, bytes, status } = mem_balance
 
   // initialization
   useEffect(() => {
-    getBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
-      if(typeof balance === 'object' && 'error' in balance) {
-        console.error(balance)
-        return
-      }
-      mem.balance = balance
-    })
-    getBytesBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
-      if(typeof balance === 'object' && 'error' in balance) {
-        console.error(balance)
-        return
-      }
-      mem.bytes_balance = balance
-    })
-    getWalletStatus({ public_key: user_state.public_key, master_key: user_state.master_key }).then((wallet_status) => {
-      if(typeof wallet_status === 'object' && 'error' in wallet_status) {
-        console.error(wallet_status)
-        return
-      }
-      mem.wallet_status = wallet_status
-    })
-    // getFreeBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((free_balance) => {
-    //   console.log("free balance", free_balance)
-    // })
     updateModules()
   }, [])
 
@@ -290,7 +265,7 @@ export default function Settings(props: any) {
               <div className="flex flex-row w-full gap-4 h-8">
                 <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Status</div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
-                  {wallet_status === "no_wallet" ? "waiting for funds" : wallet_status}
+                  {status === "no_wallet" ? "waiting for funds" : status}
                 </div>
               </div>
             </div>
@@ -313,7 +288,7 @@ export default function Settings(props: any) {
                   </span>
                 </div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
-                  {_.isNumber(balance) ? `$${balance}` : balance}
+                  {credits}
                 </div>
               </div>
             </div>
@@ -321,7 +296,7 @@ export default function Settings(props: any) {
               <div className="flex flex-row w-full gap-4 h-8">
                 <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Stored bytes </div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
-                  {_.isNumber(bytes_balance) ? `${humanize.filesize(bytes_balance)}` : bytes_balance}
+                  {humanize.filesize(bytes)}
                 </div>
               </div>
             </div>
