@@ -76,9 +76,8 @@ export default function Notepad() {
 
   useEvent({
     name: ["notepad.addClip.done", "notepad.updateNotepad.done", "notepad.deleteClip.done"],
-    target: session_id,
-    action: function ({ notepad, session_id }: { notepad: NotepadT; session_id: string }) {
-      // console.log("update")
+    // target: session_id,
+    action: function ({ notepad, session_id: sid }: { notepad: NotepadT; session_id: string }) {
       updateNotepad({ session_id })
     },
   })
