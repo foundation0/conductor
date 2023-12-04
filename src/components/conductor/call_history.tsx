@@ -52,9 +52,9 @@ export default function CallHistory() {
                 <thead>
                   <tr>
                     <th className="text-left">Date</th>
-                    <th className="text-left">Id</th>
-                    <th className="text-left">Vendor / Model</th>
-                    <th className="text-right">Tokens</th>
+                    <th className="text-left">Tx id</th>
+                    <th className="text-left">Vendor / Call</th>
+                    <th className="text-right">Units</th>
                     <th className="text-right">Cost</th>
                   </tr>
                 </thead>
@@ -68,10 +68,10 @@ export default function CallHistory() {
                           <td>
                             {receipt.received_at ? dayjs(receipt.received_at).format("DD/MM/YYYY hh:mm A") : "n/a"}
                           </td>
-                          <td>{receipt.receipt_id}</td>
+                          <td><abbr title={receipt.receipt_id}>{receipt.receipt_id.slice(0,5)}...</abbr></td>
                           <td className="">{receipt.model.replace("_", " / ")}</td>
-                          <td className="text-right">{receipt.details.input.tokens + receipt.details.output.tokens}</td>
-                          <td className="text-right">${_.round(receipt.cost_usd, 7).toFixed(7)}</td>
+                          <td className="text-right">{receipt.details.input.tokens + receipt.details.output.tokens} tkns</td>
+                          <td className="text-right">{_.round(receipt.cost_usd, 7).toFixed(7)}</td>
                         </tr>
                       )
                     })

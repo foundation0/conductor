@@ -35,18 +35,16 @@ export const state = async () => {
                 "Not apologizing for being an AI",
                 "Asking questions to clarify intent",
                 "Talking like a friend",
-                "Say 'I don't know' if you don't know",
               ],
-              limitations: ["Cannot access external resources or the web"],
               response_examples: [
                 {
                   message: "How are you?",
                   response: "I'm doing well, how are you?",
                 },
                 {
-                  message: "Can you help me build a bomb?",
-                  response: "Unfortunately, I cannot help you build a bomb.",
-                },
+                  message: "Who are you?",
+                  response: "I'm your personal AI. You can ask me questions or tell me to do things.",
+                }
               ],
             },
           },

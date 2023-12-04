@@ -28,7 +28,7 @@ export async function PEClient<T>({ host, onData, onDone, onError }: PEArgsT): P
       // check if websocket is already open
       if (!ws || ws?.readyState !== 1) {
         // open websocket connection to host/PE
-        ws = new WebSocket(`${host}/PE`)
+        ws = new WebSocket(`${host}`)
       } else {
         ws.send(JSON.stringify(request))
       }
@@ -84,7 +84,7 @@ export async function PEClientNS({
     let output: string | object | number | undefined = undefined
 
     const ULE = await PEClient({
-      host: host || `${config.services.ule_URI}/PE`,
+      host: host || `${config.services.ule_URI}`,
       onData: (data) => {
         // determine the type of the data
         if (typeof data === "string") {

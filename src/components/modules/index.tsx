@@ -166,7 +166,7 @@ export default function Modules() {
       const updated_public_user = _.set(public_user, f_name, field_value)
       await UsersActions.updateUser(updated_public_user)
     }
-    navigate("/conductor/modules/")
+    navigate("/c/modules")
   }
 
   const EditComponent = function (props: any) {

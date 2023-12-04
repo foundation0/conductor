@@ -36,7 +36,7 @@ export async function getBalance({
   let b: any = await new Promise(async (resolve) => {
     let output: any = {}
     const ULE = await PEClient({
-      host: `${config.services.ule_URI}/PE`,
+      host: `${config.services.ule_URI}`,
       onData: (data) => {
         output = { ...output, ...data }
       },
@@ -56,7 +56,7 @@ export async function getBalance({
     ULE.compute(payload)
   })
   const { balance } = b
-  return balance.toFixed(2) || "error"
+  return parseFloat(balance).toFixed(2) || "error"
 }
 export async function getBytesBalance({
   public_key,
@@ -89,7 +89,7 @@ export async function getBytesBalance({
   let b: any = await new Promise(async (resolve) => {
     let output: any = {}
     const ULE = await PEClient({
-      host: `${config.services.ule_URI}/PE`,
+      host: `${config.services.ule_URI}`,
       onData: (data) => {
         output = { ...output, ...data }
       },
@@ -109,7 +109,7 @@ export async function getBytesBalance({
     ULE.compute(payload)
   })
   const { balance } = b
-  return _.isNumber(balance) ? balance : "error"
+  return _.isNumber(balance) ? balance : parseInt(balance) || "error"
 }
 
 export async function getFreeBalance({
@@ -141,7 +141,7 @@ export async function getFreeBalance({
   }
 
   // send request to the server
-  const response = await fetch(config.services.wallet_URI + "/PE", {
+  const response = await fetch(config.services.ule_URI, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -153,7 +153,7 @@ export async function getFreeBalance({
 
   const free_balance = await response?.json()
 
-  return free_balance || "error"
+  return parseFloat(free_balance) || "error"
 }
 
 export async function getWalletStatus({
@@ -188,7 +188,7 @@ export async function getWalletStatus({
   let s: any = await new Promise(async (resolve) => {
     let output: any = {}
     const ULE = await PEClient({
-      host: `${config.services.ule_URI}/PE`,
+      host: `${config.services.ule_URI}`,
       onData: (data) => {
         output = { ...output, ...data }
       },
@@ -249,7 +249,7 @@ export async function getAllCharges({
   let s: any = await new Promise(async (resolve) => {
     let output: any = {}
     const ULE = await PEClient({
-      host: `${config.services.ule_URI}/PE`,
+      host: `${config.services.ule_URI}`,
       onData: (data) => {
         output = data
       },

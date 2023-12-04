@@ -162,7 +162,7 @@ export default function Input({
                 <button
                   className="tooltip tooltip-top"
                   data-tip={`Total cost: $${_.sumBy(session.receipts, (l) => l.cost_usd).toFixed(
-                    2
+                    8
                   )}\nTotal tokens used: ${_.sumBy(
                     session.receipts,
                     (l) => l.details.input.tokens + l.details.output.tokens

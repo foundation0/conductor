@@ -7,6 +7,7 @@ import { RequireAuth } from "@/libraries/auth"
 import { AIR } from "@/components/ai/routes"
 import { Admin } from "./admin"
 import CallHistory from "./call_history"
+import { ModulesR } from "../modules/routes"
 
 export const SettingsR = {
   loader,
@@ -34,5 +35,5 @@ export const ConductorR = {
     </RequireAuth>
   ),
   loader,
-  children: [WorkspaceR, WorkspaceIdR, SettingsR, UserIdR, AIR, AdminR, CallHistoryR],
+  children: [WorkspaceR, WorkspaceIdR, SettingsR, UserIdR, AIR, AdminR, CallHistoryR, ModulesR],
 }

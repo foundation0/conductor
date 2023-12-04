@@ -60,12 +60,24 @@ export default function Settings(props: any) {
   // initialization
   useEffect(() => {
     getBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
+      if(typeof balance === 'object' && 'error' in balance) {
+        console.error(balance)
+        return
+      }
       mem.balance = balance
     })
     getBytesBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
+      if(typeof balance === 'object' && 'error' in balance) {
+        console.error(balance)
+        return
+      }
       mem.bytes_balance = balance
     })
     getWalletStatus({ public_key: user_state.public_key, master_key: user_state.master_key }).then((wallet_status) => {
+      if(typeof wallet_status === 'object' && 'error' in wallet_status) {
+        console.error(wallet_status)
+        return
+      }
       mem.wallet_status = wallet_status
     })
     // getFreeBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((free_balance) => {
