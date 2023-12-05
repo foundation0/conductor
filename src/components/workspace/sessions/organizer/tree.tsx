@@ -164,6 +164,22 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
     },
   })
 
+  useEvent({
+    name: "user.addGroup.done",
+    action: (data: any) => {
+      const { group } = data
+      setFieldEditId(group.id)
+    },
+  })
+  
+  useEvent({
+    name: "user.addFolder.done",
+    action: (data: any) => {
+      const { folder } = data
+      setFieldEditId(folder.id)
+    },
+  })
+
   return (
     <div className="OrganizerTree flex w-full flex-col gap-8">
       {mem.groups.map((group) => (
