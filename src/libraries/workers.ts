@@ -1,5 +1,6 @@
 import * as Comlink from "comlink"
 import WorkerVector from "@/libraries/worker.vector.ts?worker&url"
+import WorkerTokenizer from "@/libraries/worker.tokenizer.ts?worker&url"
 import { error, info } from "./logging"
 import _ from "lodash"
 import { nanoid } from "nanoid"
@@ -7,6 +8,7 @@ import { listen } from "./events"
 
 const WORKERS: { [key: string]: string } = {
   vector: WorkerVector,
+  tokenizer: WorkerTokenizer,
 }
 
 const WORKER_CACHE: { [key: string]: Worker & any } = {}
@@ -31,7 +33,7 @@ function threadsCleanup(THREADS: { n: string; la: number; id: string }[]) {
       } else {
         THREADS = _.filter(THREADS, (w) => w.n !== wid.n)
       }
-      console.log(`${THREADS.length} / Removed thread ${wid.n} / ${wid.id}`)
+      // console.log(`${THREADS.length} / Removed thread ${wid.n} / ${wid.id}`)
       return true
     }
     return false
@@ -82,7 +84,7 @@ async function ThreadCache() {
         _w.terminate()
         delete WORKER_CACHE[n]
         THREADS = _.filter(THREADS, (w) => w.n === n)
-        console.log(`${THREADS.length} / Terminated worker for ${wid.id} / ${n}`)
+        // console.log(`${THREADS.length} / Terminated worker for ${wid.id} / ${n}`)
       }
     },
   }

@@ -1,6 +1,11 @@
 import { HuggingFaceTransformersEmbeddings } from "langchain/embeddings/hf_transformers"
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"
-import { DataT, EmbeddingModelsT, IndexersT, VectorT } from "@/data/schemas/data"
+import {
+  DataT,
+  EmbeddingModelsT,
+  IndexersT,
+  VectorT,
+} from "@/data/schemas/data"
 import * as Comlink from "comlink"
 import { Voy as VoyClient } from "voy-search"
 import { VoyVectorStore } from "langchain/vectorstores/voy"
@@ -8,21 +13,24 @@ import _ from "lodash"
 import { error } from "./logging"
 import { LANGUAGES } from "@/data/schemas/data_types"
 import b4a from "b4a"
-// @ts-ignore
 import { getDocument, PDFDocumentProxy, GlobalWorkerOptions } from "pdfjs-dist"
-import * as pdfjsWorker from "pdfjs-dist/build/pdf.worker.js"
+// @ts-ignore
+import * as pdfjsWorker from "pdfjs-dist/build/pdf.worker"
 GlobalWorkerOptions.workerSrc = pdfjsWorker
 
-import { env } from '@xenova/transformers';
+import { env } from "@xenova/transformers"
 
-env.backends.onnx.wasm.wasmPaths = '/assets/wasm/';
+env.backends.onnx.wasm.wasmPaths = "/assets/wasm/"
 
 export async function extractPDFContent(pdfData: ArrayBuffer): Promise<string> {
   let content = ""
 
   try {
     // Load the PDF document
-    const loadingTask = getDocument({ data: pdfData })
+    const loadingTask = await getDocument({
+      data: pdfData,
+      disableAutoFetch: true,
+    })
     const pdf: PDFDocumentProxy = await loadingTask.promise
 
     // Loop over each page in the PDF
@@ -83,7 +91,7 @@ export async function chunkText({
     })
     if (LANGUAGES[type.mime] || type.mime === "text/plain") {
       let lang = LANGUAGES[type.mime]
-      if(type.mime === "text/plain") lang = "markdown"
+      if (type.mime === "text/plain") lang = "markdown"
 
       if (!lang) {
         return { error: `Unknown language: ${type.mime}` }
@@ -94,6 +102,7 @@ export async function chunkText({
         chunkOverlap: overlap,
       })
     } else if (type.mime === "application/pdf") {
+      if (!content) return error({ message: "No content" })
       const pdf_data = await extractPDFContent(content as ArrayBuffer)
       _content = pdf_data
     } else if (type.mime === "application/epub+zip") {
@@ -104,10 +113,15 @@ export async function chunkText({
     let chunks = await splitter.createDocuments([_content], [])
 
     chunks = chunks.map((chunk, i) => {
-      const [startIndex, endIndex] = findChunkPosition({ full_text: _content, chunk: chunk.pageContent })
+      const [startIndex, endIndex] = findChunkPosition({
+        full_text: _content,
+        chunk: chunk.pageContent,
+      })
       return {
         ...chunk,
-        pageContent: `MIME: ${type.mime}\nNAME: ${type.name}\nCHUNK: ${i + 1}/${chunks.length}\n\n${chunk.pageContent}`,
+        pageContent: `MIME: ${type.mime}\nNAME: ${type.name}\nCHUNK: ${i + 1}/${
+          chunks.length
+        }\n\n${chunk.pageContent}`,
         metadata: {
           ...type,
           start: startIndex,
@@ -122,7 +136,13 @@ export async function chunkText({
   }
 }
 
-function findChunkPosition({ full_text, chunk }: { full_text: string; chunk: string }): [number, number] {
+function findChunkPosition({
+  full_text,
+  chunk,
+}: {
+  full_text: string
+  chunk: string
+}): [number, number] {
   const startIndex = full_text.indexOf(chunk, 0)
   if (startIndex === -1) {
     return [0, 0]
@@ -131,14 +151,21 @@ function findChunkPosition({ full_text, chunk }: { full_text: string; chunk: str
   return [startIndex, endIndex]
 }
 
-export async function vectorizeText({ model, chunks }: { model: EmbeddingModelsT; chunks: string[] }) {
+export async function vectorizeText({
+  model,
+  chunks,
+}: {
+  model: EmbeddingModelsT
+  chunks: string[]
+}) {
   let embed_model = MODEL_CACHE[model]
   if (!embed_model) {
     switch (model) {
       case "MiniLM-L6-v2":
-        embed_model = MODEL_CACHE[model] = new HuggingFaceTransformersEmbeddings({
-          modelName: "Xenova/all-MiniLM-L6-v2",
-        })
+        embed_model = MODEL_CACHE[model] =
+          new HuggingFaceTransformersEmbeddings({
+            modelName: "Xenova/all-MiniLM-L6-v2",
+          })
         break
       default:
         return { error: `Unknown model: ${model}` }
@@ -174,9 +201,10 @@ export async function queryIndex({
   if (!embed_model) {
     switch (model) {
       case "MiniLM-L6-v2":
-        embed_model = MODEL_CACHE[model] = new HuggingFaceTransformersEmbeddings({
-          modelName: "Xenova/all-MiniLM-L6-v2",
-        })
+        embed_model = MODEL_CACHE[model] =
+          new HuggingFaceTransformersEmbeddings({
+            modelName: "Xenova/all-MiniLM-L6-v2",
+          })
         break
       default:
         return { error: `Unknown model: ${model}` }
@@ -198,14 +226,19 @@ export async function queryIndex({
     const chunks = _(content?.vectors)
       .map((v: VectorT, i: number) => {
         if (!v) return null
-        return v.locs?.map((meta: { start: number; end: number; id: string; name: string }) => {
-          const c = content?.chunks?.[i]?.data?.content
+        return v.locs?.map(
+          (meta: { start: number; end: number; id: string; name: string }) => {
+            const c = content?.chunks?.[i]?.data?.content
 
-          return {
-            pageContent: content.chunks[i].data.content.slice(meta.start, meta.end),
-            metadata: { id: meta.id, name: meta.name },
-          }
-        })
+            return {
+              pageContent: content.chunks[i].data.content.slice(
+                meta.start,
+                meta.end,
+              ),
+              metadata: { id: meta.id, name: meta.name },
+            }
+          },
+        )
       })
       .compact()
       .value()
@@ -243,4 +276,10 @@ export async function queryIndex({
   }
 }
 
-Comlink.expose({ vectorizeText, chunkText, queryIndex, extractPDFContent, ping: () => "pong" })
+Comlink.expose({
+  vectorizeText,
+  chunkText,
+  queryIndex,
+  extractPDFContent,
+  ping: () => "pong",
+})

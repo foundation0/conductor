@@ -5,10 +5,10 @@ import _ from "lodash"
 // @ts-ignore
 import Icon from "./icon.svg?dataurl"
 import config from "@/config"
-import { error } from "@/libraries/logging"
 import { PEClient } from "@/libraries/pe"
 import eventEmitter from "@/libraries/events"
 import { LLMVariantT } from "@/data/schemas/modules"
+import { ErrorT } from "@/data/schemas/common"
 
 const variant_setting = {
   max_tokens: 2000,
@@ -31,10 +31,10 @@ export let specs: z.infer<typeof ModuleS> = {
     vendor: { name: "Unified LLM Engine" },
     variants: [
       {
-        id: "openai_gpt-3.5-turbo",
-        name: "OpenAI ChatGPT",
+        id: "mistralai_mixtral-8x7b-instruct-v0.1",
+        name: "Mistral 8x7B Instruct v0.1",
         type: "language",
-        context_len: 4096,
+        context_len: 32768,
         settings: variant_setting,
       },
     ],
@@ -45,10 +45,11 @@ export let specs: z.infer<typeof ModuleS> = {
 
 const InputS = z.object({
   user_id: z.string().min(1),
-  model: z.string().default("openai_gpt-3.5-turbo"),
+  model: z.string().default(config.defaults.llm_module.variant_id),
   prompt: z.object({
     instructions: z.string().optional(),
     user: z.string(),
+    context: z.string().optional(),
   }),
   history: z.array(TextMessageS),
   settings: z
@@ -69,12 +70,40 @@ export const OutputS = z.string()
 type InputT = z.infer<typeof InputS>
 type OutputT = z.infer<typeof OutputS>
 
-export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>): Promise<OutputT> => {
-  const { user_id, model, prompt, settings, history } = InputS.parse(input)
-  const { setGenController, onData, onClose, onError } = StreamingS.parse(callbacks)
+export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>): Promise<OutputT | ErrorT> => {
+  const input_parsed = InputS.safeParse(input)
+  if (!input_parsed.success) {
+    const error = {
+      code: "500",
+      message: "input parsing error",
+      status: "error",
+      surpress: false,
+    }
+    callbacks.onError(error)
+    return "error"
+  }
+  const { user_id, model, prompt, settings, history } = input_parsed.data
+  const stream_parsed = StreamingS.safeParse(callbacks)
+  if(!stream_parsed.success) {
+    const error = {
+      code: "500",
+      message: "callbacks parsing error",
+      status: "error",
+      surpress: false,
+    }
+    callbacks.onError(error)
+    return "error"
+  }
+  const { setGenController, onData, onClose, onError } = stream_parsed.data
 
   if (!user_id) {
-    error({ message: "user_id is required" })
+    const error = {
+      code: "500",
+      message: "user id required",
+      status: "error",
+      surpress: false,
+    }
+    callbacks.onError(error)
     return "error"
   }
 
@@ -109,30 +138,41 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
 
     setGenController && setGenController({ abort: () => ULE.abort({ user_id }) })
 
-    const messages: any = [
+    type msgT = {
+      type: "system" | "user" | "assistant"
+      text: string
+    }
+    const messages: msgT[] = [
       {
         type: "system",
         text: prompt.instructions || "You are a helpful assistant",
       },
-      ...history.map((message) => {
+      ..._(history).map((message) => {
         if (message.type === "human" && message.text) {
           return {
             type: "user",
             text: message.text,
-          }
+          } as msgT
         } else if (message.type === "ai" && message.text) {
           return {
             type: "assistant",
             text: message.text,
-          }
+          } as msgT
         }
-      }),
+      }).compact().value(),
     ]
     if (messages[messages.length - 1]?.type === "assistant" || messages.length === 1) {
       messages.push({
         type: "user",
         text: prompt.user,
       })
+    }
+
+    if (_.last(messages)?.type === "user") {
+      // prepend context to the message
+      if (prompt.context) {
+        messages[messages.length - 1].text = prompt.context + "\n\n" + messages[messages.length - 1].text
+      }
     }
 
     ULE.compute({

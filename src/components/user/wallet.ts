@@ -1,4 +1,5 @@
 import config from "@/config"
+import { ErrorT } from "@/data/schemas/common"
 import { GetBalanceT, AuthGetT } from "@/data/schemas/pe"
 import { getActiveUser } from "@/libraries/active_user"
 import { PEClient } from "@/libraries/pe"
@@ -273,7 +274,7 @@ export async function getAllCharges({
   return s || "error"
 }
 
-export async function getPricing(): Promise<string | number> {
+export async function getPricing(): Promise<[] | ErrorT> {
   const user = getActiveUser()
   // create request payload
   const payload = {

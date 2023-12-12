@@ -22,9 +22,9 @@ const API: { [key: string]: Function } = {
     const updated_state: UserT = { ...s, ...state }
     const parsed = UserS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
-    await UserState.set(parsed.data)
+    await UserState.set(parsed.data, false, true )
 
-    emit({ type: "user.update.done", data: parsed.data })
+    emit({ type: "user.updateUser.done", data: parsed.data })
 
     return parsed.data
   },
@@ -236,6 +236,7 @@ const API: { [key: string]: Function } = {
     // add session into correct state.workspaces.groups.folders and create updated state
     const id = buf2hex({ input: keyPair().public_key, add0x: true }) // just for testing
     const new_session = SessionS.parse({ id })
+
     const updated_state: UserT = { ...state }
     // add new session to correct folder
     const folder_index = _.findIndex(g.folders, (f) => f.id === folder_id)
@@ -333,6 +334,9 @@ const API: { [key: string]: Function } = {
       created_at: new Date(),
       settings: {
         module: new_workspace.defaults.llm_module as any,
+        memory: {
+          rag_mode: 'full'
+        }
       },
     }
     await SessionState.set(new_sessions)

@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom"
 import { initLoaders, loader } from "@/data/loaders"
-import Modules from "@/components/modules"
+import Market from "@/components/market"
 
 export const ModulesIndexR = {
   path: "fff",
@@ -12,5 +12,5 @@ export const ModulesR = {
   path: "modules",
   element: <Outlet />,
   loader,
-  children: [{ index: true, element: <Modules />, loader }],
+  children: [{ index: true, element: <Market />, loader }],
 }

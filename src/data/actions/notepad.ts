@@ -21,6 +21,11 @@ const API: { [key: string]: Function } = {
     if (ClipS.safeParse(clip).success !== true) throw new Error("Invalid clip")
     notepads[session_id] = notepads[session_id] || { session_id, clips: [] }
     notepads[session_id].clips.push(clip)
+
+    // remove duplicates by msg_id
+    notepads[session_id].clips = _(notepads[session_id].clips).uniqBy("msg_id").uniqBy("id").value()
+    await NotepadState.set(notepads, false, true)
+
     ph().capture("notepad/add")
     emit({
       type: "notepad.addClip.done",
@@ -29,7 +34,6 @@ const API: { [key: string]: Function } = {
         target: session_id,
       },
     })
-    await NotepadState.set(notepads)
   },
   updateNotepad: async ({ session_id, notepad }: { session_id: string; notepad: z.infer<typeof NotepadS> }) => {
     const { NotepadState } = await initLoaders()
@@ -47,8 +51,8 @@ const API: { [key: string]: Function } = {
   deleteClip: async ({ session_id, clip_id }: { session_id: string; clip_id: string }) => {
     const { NotepadState } = await initLoaders()
     const notepads = _.cloneDeep(NotepadState.get())
-    notepads[session_id].clips = notepads[session_id].clips.filter((clip: any) => clip.id !== clip_id)
-    await NotepadState.set(notepads)
+    notepads[session_id].clips = _(notepads[session_id].clips).uniqBy("msg_id").uniqBy("id").filter((clip: any) => clip.id !== clip_id).value()
+    await NotepadState.set(notepads, false, true)
     emit({
       type: "notepad.deleteClip.done",
       data: {

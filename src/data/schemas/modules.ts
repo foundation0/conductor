@@ -1,6 +1,23 @@
 import { z } from "zod"
 import { RangeS } from "./common"
 
+export const LLMTemplateS = z.object({
+  assistant_start: z.string().optional(),
+  assistant_end: z.string().optional(),
+  prompt_start: z.string().optional(),
+  prompt_end: z.string().optional(),
+  system: z.string().optional(),
+  system_start: z.string().optional(),
+  system_end: z.string().optional(),
+  stop: z.array(z.string()).optional(),
+})
+
+export const ULES = z.object({
+  tokenizer_type: z.enum(["module", "hf"]),
+  tokenizer_name: z.string(),
+  tokenizer_file_repo: z.string().optional(),
+})
+
 export const LLMVariantS = z.object({
   id: z.string(),
   name: z.string().optional(),
@@ -9,12 +26,13 @@ export const LLMVariantS = z.object({
     .boolean()
     .optional()
     .catch(() => false),
+  tokenizer: ULES.optional(),
   context_len: z.number().optional(),
   cost_input: z.number().optional(),
   cost_output: z.number().optional(),
-  color: z.string().default("transparent").optional(),
-  template: z.string().optional(),
+  template: z.union([z.string(), LLMTemplateS]).optional(),
   settings: z.record(z.any()).optional(),
+  color: z.string().default("transparent").optional(), // deprecated
   cost: z.number().optional().describe("deprecated"), // deprecated
 })
 export type LLMVariantT = z.infer<typeof LLMVariantS>
@@ -41,7 +59,11 @@ export const ModuleS = z.object({
   }),
   settings: z.record(z.any()).optional(),
   cost: z.number().optional().describe("deprecated"), // deprecated
-  streaming: z.boolean().catch(() => false).optional().describe("deprecated"), // deprecated
+  streaming: z
+    .boolean()
+    .catch(() => false)
+    .optional()
+    .describe("deprecated"), // deprecated
 })
 export type ModuleT = z.infer<typeof ModuleS>
 

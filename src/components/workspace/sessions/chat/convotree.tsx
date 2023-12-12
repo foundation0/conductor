@@ -20,6 +20,8 @@ import { error } from "@/libraries/logging"
 import { buildMessageTree, computeActivePath } from "../../../../libraries/branching"
 import { RxCornerBottomLeft } from "react-icons/rx"
 import { LuGitBranchPlus } from "react-icons/lu"
+import useMemory from "@/components/hooks/useMemory"
+import { mChatSessionT } from "@/data/schemas/memory"
 dayjs.extend(relativeTime)
 
 type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
@@ -47,7 +49,12 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
 
   const { ai_state, user_state } = useLoaderData() as { ai_state: AIsT; user_state: UserT }
   const [ago_refresh, setAgoRefresh] = useState(1)
-  const [session, setSession] = useState<ChatSessionT | undefined>(undefined)
+  const mem_session = useMemory<mChatSessionT>({
+    id: `session-${session_id}`,
+  })
+  if(!mem_session) return error({message: "No session"})
+  const { session } = mem_session
+  // const [session, setSession] = useState<ChatSessionT | undefined>(undefined)
 
   // setup participants
   const [participants, setParticipants] = useState<{ [key: string]: React.ReactElement }>({
@@ -138,13 +145,13 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   })
 
   async function init() {
-    const session = await query<ChatSessionT>({
+    /* const session = await query<ChatSessionT>({
       type: "sessions.getById",
       data: {
         session_id,
       },
     })
-    setSession(session)
+    setSession(session) */
     const raw_messages = await query<TextMessageT[]>({
       type: "sessions.getMessagesBySessionId",
       data: {

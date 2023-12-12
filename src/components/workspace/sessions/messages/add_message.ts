@@ -12,6 +12,9 @@ import { ReceiptT } from "@/data/schemas/sessions"
 import { emit } from "@/libraries/events"
 import { Module } from "@/modules"
 import { initLoaders } from "@/data/loaders"
+import { getMemoryState } from "@/libraries/memory"
+import { mChatSessionT, mModulesT } from "@/data/schemas/memory"
+import config from "@/config"
 
 async function getParentId({
   branch_parent_id,
@@ -47,23 +50,9 @@ async function getParentId({
   } else return { parent_id, resend }
 }
 
-async function createContext({
-  context,
-}: {
-  context?: { pageContent: string; metadata: { id: string; name: string } }[]
-}) {
-  let ctx = ""
-  if (context && context?.length > 0) {
-    ctx = `## CONTEXT ##\n\n${context
-      .map((c) => `ID: ${c.metadata.id}\nDOC NAME: ${c.metadata.name}\n\n${c.pageContent}`)
-      .join("\n\n---\n\n")}\n\n## CONTEXT ENDS ##\n\n`
-  }
-  return ctx
-}
-
 export async function addMessage({
   session_id,
-  context,
+  // context,
   processed_messages,
   branch_parent_id,
   message,
@@ -72,16 +61,7 @@ export async function addMessage({
   raw_messages,
   user_state,
   ai,
-  callbacks: {
-    setGenInProgress,
-    setMsgUpdateTs,
-    setMsgsInMem,
-    setGenController,
-    setBranchParentId,
-    appendOrUpdateProcessedMessage,
-    addRawMessage,
-    onError,
-  },
+  callbacks: { appendOrUpdateProcessedMessage, addRawMessage, onError },
 }: {
   session_id: string
   context?: { pageContent: string; metadata: { id: string; name: string } }[]
@@ -94,56 +74,74 @@ export async function addMessage({
   user_state: UserT
   ai: AIT
   callbacks: {
-    setGenInProgress: Function
-    setMsgUpdateTs: Function
-    setMsgsInMem: Function
-    setGenController: Function
-    setBranchParentId: Function
     appendOrUpdateProcessedMessage: Function
     addRawMessage: Function
     onError?: Function
   }
 }): Promise<boolean | undefined> {
-  // set the module
-  const { SessionState } = await initLoaders()
-  const sessions_state = await SessionState.get()
-  const session = sessions_state.active[session_id]
+  const mem_modules = getMemoryState<mModulesT>({ id: "modules" })
+  if (!mem_modules) return error({ message: "no modules" })
 
+  const mem_session = getMemoryState<mChatSessionT>({
+    id: `session-${session_id}`,
+  })
+  if (!mem_session) return error({ message: "no session" })
+
+  // set the module
+  //const { SessionState } = await initLoaders()
+  //const sessions_state = await SessionState.get()
+  // const session = sessions_state.active[session_id]
+  const { session } = mem_session
   const module_id = _.get(session, "settings.module.id")
   let active_module = await Module(module_id)
 
-  const defaultModule = _.find(user_state.modules.installed, { id: ai.default_llm_module.id })
+  const defaultModule = _.find(user_state.modules.installed, {
+    id: ai.default_llm_module.id,
+  })
   if (typeof active_module !== "object" && defaultModule) {
     active_module = await Module(defaultModule.id)
   }
   if (!active_module) throw new Error("No module")
   const module = active_module
 
+  // get the variant
+  const variant = _.find(module?.specs.meta.variants, {
+    id: session?.settings.module.variant,
+  })
+  if (!variant)
+    return error({
+      message: "no variant",
+      data: { module_id: module.specs.id },
+    })
+  if (!variant.context_len)
+    return error({
+      message: "no context length",
+      data: { module_id: module.specs.id },
+    })
+  // get module meta from mem_modules based on the variant
+  /* const module_meta = _(mem_modules.modules)
+    .map((vendor: any) => {
+      const model = vendor.models.find((model: any) => model.id === variant.id)
+      return model
+    })
+    .compact()
+    .first() */
+
   const { parent_id, resend } = await getParentId({
     raw_messages,
     processed_messages,
     meta,
-    branch_parent_id: typeof branch_parent_id === "string" ? branch_parent_id : "",
+    branch_parent_id:
+      typeof branch_parent_id === "string" ? branch_parent_id : "",
   })
   if (!parent_id) {
-    return error({ message: "no parent message", data: { raw_messages, message } })
+    return error({
+      message: "no parent message",
+      data: { raw_messages, message },
+    })
   }
 
-  const ctx = await createContext({ context })
-
   if (message || resend) {
-    let m: TextMessageT | undefined = undefined
-
-    const memory = await compileSlidingWindowMemory({
-      model: session?.settings.module.variant,
-      prompt: {
-        instructions: AIToInstruction({ ai }) || "you are a helpful assistant",
-        user: `${ctx}${message}`,
-      },
-      messages: _.map(processed_messages, (m) => m[1]).filter((m) => m.hash !== "1337"), // 1337 is the hash for temporary messages - TODO: use meta.role for this
-      module,
-    })
-
     // let's start the failsafe timer
     let failsafe_timer = setTimeout(async () => {
       emit({
@@ -156,10 +154,36 @@ export async function addMessage({
       await reset()
       error({ message: "timeout", data: { module_id: module.specs.id } })
       throw new Error("timeout")
-    }, 60000)
+    }, config.defaults.llm_module.timeout)
 
     // this is up here so we can clear it in reset
     let gen_failsafe_timer: any = null
+
+    // reset everything
+    async function reset() {
+      if (failsafe_timer) clearTimeout(failsafe_timer)
+      if (gen_failsafe_timer) clearTimeout(gen_failsafe_timer)
+      if (mem_session) {
+        mem_session.generation.in_progress = false
+        mem_session.generation.msg_update_ts = new Date().getTime()
+      }
+    }
+
+    let m: TextMessageT | undefined = undefined
+
+    // compile memory
+    const memory = await compileSlidingWindowMemory({
+      rag_mode: mem_session.session?.settings?.memory?.rag_mode || "similarity",
+      model: variant.id,
+      session_id,
+      prompt: {
+        instructions: AIToInstruction({ ai }) || "you are a helpful assistant",
+        user: message,
+      },
+      messages: _.map(processed_messages, (m) => m[1]).filter(
+        (m) => m.hash !== "1337",
+      ), // 1337 is the hash for temporary messages - TODO: use meta.role for this
+    })
 
     // if memory is null, then we have no messages to send
     if (!memory) {
@@ -174,17 +198,7 @@ export async function addMessage({
       return false
     }
 
-    // get the variant
-    const variant = _.find(module?.specs.meta.variants, { id: session?.settings.module.variant })
-    if (!variant) return error({ message: "no variant", data: { module_id: module.specs.id } })
-
-    async function reset() {
-      if (failsafe_timer) clearTimeout(failsafe_timer)
-      if (gen_failsafe_timer) clearTimeout(gen_failsafe_timer)
-      setGenInProgress(false)
-      setMsgUpdateTs(new Date().getTime())
-    }
-
+    // if memory is too long, then we need to abort
     if ((memory?.token_count || 0) > (variant?.context_len || 2000)) {
       emit({
         type: "generation/abort",
@@ -192,8 +206,26 @@ export async function addMessage({
           target: session_id,
         },
       })
+      emit({
+        type: "generation/out_of_context",
+        data: {
+          target: session_id,
+          tokens_required: memory?.token_count || 0,
+          current_context: variant?.context_len || 2000,
+        },
+      })
+
       await reset()
-      return false
+      return error({
+        message: `Message (~${_.round(
+          (memory?.token_count || 0) * 0.8,
+          0,
+        )} words) too long for ${variant.name} (${_.round(
+          (variant?.context_len || 2000) * 0.8,
+          0,
+        )} words). Try model with longer context.`,
+        data: { module_id: module.specs.id },
+      })
     }
 
     // @ts-ignore
@@ -209,7 +241,7 @@ export async function addMessage({
           hash: "123",
           text: message,
           meta: meta || { role: "msg" },
-          context: ctx,
+          context: memory.ctx,
           source: `user:${user_state.id}`,
           active: true,
           parent_id,
@@ -218,8 +250,9 @@ export async function addMessage({
       m = await SessionsActions.addMessage(msg)
       addRawMessage({ message: m })
     }
-    setGenInProgress(true)
-    // setMsgUpdateTs(new Date().getTime())
+
+    mem_session.generation.in_progress = true
+
     if (m) {
       const source = `ai:${module?.specs?.id}/${session?.settings.module.variant}/${ai?.id}`
       let stream_response = ""
@@ -240,7 +273,9 @@ export async function addMessage({
               parent_id: m?.id || "",
             },
           })
-          setMsgUpdateTs(new Date().getTime())
+
+          if (mem_session)
+            mem_session.generation.msg_update_ts = new Date().getTime()
         }
         gen_failsafe_timer = setTimeout(() => {
           emit({
@@ -253,41 +288,40 @@ export async function addMessage({
           reset()
           error({ message: "timeout", data: { module_id: module.specs.id } })
           throw new Error("timeout")
-        }, 60000)
+        }, config.defaults.llm_module.timeout)
       }
       let has_error = false
-      const prompt = {
-        instructions: `${AIToInstruction({ ai })}\n\n${ctx}` || "you are a helpful assistant",
-        user: `${m.text}`,
-      }
 
-      setMsgsInMem(memory ? memory.included_ids : [])
+      if (mem_session)
+        mem_session.generation.msgs_in_mem = memory ? memory.included_ids : []
 
-      // prepend the first type human message in history with ctx
-      /* const first_human_msg = _.findIndex(memory?.history, { role: "user" })
-      if (first_human_msg > -1) {
-        memory.history[first_human_msg].content = `${ctx}${memory.history[first_human_msg].content}`
-      } */
-
+      const settings =
+        _.find(user_state.modules.installed, {
+          id: session?.settings.module.id,
+        })?.meta.variants?.find(
+          (v) => v.id === session?.settings.module.variant,
+        )?.settings || {}
+      _.merge(settings, mem_session.session?.settings?.module?.settings || {})
       const { receipt } = (await module?.main(
         {
           model: session?.settings.module.variant,
           user_id: user_state.id,
           settings: {
-            max_tokens: 4000,
-            ...(_.find(user_state.modules.installed, { id: session?.settings.module.id })?.meta.variants?.find(
-              (v) => v.id === session?.settings.module.variant
-            )?.settings || {}),
+            ...settings,
+            max_tokens: _.round(
+              (variant.context_len - memory.token_count) * 0.9,
+            ),
           },
-          prompt,
+          prompt: { ...memory.prompt, context: memory.ctx },
           history: memory?.history || [],
         },
         {
-          setGenController,
+          setGenController: (controller: AbortController) => {
+            mem_session.generation.controller = controller
+          },
           onData,
           onClose: () => {},
           onError: async (data: any) => {
-            
             emit({
               type: "generation/abort",
               data: {
@@ -296,30 +330,29 @@ export async function addMessage({
             })
             has_error = true
             await reset()
-            if(data?.message === "Insufficient funds") {
-              return emit({ type: "insufficient_funds"})
+            if (data?.message === "Insufficient funds") {
+              return emit({ type: "insufficient_funds" })
             } else {
-              if (!data.surpress) error({ message: data.message || data.code, data })
+              if (!data.surpress)
+                error({ message: data.message || data.code, data })
             }
             onError && onError()
           },
-        }
+        },
       )) as { receipt: ReceiptT }
 
       if (stream_response) {
         await reset()
-        setBranchParentId(false)
 
-        /* const costs = await CostEstimator({
-          model: session.settings.module.variant,
-          response: response || stream_response || "",
-          costs: { input: variant?.cost_input || 0, output: variant?.cost_output || 0 },
-        }) */
+        if (mem_session) mem_session.messages.branch_parent_id = false
 
         if (!receipt)
-          return error({ message: "error in computing costs", data: { model: session.settings.module.variant } })
+          return error({
+            message: "error in computing costs",
+            data: { model: session.settings.module.variant },
+          })
         console.log(
-          `Input: ${receipt.details.input.tokens} tokens, $${receipt.details.input.cost_usd} : Output: ${receipt.details.output.tokens} tokens, $${receipt.details.output.cost_usd} : Total: $${receipt.cost_usd}`
+          `Input: ${receipt.details.input.tokens} tokens, $${receipt.details.input.cost_usd} : Output: ${receipt.details.output.tokens} tokens, $${receipt.details.output.cost_usd} : Total: $${receipt.cost_usd}`,
         )
         SessionsActions.addCost({
           session_id,
@@ -335,12 +368,12 @@ export async function addMessage({
             hash: "123",
             text: stream_response,
             meta: meta || { role: "msg" },
-            context: ctx,
+            context: memory.ctx,
             source,
             parent_id: m.id || "",
           },
         }
-        // m = await SessionsActions.addMessage(msg)
+
         addRawMessage({ message: m })
         emit({
           type: "sessions.addMessage",
@@ -355,7 +388,10 @@ export async function addMessage({
             target: session_id,
           },
         })
-        return error({ message: "no response from the module", data: { module_id: module.specs.id } })
+        return error({
+          message: "no response from the module",
+          data: { module_id: module.specs.id },
+        })
       }
     }
   }

@@ -1,6 +1,12 @@
 import { TextMessageT, SessionsT } from "@/data/loaders/sessions"
 import _ from "lodash"
-import { CostS, ReceiptS, SessionsS, TextMessageS } from "@/data/schemas/sessions"
+import {
+  ChatSessionT,
+  CostS,
+  ReceiptS,
+  SessionsS,
+  TextMessageS,
+} from "@/data/schemas/sessions"
 import { nanoid } from "nanoid"
 import { AppStateT } from "@/data/loaders/app"
 import { initLoaders } from "@/data/loaders"
@@ -11,17 +17,20 @@ import { error, ph } from "@/libraries/logging"
 import { z } from "zod"
 import config from "@/config"
 import { emit, listen } from "@/libraries/events"
-import { DataRefT, SessionT } from "../schemas/workspace"
+import { DataRefT, SessionS, SessionT } from "../schemas/workspace"
+import { mergeState } from "../storage/IDB"
 
 const API: { [key: string]: Function } = {
   updateSessions: async function (state: Partial<SessionsT>) {
     const { SessionState } = await initLoaders()
     const sessions: SessionsT = SessionState.get()
-    const updated_state: SessionsT = { ...sessions, ...state }
+    const updated_state = mergeState(sessions, state) as SessionsT
     const parsed = SessionsS.safeParse(updated_state)
-    if (!parsed.success) return error({ message: "Invalid sessions state", data: parsed.error })
-    const res = await SessionState.set(parsed.data)
-    if (typeof res === "object" && "error" in res) return error({ message: "Failed to update sessions", data: res })
+    if (!parsed.success)
+      return error({ message: "Invalid sessions state", data: parsed.error })
+    const res = await SessionState.set(parsed.data, false, true)
+    if (typeof res === "object" && "error" in res)
+      return error({ message: "Failed to update sessions", data: res })
 
     emit({
       type: "sessions.updateSessions.done",
@@ -30,34 +39,58 @@ const API: { [key: string]: Function } = {
     return parsed.data
   },
 
-  updateSession: async function ({ session_id, session }: { session_id: string; session: any }) {
+  updateSession: async function ({
+    session_id,
+    session,
+  }: {
+    session_id: string
+    session: any
+  }) {
     const { SessionState } = await initLoaders()
     const sessions: SessionsT = SessionState.get()
     const updated_sessions = _.cloneDeep(sessions)
     const current_session = updated_sessions.active[session_id]
-    if (!session) return error({ message: "Session not found", data: { session_id } })
-    const updated_session = { ...current_session, ...session }
+    if (!session)
+      return error({ message: "Session not found", data: { session_id } })
+    const updated_session = mergeState(current_session, session)
     updated_sessions.active[session_id] = updated_session
     const res = await API.updateSessions(updated_sessions)
-    if (typeof res === "object" && "error" in res) return error({ message: "Failed to update session", data: res })
+    if (typeof res === "object" && "error" in res)
+      return error({ message: "Failed to update session", data: res })
     emit({
       type: "sessions.updateSession.done",
-      data: updated_session,
+      data: {
+        session: updated_session,
+        target: session_id,
+      }
     })
     return updated_session
   },
-  updateMessages: async function ({ session_id, messages }: { session_id: string; messages: TextMessageT[] }) {
+  updateMessages: async function ({
+    session_id,
+    messages,
+  }: {
+    session_id: string
+    messages: TextMessageT[]
+  }) {
     const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })
     const res = await messages_state.set(messages)
-    if (typeof res === "object" && "error" in res) return error({ message: "Failed to update messages", data: res })
+    if (typeof res === "object" && "error" in res)
+      return error({ message: "Failed to update messages", data: res })
     emit({
       type: "sessions.updateMessages.done",
       data: { messages },
     })
   },
 
-  updateTempMessage: async function ({ session_id, message }: { session_id: string; message: TextMessageT }) {
+  updateTempMessage: async function ({
+    session_id,
+    message,
+  }: {
+    session_id: string
+    message: TextMessageT
+  }) {
     // find the session, if no session, abort
     const { MessagesState } = await initLoaders()
     let messages_state = await MessagesState({ session_id })
@@ -81,7 +114,8 @@ const API: { [key: string]: Function } = {
     // save the session
     // await SessionState.set(sessions, true)
     const res = await messages_state.set(messages)
-    if (typeof res === "object" && "error" in res) return error({ message: "Failed to update temp message", data: res })
+    if (typeof res === "object" && "error" in res)
+      return error({ message: "Failed to update temp message", data: res })
     emit({
       type: "sessions.updateTempMessage.done",
       data: { messages },
@@ -92,14 +126,24 @@ const API: { [key: string]: Function } = {
     const sessions = SessionState.get()
     return sessions.active[session_id] || null
   },
-  addMessage: async function ({ session_id, message }: { message: Partial<TextMessageT>; session_id: string }) {
+  addMessage: async function ({
+    session_id,
+    message,
+  }: {
+    message: Partial<TextMessageT>
+    session_id: string
+  }) {
     const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })
     const messages: TextMessageT[] = messages_state.get()
 
     if (message.parent_id === "first" && messages.length > 0) {
       throw new Error("multiple first messages")
-    } else if (message.parent_id && message.parent_id !== "first" && messages.length > 0) {
+    } else if (
+      message.parent_id &&
+      message.parent_id !== "first" &&
+      messages.length > 0
+    ) {
       const parent = messages.find((m) => m.id === message.parent_id)
       if (!parent) throw new Error("Invalid parent_id")
     }
@@ -116,12 +160,18 @@ const API: { [key: string]: Function } = {
       // if vmessage.data.active is true, set all other messages with same parent_id to false
       if (vmessage.data.active) {
         updated_messages.forEach((m) => {
-          if (m.parent_id === vmessage.data.parent_id && m.id !== vmessage.data.id) m.active = false
+          if (
+            m.parent_id === vmessage.data.parent_id &&
+            m.id !== vmessage.data.id
+          )
+            m.active = false
         })
       }
     } else {
       // update message
-      updated_messages = messages.map((m) => (m.id === vmessage.data.id ? vmessage.data : m))
+      updated_messages = messages.map((m) =>
+        m.id === vmessage.data.id ? vmessage.data : m,
+      )
     }
 
     // remove any message with temp id
@@ -129,7 +179,8 @@ const API: { [key: string]: Function } = {
 
     const res = await messages_state.set(updated_messages)
     ph().capture("sessions/message_added")
-    if (typeof res === "object" && "error" in res) return error({ message: "Failed to add a message", data: res })
+    if (typeof res === "object" && "error" in res)
+      return error({ message: "Failed to add a message", data: res })
     emit({
       type: "sessions.addMessage.done",
       data: { messages },
@@ -145,27 +196,37 @@ const API: { [key: string]: Function } = {
     const messages_state = await MessagesState({ session_id })
     return messages_state.get()
   },
-  addCost: async function ({ session_id, receipt }: { receipt: z.infer<typeof ReceiptS>; session_id: string }) {
+  addCost: async function ({
+    session_id,
+    receipt,
+  }: {
+    receipt: z.infer<typeof ReceiptS>
+    session_id: string
+  }) {
     const { SessionState } = await initLoaders()
     const sessions = SessionState.get()
     const session = sessions.active[session_id]
     if (!session) throw new Error("Session not found")
 
-    if (!ReceiptS.safeParse(receipt).success) return error({ message: "Invalid receipt", data: receipt })
+    if (!ReceiptS.safeParse(receipt).success)
+      return error({ message: "Invalid receipt", data: receipt })
 
     if (!session.receipts) session.receipts = []
     session.receipts.push(receipt)
     const res = await API.updateSessions(sessions)
-    if (typeof res === "object" && "error" in res) return error({ message: "Failed to add a cost", data: res })
+    if (typeof res === "object" && "error" in res)
+      return error({ message: "Failed to add a cost", data: res })
     emit({
       type: "sessions.addCost.done",
       data: { receipt },
     })
   },
-  async getAllReceipts(){
+  async getAllReceipts() {
     const { SessionState } = await initLoaders()
     const sessions: SessionsT = SessionState.get()
-    const receipts = _.flatten(Object.values(sessions.active).map((s) => s.receipts || []))
+    const receipts = _.flatten(
+      Object.values(sessions.active).map((s) => s.receipts || []),
+    )
     return receipts
   },
   clearMessages: async function ({ session_id }: { session_id: string }) {
@@ -179,12 +240,20 @@ const API: { [key: string]: Function } = {
       data: { target: session_id },
     })
   },
-  async deleteMessage({ session_id, message_id }: { session_id: string; message_id: string }) {
+  async deleteMessage({
+    session_id,
+    message_id,
+  }: {
+    session_id: string
+    message_id: string
+  }) {
     const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })
     const messages: TextMessageT[] = messages_state.get()
     // mark message status as deleted
-    const updated_messages = messages.map((m) => (m.id === message_id ? { ...m, status: "deleted" } : m))
+    const updated_messages = messages.map((m) =>
+      m.id === message_id ? { ...m, status: "deleted" } : m,
+    )
     await messages_state.set(updated_messages, null, true)
     emit({
       type: "sessions.deleteMessage.done",
@@ -200,8 +269,10 @@ const API: { [key: string]: Function } = {
     group_id?: string
     folder_id?: string
   }) => {
-    const { SessionState, UserState, AppState } = await initLoaders()
-    const active_workspace = _.find(UserState.get().workspaces, { id: workspace_id })
+    const { UserState, AppState } = await initLoaders()
+    const active_workspace = _.find(UserState.get().workspaces, {
+      id: workspace_id,
+    })
     if (!active_workspace) throw new Error("Active workspace not found")
     const new_session = await UserActions.addSession({
       active_workspace,
@@ -221,19 +292,31 @@ const API: { [key: string]: Function } = {
     await AppStateActions.updateAppState(as)
 
     // add to active sessions
-    const res = await API.addSessionToActive({ session_id: new_session.session.id, workspace_id })
+    const res = await API.addSessionToActive({
+      session_id: new_session.session.id,
+      workspace_id,
+    })
 
     ph().capture("sessions/create")
-    if (typeof res === "object" && "error" in res) return error({ message: "Failed to add a session", data: res })
+    if (typeof res === "object" && "error" in res)
+      return error({ message: "Failed to add a session", data: res })
     emit({
       type: "sessions.addSession.done",
       data: new_session,
     })
     return new_session
   },
-  async addSessionToActive({ session_id, workspace_id }: { session_id: string; workspace_id: string }) {
+  async addSessionToActive({
+    session_id,
+    workspace_id,
+  }: {
+    session_id: string
+    workspace_id: string
+  }) {
     const { SessionState, UserState, AppState } = await initLoaders()
-    const active_workspace = _.find(UserState.get().workspaces, { id: workspace_id })
+    const active_workspace = _.find(UserState.get().workspaces, {
+      id: workspace_id,
+    })
     if (!active_workspace) throw new Error("Active workspace not found")
     const sessions = SessionState.get()
     sessions.active[session_id] = {
@@ -243,11 +326,18 @@ const API: { [key: string]: Function } = {
       created_at: new Date(),
       settings: {
         module: {
-          id: active_workspace.defaults.llm_module.id || config.defaults.llm_module.id,
-          variant: active_workspace.defaults.llm_module.variant || config.defaults.llm_module.variant_id,
+          id:
+            active_workspace.defaults.llm_module.id ||
+            config.defaults.llm_module.id,
+          variant:
+            active_workspace.defaults.llm_module.variant ||
+            config.defaults.llm_module.variant_id,
         },
+        memory: {
+          rag_mode: 'full'
+        }
       },
-    }
+    } as ChatSessionT
     return API.updateSessions(sessions)
   },
   deleteSession: async ({
@@ -261,21 +351,28 @@ const API: { [key: string]: Function } = {
     folder_id: string
     session_id: string
   }) => {
-    const { SessionState, UserState, AppState, MessagesState } = await initLoaders()
+    const { SessionState, UserState, AppState, MessagesState } =
+      await initLoaders()
 
     // delete session from app_state.open_sessions
     const as: AppStateT = _.cloneDeep(AppState.get())
-    const new_open_sessions = as.open_sessions.filter((open_session) => open_session.session_id !== session_id)
+    const new_open_sessions = as.open_sessions.filter(
+      (open_session) => open_session.session_id !== session_id,
+    )
     as.open_sessions = new_open_sessions
     await AppStateActions.updateAppState(as)
 
     // delete session from user_state.workspaces.groups.folders.sessions
     let us: UserT = _.cloneDeep(UserState.get())
-    const updated_group = _.find(us.workspaces, { id: workspace_id })?.groups.map((group) => {
+    const updated_group = _.find(us.workspaces, {
+      id: workspace_id,
+    })?.groups.map((group) => {
       if (group.id === group_id) {
         group.folders.map((folder) => {
           if (folder.id === folder_id) {
-            folder.sessions = folder?.sessions?.filter((session) => session.id !== session_id)
+            folder.sessions = folder?.sessions?.filter(
+              (session) => session.id !== session_id,
+            )
           }
           return folder
         })
@@ -310,6 +407,13 @@ const API: { [key: string]: Function } = {
       data: { session_id },
     })
   },
+  async getData({ session_id }: { session_id: string }) {
+    const { SessionState } = await initLoaders()
+    const sessions = SessionState.get()
+    const session = sessions.active[session_id]
+    if (!session) throw new Error("Session not found")
+    return session.data || []
+  },
   async addData({ session_id, data }: { session_id: string; data: DataRefT }) {
     const { SessionState } = await initLoaders()
     const sessions = SessionState.get()
@@ -317,9 +421,10 @@ const API: { [key: string]: Function } = {
     if (!session) throw new Error("Session not found")
     if (!session.data) session.data = []
     // check that data doesn't exist
-    if (session.data.find((d: DataRefT) => d.id === data.id)) return
-    session.data.push(data)
-    await API.updateSessions(sessions)
+    if (!session.data.find((d: DataRefT) => d.id === data.id)) {
+      session.data.push(data)
+      await API.updateSessions(sessions)
+    }
     emit({
       type: "sessions.addData.done",
       data: {
@@ -328,14 +433,20 @@ const API: { [key: string]: Function } = {
       },
     })
   },
-  async removeData({ session_id, data_id }: { session_id: string; data_id: any }) {
+  async removeData({
+    session_id,
+    data_id,
+  }: {
+    session_id: string
+    data_id: any
+  }) {
     const { SessionState } = await initLoaders()
     const sessions = SessionState.get()
     const session = sessions.active[session_id]
     if (!session) throw new Error("Session not found")
     if (!session.data) session.data = []
     session.data = session.data.filter((d: DataRefT) => d.id !== data_id)
-    await API.updateSessions(sessions)
+    await API.updateSession({ session_id, session })
     emit({
       type: "sessions.removeData.done",
       data: {
@@ -361,7 +472,13 @@ const API: { [key: string]: Function } = {
     const as: AppStateT = AppState.get()
     return { session_id: as.active_sessions[as.active_workspace_id].session_id }
   },
-  async getMessages({ session_id, remove_deleted }: { session_id: string; remove_deleted?: boolean }) {
+  async getMessages({
+    session_id,
+    remove_deleted,
+  }: {
+    session_id: string
+    remove_deleted?: boolean
+  }) {
     const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })
     const msgs = messages_state.get()

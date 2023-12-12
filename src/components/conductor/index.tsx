@@ -49,11 +49,6 @@ export default function Conductor() {
 
   const mem_balances: mBalancesT = useMemory({
     id: "balances",
-    state: {
-      credits: 0,
-      bytes: 0,
-      status: "active",
-    },
   })
 
   // Fetch balances

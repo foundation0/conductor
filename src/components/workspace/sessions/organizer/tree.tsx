@@ -157,9 +157,9 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       "user.deleteGroup.done",
       "user.deleteFolder.done",
       "user.renameItem.done",
+      "user.updateUser.done"
     ],
     action: () => {
-      console.log("updata groups")
       setTimeout(updateGroups, 100)
     },
   })
@@ -237,7 +237,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         <DropdownMenu.Item
                           className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200"
                           onClick={() => {
-                            fetcher.submit(
+                            /* fetcher.submit(
                               {
                                 workspace_id: workspace_id || "",
                                 group_id: group.id,
@@ -246,7 +246,14 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                                 method: "DELETE",
                                 action: "/c/workspace/group",
                               }
-                            )
+                            ) */
+                            emit({
+                              type: 'user.deleteGroup',
+                              data: {
+                                workspace_id,
+                                group_id: group.id,
+                              }
+                            })
                           }}
                         >
                           Delete

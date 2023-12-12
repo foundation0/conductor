@@ -16,11 +16,11 @@ export default function Welcome() {
       </p>
       <p className="">Hi there, a few important words before we let you get into it...</p>
       <p className="">
-        As of today, Conductor is <i>"ChatGPT for professionals"</i>. But soon, Conductor will go beyond chat with support for
-        documents, images, audio, video, and 3D.
+        Today, Conductor is <i>"ChatGPT for creators & professionals"</i>. But soon, Conductor will go beyond chat with support for
+        documents, images, audio, video, 3D and agents.
       </p>
       <p className="">
-        As you will notice, in its current form, Conductor gives you powerful tools to organize and manage your AI work.
+        In its current form, Conductor gives you powerful tools to organize and manage your AI work.
       </p>
       <p>
         <strong>Next</strong>, you'll get a super quick introduction to the interface so you can hit the ground running.
@@ -29,7 +29,7 @@ export default function Welcome() {
         <strong>Important!</strong> Conductor is a community-driven project. If you want a feature in Conductor, let us know,
         and the community will build it. Find us at{" "}
         <a
-          href="https://github.com/promptc0/a0"
+          href="https://github.com/foundation0/conductor"
           target="_blank"
           className="underline tooltip tooltip-top"
           data-tip="stars appreciated ;)"
@@ -38,12 +38,12 @@ export default function Welcome() {
         </a>
         ,{" "}
         <a
-          href="https://twitter.com/promptc0"
+          href="https://twitter.com/conductorc0"
           target="_blank"
           className="underline tooltip tooltip-top"
           data-tip="follow for updates"
         >
-          Twitter
+          X/Twitter
         </a>{" "}
         and{" "}
         <a

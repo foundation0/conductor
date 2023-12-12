@@ -7,7 +7,7 @@ import { RequireAuth } from "@/libraries/auth"
 import { AIR } from "@/components/ai/routes"
 import { Admin } from "./admin"
 import CallHistory from "./call_history"
-import { ModulesR } from "../modules/routes"
+import { ModulesR } from "../market/routes"
 
 export const SettingsR = {
   loader,
