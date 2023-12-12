@@ -278,7 +278,7 @@ export async function getPricing(): Promise<[] | ErrorT> {
   const user = getActiveUser()
   // create request payload
   const payload = {
-    user_id: user?.id,
+    user_id: user?.id || "unknown",
     type: "GetPricing",
   }
 
