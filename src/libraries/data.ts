@@ -6,8 +6,8 @@ import { DataT, EmbeddingModelsT, IndexersT, VectorT } from "@/data/schemas/data
 import { DataRefT } from "@/data/schemas/workspace"
 import { emit, listen } from "./events"
 import { lookup } from "mrmime"
-import async, { mapLimit } from "async"
-import _, { chunk } from "lodash"
+import async from "async"
+import _ from "lodash"
 import { initLoaders } from "@/data/loaders"
 import { UserT } from "@/data/schemas/user"
 import { getWorker } from "./workers"
@@ -17,7 +17,6 @@ import {
   DATA_TYPES_TEXT,
   DataTypesBinaryS,
   DataTypesTextS,
-  DataTypesTextT,
 } from "@/data/schemas/data_types"
 import { get, set } from "@/data/actions/cache"
 

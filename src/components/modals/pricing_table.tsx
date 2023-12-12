@@ -1,20 +1,12 @@
 import { useEvent } from "@/components/hooks/useEvent"
 import useMemory from "@/components/hooks/useMemory"
-import config from "@/config"
-import { useEffect } from "react"
-import { getPricing } from "../user/wallet"
-import { getActiveUser } from "@/libraries/active_user"
 import { Match, Switch } from "react-solid-flow"
 import _ from "lodash"
 import { MdClose } from "react-icons/md"
+import { mPricesT } from "@/data/schemas/memory"
 
 export function PricingTable() {
-  const mem: { prices: any[] } = useMemory({
-    id: "pricing_table",
-    state: {
-      prices: [],
-    },
-  })
+  const mem = useMemory<mPricesT>({ id: "prices" })
 
   useEvent({
     name: "pricing_table/show",
@@ -24,28 +16,6 @@ export function PricingTable() {
       dialog.showModal()
     },
   })
-
-  useEffect(() => {
-    getPricing().then((pricing: any) => {
-      if (pricing.error) return console.error(pricing.error)
-      mem.prices = _(pricing)
-        .map((vendor: any) => {
-          return vendor.modules.map((module: any) => {
-            return {
-              type: module.type,
-              vendor: vendor.meta.name,
-              module: module.name,
-              input_price: (parseFloat(module.cost_input) / 1000).toFixed(8),
-              output_price: (parseFloat(module.cost_output) / 1000).toFixed(8),
-            }
-          })
-        })
-        .flatten()
-        .orderBy("module")
-        .orderBy("vendor")
-        .value()
-    })
-  }, [])
 
   return (
     <dialog id="PricingTable" className="ModuleSetting modal w-full w-max-4xl h-max-[80dvh]">
@@ -67,7 +37,7 @@ export function PricingTable() {
                 <th>Type</th>
                 <th>Vendor</th>
                 <th>Module</th>
-                <th>Price per 1M units (in/out)</th>
+                <th>$ price per unit (in/out)</th>
                 <th>Unit</th>
               </tr>
             </thead>

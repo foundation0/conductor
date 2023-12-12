@@ -19,6 +19,7 @@ import { setActiveUser, getActiveUser, removeActiveUser } from "@/libraries/acti
 import ToastNotification from "@/components/notifications/toast"
 import UsersActions from "@/data/actions/users"
 import { ph } from "@/libraries/logging"
+import stateMem from "@/libraries/state_memory"
 
 // pseudo polyfills
 if (typeof window !== "undefined") {
@@ -31,6 +32,7 @@ if (typeof window !== "undefined") {
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   let [user, setUser] = React.useState<any>(getActiveUser())
+  stateMem()
 
   React.useEffect(() => {
     if (user) {

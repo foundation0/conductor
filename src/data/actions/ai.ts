@@ -11,7 +11,8 @@ import { UserT } from "../loaders/user"
 const API: { [key: string]: Function } = {
   add: async ({ persona, default_llm_module }: Partial<AIT>) => {
     if (!persona) return error({ message: "Persona is required" })
-    if (!default_llm_module) return error({ message: "Default LLM Module is required" })
+    if (!default_llm_module)
+      return error({ message: "Default LLM Module is required" })
 
     const { UserState } = await initLoaders()
     const user_state: UserT = await UserState.get()
@@ -24,9 +25,12 @@ const API: { [key: string]: Function } = {
     const same_name_ai = ais.find((ai: AIT) => ai.meta.name === persona["name"])
 
     if (same_name_ai) {
-      const already_installed_ai = user_state.ais?.find((user_ai) => user_ai.id === ai.id)
+      const already_installed_ai = user_state.ais?.find(
+        (user_ai) => user_ai.id === ai.id,
+      )
       // if same name ai exists and is already installed, return error
-      if (same_name_ai && already_installed_ai) return error({ message: "You already have this AI." })
+      if (same_name_ai && already_installed_ai)
+        return error({ message: "You already have this AI." })
     }
 
     const ai: AIT = {
@@ -42,7 +46,8 @@ const API: { [key: string]: Function } = {
       },
       persona,
     }
-    if (AIS.safeParse(ai).success !== true) return error({ message: "Invalid AI" })
+    if (AIS.safeParse(ai).success !== true)
+      return error({ message: "Invalid AI" })
 
     // add ai to the list if it doesn't exist
     if (!same_name_ai) {
@@ -64,7 +69,6 @@ const API: { [key: string]: Function } = {
 
     return ai
   },
-
 
   update: async ({ ai }: { ai: Partial<AIT> }) => {
     const { AIState } = await initLoaders()
@@ -102,6 +106,12 @@ const API: { [key: string]: Function } = {
     ais.splice(index, 1)
     await AIState.set(ais, null, true)
   },
+
+  async getAll() {
+    const { AIState } = await initLoaders()
+    const ais = _.cloneDeep(AIState.get())
+    return ais
+  }
 }
 
 listen({

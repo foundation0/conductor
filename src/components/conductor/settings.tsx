@@ -20,7 +20,7 @@ import { LuSettings2 } from "react-icons/lu"
 import { BiBlock } from "react-icons/bi"
 import { parseBoolean, parseNumber } from "@/libraries/utilities"
 import { getBalance, getBytesBalance, getFreeBalance, getWalletStatus } from "@/components/user/wallet"
-import { ModuleSettings } from "../modules/module_settings"
+import { ModuleSettings } from "../market/module_settings"
 import { buyCreditsWithStripe } from "@/libraries/payments"
 import { getModules } from "@/modules"
 import { get as getLS } from "@/data/storage/localStorage"
@@ -308,72 +308,8 @@ export default function Settings(props: any) {
         <div className="flex flex-row w-full gap-2">
           <CallHistory />
         </div>
+        
         {/* <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
-          Modules
-        </div>
-        <div className="flex flex-row w-full gap-2">
-          {module_list
-            ?.filter((m) => m.meta?.type.toLowerCase() === "llm")
-            //?.filter((m) => _.find(module_list, { id: m.id }))
-            .map((module: any, index: number) => {
-              return (
-                <div
-                  key={module.id}
-                  className="w-1/2 bg-zinc-800/50 bg-gradient rounded-xl p-5 border-t border-t-zinc-600/50"
-                >
-                  <div className="flex w-full mb-2 pb-2 border-b border-b-zinc-700">
-                    <div className="flex items-center text-zinc-400 font-semibold">
-                      {module.meta?.vendor?.name || "Unknown"}{" "}
-                    </div>
-                    <div className="flex flex-1 items-center justify-end gap-2">
-                      <label
-                        className="relative inline-flex items-center cursor-pointer tooltip tooltip-top"
-                        data-tip="Active/inactive module"
-                      >
-                        <input
-                          type="checkbox"
-                          onChange={() => {
-                            handleEdit({
-                              module_id: module.id,
-                              value: module.active ? "false" : "true",
-                              name: "active",
-                            })
-                          }}
-                          checked={module.active ? true : false}
-                          className="sr-only peer"
-                        />
-                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                      </label>
-                      <MdSettingsSuggest
-                        className="w-4 h-4 text-zinc-400 hover:text-zinc-300 cursor-pointer"
-                        onClick={() => {
-                          // @ts-ignore
-                          window[`settings-${module.id}`].showModal()
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center text-zinc-400 font-semibold text-xs mb-3">
-                    {module.meta?.description || "No description"}
-                  </div>
-
-                  <ModuleSettings {...{ module, index: index - 1, handleEdit, EditComponent }} />
-                </div>
-              )
-            })}
-          <div
-            className="w-1/2 bg-zinc-900 rounded-lg p-3 flex flex-col justify-center items-center cursor-not-allowed border-zinc-700 border border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500 tooltip tooltip-top"
-            data-tip="Coming soon"
-          >
-            
-            <img
-              src={IntersectIcon}
-              className="w-10 h-10 rounded-full border-2 border-dashed border-zinc-700 m-2 p-1 saturate-0 hover:saturate-50"
-            />
-            <div className="text-xs font-semibold">Browser module marketplace</div>
-          </div>
-        </div> */}
-        <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
           AIs
         </div>
         <div className="flex flex-grow flex-1 w-full flex-col gap-3">
@@ -547,7 +483,7 @@ export default function Settings(props: any) {
                 .value()}
             </ul>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   )

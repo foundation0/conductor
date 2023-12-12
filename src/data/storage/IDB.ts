@@ -1,6 +1,14 @@
 import { ZodTypeAny } from "zod"
 import _ from "lodash"
-import { buf2hex, createHash, decrypt, encrypt, hex2buf, keyPair, signMessage } from "@/security/common"
+import {
+  buf2hex,
+  createHash,
+  decrypt,
+  encrypt,
+  hex2buf,
+  keyPair,
+  signMessage,
+} from "@/security/common"
 import { pack, unpack } from "msgpackr"
 import { get, set, del } from "idb-keyval"
 import { getActiveUser } from "@/libraries/active_user"
@@ -23,7 +31,8 @@ export const mergeState = <T>(state: T, updated_state: T): T => {
   }
   // If both states are objects, merge them
   else if (_.isObject(state) && _.isObject(updated_state)) {
-    return { ...state, ...updated_state } as T
+    _.merge(state, updated_state)
+    return state as T
   }
   // Throw an error if the states are not valid
   throw new Error("Invalid state or updated_state")
@@ -43,11 +52,24 @@ async function processForRemote({
   const enc_vstate = encrypt({ data, key: enc_key })
   const packed_vstate = pack(enc_vstate)
   const signature = await signMessage(packed_vstate, key_pair.secret_key)
-  const enc_data = pack({ data: enc_vstate, signature, public_key: key_pair.public_key, destroy })
+  const enc_data = pack({
+    data: enc_vstate,
+    signature,
+    public_key: key_pair.public_key,
+    destroy,
+  })
   return enc_data
 }
 
-export function getRemoteKey({ key, name, active_user }: { key: string; name: string; active_user: UserT }) {
+export function getRemoteKey({
+  key,
+  name,
+  active_user,
+}: {
+  key: string
+  name: string
+  active_user: UserT
+}) {
   let remote_key = ""
   if (name !== "user") {
     remote_key = keyHash(active_user?.master_key + key)
@@ -93,34 +115,47 @@ export async function getRemote({
   // Set the store status to "checking_update"
   mem[name] = { status: "checking_update", updated_at: new Date().getTime() }
 
-  
   // Get the store from the cloud storage
   getCF({ key: remote_key })
     .then(async (cf_store: any) => {
       // If the store exists and the public key matches the active user's public key, decrypt the store
-      if (cf_store && buf2hex({ input: cf_store.public_key }) === active_user.public_key) {
+      if (
+        cf_store &&
+        buf2hex({ input: cf_store.public_key }) === active_user.public_key
+      ) {
         // Check the signature of the store
-        const sig_valid = verify(cf_store.signature, createHash({ str: pack(cf_store.data) }), cf_store.public_key)
+        const sig_valid = verify(
+          cf_store.signature,
+          createHash({ str: pack(cf_store.data) }),
+          cf_store.public_key,
+        )
         if (!sig_valid) {
           error({ message: "invalid signature" })
           mem[name] = { status: "error", updated_at: new Date().getTime() }
         } else {
           // Decrypt the store
           const cf_s = decrypt({ ...cf_store.data, key: enc_key })
-          const cf_vstate = ztype.safeParse(cf_s) as { data?: any; success?: boolean }
+          const cf_vstate = ztype.safeParse(cf_s) as {
+            data?: any
+            success?: boolean
+          }
           // If the store is valid, update the local store
           if (cf_vstate.success && cf_vstate?.data) {
-
             if ((_.isArray(s) && _.size(s) === 0) || !s) s = cf_vstate?.data
             if (
               s &&
               _.isObject(cf_vstate?.data) &&
-              (_.get(cf_vstate, "data._updated") || 0) > (_.get(s, "_updated") || 0)
+              (_.get(cf_vstate, "data._updated") || 0) >
+                (_.get(s, "_updated") || 0)
             ) {
               s = cf_vstate?.data
               await API.set(s)
               emit({ type: "store/update", data: { session_id: name } })
-            } else if (s && _.isArray(cf_vstate?.data) && cf_vstate?.data.length > (_.size(s) || 0)) {
+            } else if (
+              s &&
+              _.isArray(cf_vstate?.data) &&
+              cf_vstate?.data.length > (_.size(s) || 0)
+            ) {
               s = cf_vstate?.data
               await API.set(s, false, true, true)
               emit({ type: "store/update", data: { session_id: name } })
@@ -164,13 +199,12 @@ export const store = async <TData>({
   destroy: () => void
 } | null> => {
   // get memory for stores
-  let mem = getMemoryState({ id: "stores" })
-  if (!mem)
-    mem = createMemoryState({
-      id: "stores",
-      state: { [name]: { status: "initializing", updated_at: new Date().getTime() } },
-    })
-  else mem[name] = { status: "initializing", updated_at: new Date().getTime() }
+  let mem = createMemoryState({
+    id: "stores",
+    state: {
+      [name]: { status: "initializing", updated_at: new Date().getTime() },
+    },
+  })
 
   // Log the creation of the store
   info({ message: `setting up store for ${name}` })
@@ -225,29 +259,38 @@ export const store = async <TData>({
     })
     remote_key = getRemoteKey({ name, key, active_user })
   }
-  
+
   // Return API to get and set the store data
   const API = {
-    get: (): TData => { 
+    get: (): TData => {
       // if(active_user && enc_key && remote_key) getRemote({ mem, remote_key, name, active_user, enc_key, ztype, s: store, API })
-      return store 
+      return store
     },
-    set: async (data: TData, no_storage?: boolean, replace?: boolean, skip_sync?: boolean) => {
+    set: async (
+      data: TData,
+      no_storage?: boolean,
+      replace?: boolean,
+      skip_sync?: boolean,
+    ) => {
       // Check we have everything needed
       if (!data) return
       if (!enc_key) return error({ message: "No encryption key" })
       if (!ztype) return error({ message: "No schema" })
       if (!name) return error({ message: "No name" })
-      
+
       // Log the update of the store
       info({ message: `updating store for ${name}` })
 
       // Merge the current state with the new data and validate it against the schema
       const updated_state = !replace ? mergeState(store, data) : data
-      
+
       // Check if _updated timestamp exists, if so, update it
       // @ts-ignore
-      if (ztype._def.shape?._updated || ztype._cached?.keys?.includes("_updated")) {
+      if (
+        ztype._def.shape?._updated ||
+        // @ts-ignore
+        ztype._cached?.keys?.includes("_updated")
+      ) {
         // @ts-ignore
         updated_state._updated = new Date().getTime()
       }
@@ -265,13 +308,24 @@ export const store = async <TData>({
       if (no_storage) return
 
       // If a key pair exists, encrypt the data and save it to the cloud storage
-      if (key_pair && remote_key && name !== "users" && !local_only && !skip_sync) {
-        const enc_data = await processForRemote({ data: vstate.data, key_pair, enc_key })
+      if (
+        key_pair &&
+        remote_key &&
+        name !== "users" &&
+        !local_only &&
+        !skip_sync
+      ) {
+        const enc_data = await processForRemote({
+          data: vstate.data,
+          key_pair,
+          enc_key,
+        })
         setCF({ key: remote_key, value: enc_data })
       }
 
       // Save the data to the local storage
-      if (config.features.local_encryption) await set(key, pack(encrypt({ data: vstate.data, key: enc_key })))
+      if (config.features.local_encryption)
+        await set(key, pack(encrypt({ data: vstate.data, key: enc_key })))
       else await set(key, vstate.data)
 
       // Emit an event to notify the store has been updated
@@ -286,7 +340,12 @@ export const store = async <TData>({
     destroy: async () => {
       await del(key)
       if (remote_key) {
-        const enc_data = await processForRemote({ data: 1, key_pair, enc_key, destroy: true })
+        const enc_data = await processForRemote({
+          data: 1,
+          key_pair,
+          enc_key,
+          destroy: true,
+        })
         setCF({ key: remote_key, value: enc_data })
       }
       return true
@@ -298,7 +357,16 @@ export const store = async <TData>({
       error({ message: "no active user" })
       return null
     }
-    getRemote({ mem, remote_key, name, active_user, enc_key, ztype, s: store, API })
+    getRemote({
+      mem,
+      remote_key,
+      name,
+      active_user,
+      enc_key,
+      ztype,
+      s: store,
+      API,
+    })
   }
 
   // If the store exists, validate it against the schema and save it to the local storage if it doesn't exist
@@ -310,12 +378,18 @@ export const store = async <TData>({
       throw new Error("Store data does not match schema")
     }
     // if (!local_store) {
-    config.features.local_encryption && enc_key ? set(key, pack(encrypt({ data: store, key: enc_key }))) : set(key, store)
+    config.features.local_encryption && enc_key ?
+      set(key, pack(encrypt({ data: store, key: enc_key })))
+    : set(key, store)
     // }
 
     if (!cf_store) {
       if (key_pair && remote_key && name !== "users") {
-        const enc_data = await processForRemote({ data: store, key_pair, enc_key })
+        const enc_data = await processForRemote({
+          data: store,
+          key_pair,
+          enc_key,
+        })
         mem[name] = { status: "syncing", updated_at: new Date().getTime() }
         setCF({ key: remote_key, value: enc_data }).then(() => {
           mem[name] = { status: "ready", updated_at: new Date().getTime() }

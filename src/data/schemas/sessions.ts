@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid"
 import { z } from "zod"
 import { DataRefS } from "./workspace"
+import config from "@/config"
 
 export const TextMessageS = z.object({
   _v: z.number().default(1),
@@ -77,10 +78,14 @@ export const ChatSessionS = z.object({
   created_at: z.date().catch(() => new Date()),
   settings: z.object({
     module: z.object({
-      id: z.string(),
-      variant: z.string(),
+      id: z.string().catch(() => config.defaults.llm_module.id),
+      variant: z.string().catch(() => config.defaults.llm_module.variant_id),
       locked: z.boolean().optional(),
+      settings: z.record(z.any()).optional(),
     }),
+    memory: z.object({
+      rag_mode: z.enum(["full", "similarity", "none"]).catch("full"),
+    }).optional(),
     ai: z.string().optional(),
   }),
   receipts: z.array(ReceiptS).optional(),
@@ -106,7 +111,7 @@ export const DataSessionS = z.object({
 })
 export type DataSessionT = z.infer<typeof DataSessionS>
 
-export const SessionTypesS = z.union([ChatSessionS, DataSessionS])
+export const SessionTypesS = ChatSessionS
 export type SessionTypesT = z.infer<typeof SessionTypesS>
 
 export const SessionsS = z.object({

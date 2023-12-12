@@ -501,7 +501,7 @@ export default function CreatePersona() {
                   <div className="flex flex-col mr-1 justify-center items-center">
                     {values_show["responsibilities"] ? <MdOutlineKeyboardArrowDown /> : <MdOutlineKeyboardArrowRight />}
                   </div>
-                  Duties{" "}
+                  Tasks{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
                     optional but improves results
                   </span>
@@ -516,9 +516,9 @@ export default function CreatePersona() {
                         <RichTextarea
                           rows={1}
                           autoHeight
-                          placeholder={`What should ${values["name"] || "Researcher Raymond"} always do? (e.g. '${
+                          placeholder={`What tasks ${values["name"] || "Researcher Raymond"} should focus on? (e.g. '${
                             values["name"] || "Researcher Raymond"
-                          } should always write succinctly and truthfully')`}
+                          } should always suggest follow up questions.')`}
                           style={{ width: "100%", resize: "none" }}
                           value={values["responsibilities"]?.[index] || ""}
                           onChange={(e) => {

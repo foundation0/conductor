@@ -42,15 +42,22 @@ const API: { [key: string]: Function } = {
 
     await store.set(validated?.data)
 
-    emit({ type: "data/add", data: validated?.data })
+    emit({ type: "data.add.done", data: validated?.data })
 
     // return hash of the content as an id
     return id
+  },
+  get: async ({ id }: { id: string }) => {
+    const { DataState } = await initLoaders()
+    const store = await DataState({ id })
+    emit({ type: "data.get.done" })
+    return await store.get()
   },
   delete: async ({ id }: { id: string }) => {
     const { DataState } = await initLoaders()
     const store = await DataState({ id })
     await store.destroy()
+    emit({ type: "data.delete.done" })
   },
 }
 

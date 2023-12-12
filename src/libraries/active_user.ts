@@ -7,7 +7,7 @@ export function getActiveUser(): UserT | null {
   const au = localStorage.getItem("active_user")
   if (!au) return null
   const active_user = JSON.parse(au)
-  if (checkActiveUserTTL(active_user)) return active_user?.user
+  if (checkActiveUserTTL(active_user)) return active_user?.user as UserT
   return null
 }
 

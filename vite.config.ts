@@ -23,7 +23,7 @@ const wasmContentTypePlugin = {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   return {
     plugins: [
@@ -42,12 +42,12 @@ export default defineConfig(({ command, mode }) => {
           },
         },
       }),
-      VitePWA({
+      /* VitePWA({
         registerType: "autoUpdate",
         workbox: {
           maximumFileSizeToCacheInBytes: 10000000,
         },
-      }),
+      }), */
       svgr(),
       dataURLLoader,
       comlink(),
@@ -76,6 +76,14 @@ export default defineConfig(({ command, mode }) => {
     },
     worker: {
       plugins: [wasm(), topLevelAwait(), comlink()],
+      format: 'es'
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          format: "esm",
+        },
+      },
     },
   }
 })

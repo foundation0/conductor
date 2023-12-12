@@ -8,3 +8,12 @@ export const RangeS = z.object({
   label: z.string().optional(),
   unit: z.string().optional(),
 })
+
+export type ErrorT = {
+  error: {
+    code: string
+    message: string
+    status: string
+    surpress: boolean
+  }
+}

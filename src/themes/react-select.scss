@@ -36,6 +36,9 @@
         &--is-focused {
           @apply bg-zinc-800;
         }
+        &--is-disabled {
+          @apply text-zinc-500 cursor-not-allowed;
+        }
       }
     }
   }

@@ -4,6 +4,8 @@ import { compileSlidingWindowMemory } from "@/libraries/ai"
 import { error } from "@/libraries/logging"
 import { Module } from "@/modules"
 import SessionsActions from "@/data/actions/sessions"
+import { mChatSessionT } from "@/data/schemas/memory"
+import { getMemoryState } from "@/libraries/memory"
 
 export async function autoRename({
   messages,
@@ -14,6 +16,7 @@ export async function autoRename({
   user_id: string
   messages: TextMessageT[]
 }) {
+  const mem_session = getMemoryState<mChatSessionT>({ id: `session-${session_id}` })
   const module = await Module("ule")
   if (!module) throw new Error("No module")
 
@@ -26,18 +29,23 @@ export async function autoRename({
   let has_error = false
   const prompt = {
     // instructions: `Conversation:\n${messages.map((m) => `${m.type}: ${m.text}`).join("\n")}`,
-    user: `Conversation:\n${messages.map((m) => `${m.type}: ${m.text}`).join("\n")}\n\nBased on the conversation, what three-word title best encapsulates its content? No chat, no verbose. Use the following format to answer: 'Title: {The title}'`,
+    user: `Conversation:\n${messages
+      .map((m) => `${m.type}: ${m.text}`)
+      .join(
+        "\n"
+      )}\n\nBased on the conversation, what three-word title best encapsulates its content? No chat, no verbose. Use the following format to answer: 'Title: {The title}'`,
   }
   const memory = await compileSlidingWindowMemory({
-    model: "mistralai_mistral-7b-instruct",
+    model: "mistralai_mistral-7b-instruct-free",
     prompt,
     messages,
-    module,
+    session_id,
+    // module,
   })
   if (!memory) return error({ message: "error compiling memory", data: { module_id: module.specs.id } })
   const { receipt } = await module?.main(
     {
-      model: "mistralai_mistral-7b-instruct",
+      model: "mistralai_mistral-7b-instruct-free",
       user_id,
       prompt,
       history: memory?.history || [],
@@ -75,4 +83,7 @@ export async function autoRename({
   } else if (!has_error && !stream_response) {
     error({ message: "no response from the module", data: { module_id: module.specs.id } })
   }
+}
+function getMemorySession(arg0: { id: string }) {
+  throw new Error("Function not implemented.")
 }

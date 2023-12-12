@@ -32,10 +32,10 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
 
   const [field_edit_id, setFieldEditId] = useState("")
   const fetcher = useFetcher()
-  
+
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
-  
+
   // const workspace_id = useParams().workspace_id
   // const session_id = useParams().session_id
   const navigate = useNavigate()
@@ -152,8 +152,32 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       "sessions.updateSessions.done",
       "app.changeActiveSession.done",
       "app.removeOpenSession.done",
+      "user.addGroup.done",
+      "user.addFolder.done",
+      "user.deleteGroup.done",
+      "user.deleteFolder.done",
+      "user.renameItem.done",
+      "user.updateUser.done"
     ],
-    action: updateGroups,
+    action: () => {
+      setTimeout(updateGroups, 100)
+    },
+  })
+
+  useEvent({
+    name: "user.addGroup.done",
+    action: (data: any) => {
+      const { group } = data
+      setFieldEditId(group.id)
+    },
+  })
+  
+  useEvent({
+    name: "user.addFolder.done",
+    action: (data: any) => {
+      const { folder } = data
+      setFieldEditId(folder.id)
+    },
   })
 
   return (
@@ -213,7 +237,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         <DropdownMenu.Item
                           className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200"
                           onClick={() => {
-                            fetcher.submit(
+                            /* fetcher.submit(
                               {
                                 workspace_id: workspace_id || "",
                                 group_id: group.id,
@@ -222,7 +246,14 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                                 method: "DELETE",
                                 action: "/c/workspace/group",
                               }
-                            )
+                            ) */
+                            emit({
+                              type: 'user.deleteGroup',
+                              data: {
+                                workspace_id,
+                                group_id: group.id,
+                              }
+                            })
                           }}
                         >
                           Delete
@@ -253,7 +284,11 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                       <DropdownMenu.Item
                         className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200"
                         onClick={() => {
-                          fetcher.submit(
+                          emit({
+                            type: "user.addGroup",
+                            data: { workspace_id: workspace_id, name: "New group" },
+                          })
+                          /* fetcher.submit(
                             {
                               workspace_id: workspace_id || "",
                               name: "New group",
@@ -262,7 +297,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                               method: "PUT",
                               action: `/c/workspace/group`,
                             }
-                          )
+                          ) */
                         }}
                       >
                         Add new group...

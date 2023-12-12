@@ -1,5 +1,5 @@
-import HFIcon from "@/assets/icons/hf-logo.svg"
-import { getBridgeAPI } from "@/libraries/bridge"
+// import HFIcon from "@/assets/icons/hf-logo.svg"
+// import { getBridgeAPI } from "@/libraries/bridge"
 import { error } from "@/libraries/logging"
 import { useState } from "react"
 import { MdOutlineCloudDownload, MdClose } from "react-icons/md"
@@ -20,7 +20,7 @@ export function DownloadFromHF({ downloadModel }: { downloadModel: ({ url }: { u
         </div>
         <div className="flex flex-row items-start gap-2">
           <div className="flex items-center">
-            <img src={HFIcon} className="w-10 h-10" />
+            {/* <img src={HFIcon} className="w-10 h-10" /> */}
           </div>
           <div className="flex flex-1 flex-col mt-1">
             <div className="flex flex-row">

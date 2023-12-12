@@ -9,7 +9,8 @@ const config = {
   defaults: {
     llm_module: {
       id: "ule",
-      variant_id: "openai_gpt-3.5-turbo",
+      variant_id: "mistralai_mixtral-8x7b-instruct-v0.1-free",
+      timeout: 180000,
     },
     user: {
       privacy: {
@@ -37,7 +38,10 @@ const config = {
     },
   },
   DB: {
-    URI: override("DB_URI") || import.meta.env.PROD ? "https://db.promptc0.com/" : "http://localhost:6002/",
+    URI:
+      override("DB_URI") || import.meta.env.PROD ?
+        "https://db.promptc0.com/"
+      : "http://localhost:6002/",
     CF: {
       sync_interval: 1000 * 60,
       get_limit: 1000,
@@ -45,9 +49,14 @@ const config = {
     },
   },
   services: {
-    ule_URI: override("ULE_URI") || import.meta.env.PROD ? "wss://ule.services.foundation0.net" : "ws://localhost:7001",
+    ule_URI:
+      override("ULE_URI") || import.meta.env.PROD ?
+        "wss://ule.services.foundation0.net"
+      : "ws://localhost:7001",
     wallet_URI:
-      override("WALLET_URI") || import.meta.env.PROD ? "https://wallet.promptc0.com" : "http://localhost:6001",
+      override("WALLET_URI") || import.meta.env.PROD ?
+        "https://wallet.promptc0.com"
+      : "http://localhost:6001",
   },
   features: {
     local_encryption: false, // DO NOT CHANGE THIS AFTER INITIAL SETUP OR YOU WILL LOSE ALL YOUR DATA - TODO: functions to migrate data from non-encrypted to encrypted

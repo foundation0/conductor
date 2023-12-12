@@ -7,14 +7,12 @@ import { Link } from "react-router-dom"
 import _ from "lodash"
 import { useEffect, useState } from "react"
 import { useEvent } from "@/components/hooks/useEvent"
-import { error } from "@/libraries/logging"
 import { initLoaders } from "@/data/loaders"
-import SessionsActions from "@/data/actions/sessions"
 import { TbSelector } from "react-icons/tb"
 import { getAvatar } from "@/libraries/ai"
-import { emit } from "@/libraries/events"
 import useMemory from "@/components/hooks/useMemory"
-import { ChatSessionT } from "@/data/schemas/sessions"
+import { mAISelectorT } from "@/data/schemas/memory"
+import { handleModuleChange, handleAIChange } from "@/libraries/session_module"
 
 export function AISelector({
   user_state,
@@ -25,31 +23,34 @@ export function AISelector({
   session_id: string
   installed_ais: any
 }) {
-  const mem = useMemory<{
-    show_settings: boolean
-    active_llm_module_text: string
-    ai_options: []
-    llm_options: []
-    session: ChatSessionT
-  }>({
-    id: `${session_id}-input`,
+  const mem = useMemory<mAISelectorT>({
+    id: `${session_id}-ai-selector`,
     state: {
       show_settings: true,
       active_llm_module_text: "",
       ai_options: [],
       llm_options: [],
       session: {},
+      context_len: 0,
     },
   })
 
   function update() {
     if (_.isEqualWith(mem.session, {})) return
-    const mod = _.find(user_state.modules.installed, { id: mem.session.settings.module.id })
-    const variant = _.find(mod?.meta?.variants, { id: mem.session.settings.module.variant })
-    const active_llm_module_text = `${mod?.meta.name || mod?.meta.vendor.name} / ${variant?.name || variant?.id} ${
-      variant?.context_len && `(~${_.round(variant?.context_len * 0.8, 0)} word memory)`
+    const mod = _.find(user_state.modules.installed, {
+      id: mem.session.settings.module.id,
+    })
+    const variant = _.find(mod?.meta?.variants, {
+      id: mem.session.settings.module.variant,
+    })
+    const active_llm_module_text = `${
+      mod?.meta.name || mod?.meta.vendor.name
+    } / ${variant?.name || variant?.id} ${
+      variant?.context_len &&
+      `(~${_.round(variant?.context_len * 0.8, 0)} word memory)`
     }`
     mem.active_llm_module_text = active_llm_module_text
+    mem.context_len = variant?.context_len || 0
 
     mem.ai_options = generate_ai_options({
       user_state,
@@ -60,7 +61,7 @@ export function AISelector({
 
     mem.llm_options = generate_llm_module_options({
       user_state,
-      selected: `${mem.session.settings.module.id}/${mem.session.settings.module.variant}`,
+      selected: `${mem.session?.settings?.module?.id}/${mem.session?.settings?.module?.variant}`,
       return_as_object: true,
     })
   }
@@ -76,7 +77,6 @@ export function AISelector({
 
   useEvent({
     name: "sessions.updateSessions.done",
-    // target: session_id,
     action: (session: any) => {
       const s = session?.active[session_id]
       if (!s) return
@@ -98,63 +98,9 @@ export function AISelector({
   }, [])
 
   // change session's active ai
-  const handleAIChange = async ({ value }: { value: string }) => {
-    const { SessionState, AIState } = await initLoaders()
-    const ai_state = await AIState.get()
-    const sessions_state = await SessionState.get()
-    const session = sessions_state.active[session_id]
-    if (!session) return
-
-    // check that ai is installed
-    const ai = _.find(ai_state, { id: value })
-    if (!ai) return error({ message: "AI not found" })
-
-    // update session default ai
-    const new_session = _.cloneDeep(session)
-    new_session.settings.ai = ai.id
-
-    // update session llm if not locked
-    if (!session.settings.module.locked) {
-      new_session.settings.module = { id: ai.default_llm_module.id, variant: ai.default_llm_module.variant_id || "" }
-    }
-
-    // update session in sessions
-    const new_sessions = _.cloneDeep(sessions_state)
-    new_sessions.active[session.id] = new_session
-    await SessionsActions.updateSessions(new_sessions)
-
-    emit({
-      type: "sessions/module-change",
-    })
-  }
 
   // change session's active module
-  const handleModuleChange = async ({ value }: { value: string }) => {
-    const { SessionState, AIState } = await initLoaders()
-    const sessions_state = await SessionState.get()
-    const session = sessions_state.active[session_id]
-    if (!session) return
 
-    const new_llm_module = value.split("/")
-    if (!new_llm_module) return error({ message: "Module not found" })
-    // update session default module
-    const new_session = _.cloneDeep(session)
-    new_session.settings.module = { id: new_llm_module[0], variant: new_llm_module[1] }
-
-    // update session in sessions
-    const new_sessions = _.cloneDeep(sessions_state)
-    new_sessions.active[session.id] = new_session
-    await SessionsActions.updateSessions(new_sessions)
-
-    emit({
-      type: "sessions/module-change",
-      data: {
-        target: session.id,
-        module_id: new_llm_module[0],
-        variant_id: new_llm_module[1],
-      },
-    })
-  }
   if (_.isEqualWith(mem.session, {})) return
   return (
     <div
@@ -162,19 +108,30 @@ export function AISelector({
       className="z-10 inline-block absolute text-sm gradient-bg border-2 border-zinc-700 shadow-md rounded-lg md:w-[450px] w-[300px] max-w-[450px]"
     >
       <div className="px-3 py-2 rounded-t-lg">
-        <h3 className="font-semibold text-center">Choose your AI...</h3>
+        <h3 className="font-semibold text-center text-zinc-300">
+          Choose your AI...
+        </h3>
       </div>
       <div className="flex flex-col gap-2 px-3 py-2">
         <div className="flex flex-row flex-1 items-center">
-          <div className="flex flex-1 text-sm font-semibold text-zinc-500">Available AIs</div>
+          <div className="flex flex-1 text-sm font-semibold text-zinc-500">
+            Available AIs
+          </div>
           <div className="flex gap-2">
-            <div className="text-xs font-medium tooltip tooltip-top cursor-pointer hidden" data-tip="Show settings">
+            <div
+              className="text-xs font-medium tooltip tooltip-top cursor-pointer hidden"
+              data-tip="Show settings"
+            >
               <RiSettings3Fill
                 className="w-4 h-4 text-zinc-500 hover:text-zinc-300 transition-all"
                 onClick={() => (mem.show_settings = !mem.show_settings)}
               />
             </div>
-            <Link className="text-xs font-medium tooltip tooltip-top" data-tip="Create new AI" to={`/c/ai/create`}>
+            <Link
+              className="text-xs font-medium tooltip tooltip-top"
+              data-tip="Create new AI"
+              to={`/c/ai/create`}
+            >
               <RiAddCircleFill className="w-4 h-4 text-zinc-500 hover:text-zinc-300 transition-all" />
             </Link>
           </div>
@@ -182,6 +139,7 @@ export function AISelector({
         <Select
           className="react-select-container"
           classNamePrefix="react-select"
+          isOptionDisabled={(option) => option.disabled}
           onChange={(e: any) => {
             handleAIChange({
               value: e.value,
@@ -189,7 +147,8 @@ export function AISelector({
           }}
           value={{
             label: `${
-              _.find(installed_ais, { id: mem.session.settings.ai })?.persona.name ||
+              _.find(installed_ais, { id: mem.session.settings.ai })?.persona
+                .name ||
               _.first(_.get(installed_ais, "persona.name")) ||
               "click to select"
             }`,
@@ -200,10 +159,13 @@ export function AISelector({
         ></Select>
         {mem.show_settings && (
           <div>
-            <div className="text-sm font-semibold text-zinc-500">Reasoning engine in use</div>
+            <div className="text-sm font-semibold text-zinc-500">
+              Reasoning engine in use
+            </div>
             <Select
               className="react-select-container"
               classNamePrefix="react-select"
+              isOptionDisabled={(option) => option.disabled === true}
               onChange={(e: any) => {
                 handleModuleChange({
                   value: e.value,
@@ -211,7 +173,7 @@ export function AISelector({
               }}
               value={{
                 label: `${mem.active_llm_module_text}`,
-                value: `${mem.session.settings.module.id}/${mem.session.settings.module.variant}`,
+                value: `${mem.session.settings?.module?.id}/${mem.session.settings?.module?.variant}`,
               }}
               placeholder="Choose LLM model..."
               options={mem.llm_options}
@@ -223,7 +185,11 @@ export function AISelector({
   )
 }
 
-export const AISelectorButton = function ({ session_id }: { session_id: string }) {
+export const AISelectorButton = function ({
+  session_id,
+}: {
+  session_id: string
+}) {
   const [ai_state, setAIState] = useState<any>([])
   const [session, setSession] = useState<any>({})
 
@@ -255,7 +221,11 @@ export const AISelectorButton = function ({ session_id }: { session_id: string }
       <div className="flex flex-row flex-grow flex-1 gap-2">
         <div className="flex flex-col  items-center justify-center">
           <img
-            src={getAvatar({ seed: _.find(ai_state, { id: session?.settings?.ai })?.meta?.name || "" })}
+            src={getAvatar({
+              seed:
+                _.find(ai_state, { id: session?.settings?.ai })?.meta?.name ||
+                "",
+            })}
             className={`border-0 rounded-full w-8 aspect-square `}
           />
         </div>
