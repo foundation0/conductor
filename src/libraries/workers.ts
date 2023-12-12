@@ -1,6 +1,6 @@
 import * as Comlink from "comlink"
 import WorkerVector from "@/libraries/worker.vector.ts?worker&url"
-import WorkerTokenizer from "@/libraries/worker.tokenizer.ts?worker&url"
+// import WorkerTokenizer from "@/libraries/worker.tokenizer.ts?worker&url"
 import { error, info } from "./logging"
 import _ from "lodash"
 import { nanoid } from "nanoid"
@@ -8,7 +8,7 @@ import { listen } from "./events"
 
 const WORKERS: { [key: string]: string } = {
   vector: WorkerVector,
-  tokenizer: WorkerTokenizer,
+  // tokenizer: WorkerTokenizer,
 }
 
 const WORKER_CACHE: { [key: string]: Worker & any } = {}

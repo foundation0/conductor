@@ -40,7 +40,7 @@ const config = {
   DB: {
     URI:
       override("DB_URI") || import.meta.env.PROD ?
-        "https://db.promptc0.com/"
+        "https://db.services.foundation0.net/"
       : "http://localhost:6002/",
     CF: {
       sync_interval: 1000 * 60,
@@ -55,7 +55,7 @@ const config = {
       : "ws://localhost:7001",
     wallet_URI:
       override("WALLET_URI") || import.meta.env.PROD ?
-        "https://wallet.promptc0.com"
+        "https://billing.services.foundation0.net"
       : "http://localhost:6001",
   },
   features: {

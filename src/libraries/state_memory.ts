@@ -3,12 +3,19 @@ import {
   getBytesBalance,
   getPricing,
 } from "@/components/user/wallet"
-import { mAISelectorT, mBalancesT, mPricesT } from "@/data/schemas/memory"
+import {
+  mAISelectorT,
+  mBalancesT,
+  mModulesT,
+  mPricesT,
+} from "@/data/schemas/memory"
 import _ from "lodash"
 import { createMemoryState } from "./memory"
 import { initLoaders } from "@/data/loaders"
 import { UserT } from "@/data/schemas/user"
 import { getActiveUser } from "./active_user"
+import { fetchWithTimeout } from "./utilities"
+import { get as getLS } from "@/data/storage/localStorage"
 
 export async function mPrices() {
   const mem: mPricesT = createMemoryState({
@@ -79,6 +86,27 @@ export async function mBalances() {
   return mem
 }
 
+export async function mModules() {
+  let updated_mods: [] = []
+  try {
+    if (navigator.onLine) {
+      updated_mods = (await fetchWithTimeout(
+        `https://services.foundation0.net/models.json`,
+        { timeout: 15000 },
+      )) as []
+    }
+  } catch (error) {}
+  if (updated_mods.length === 0) {
+    const models_cache = await getLS({ key: "cache.models.json" })
+    if (models_cache) updated_mods = models_cache
+  }
+  const mem_modules: mModulesT = createMemoryState({
+    id: "modules",
+    state: { modules: updated_mods },
+  })
+  mem_modules.modules = updated_mods
+}
+
 export default async () => {
-  await Promise.all([mPrices(), mBalances()])
+  await Promise.all([mModules(), mPrices(), mBalances()])
 }

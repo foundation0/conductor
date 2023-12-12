@@ -9,9 +9,10 @@ import * as ULE from "@/modules/ule"
 
 import { error } from "@/libraries/logging"
 import { emit } from "@/libraries/events"
-import { createMemoryState } from "@/libraries/memory"
+import { createMemoryState, getMemoryState } from "@/libraries/memory"
 import { get as getLS } from "@/data/storage/localStorage"
 import { fetchWithTimeout } from "@/libraries/utilities"
+import { mModulesT } from "@/data/schemas/memory"
 
 export const MODULES: any = {
   ule: ULE,
@@ -25,25 +26,6 @@ const CACHE: {
   }
 } = {}
 
-let updated_mods: [] = []
-try {
-  if (navigator.onLine) {
-    updated_mods = (await fetchWithTimeout(
-      `https://services.foundation0.net/models.json`,
-      { timeout: 15000 },
-    )) as []
-  }
-} catch (error) {}
-if (updated_mods.length === 0) {
-  const models_cache = await getLS({ key: "cache.models.json" })
-  if (models_cache) updated_mods = models_cache
-}
-const mem_modules: { modules: [] } = createMemoryState({
-  id: "modules",
-  state: { modules: updated_mods },
-})
-mem_modules.modules = updated_mods
-
 export const Module = async (mod: string, factory_state: boolean = false) => {
   if (!mod) return null
   const m = MODULES[mod]
@@ -51,6 +33,10 @@ export const Module = async (mod: string, factory_state: boolean = false) => {
     error({ message: `Module ${mod} not found, switching to default module` })
     return false
   }
+
+  const mem_modules = getMemoryState<mModulesT>({ id: "modules" })
+  if (!mem_modules) return error({ message: `Modules store not found` })
+  let updated_mods = mem_modules.modules
 
   const mm = {
     specs: _.cloneDeep(m.specs),

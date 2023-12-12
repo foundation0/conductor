@@ -30,9 +30,11 @@ if (typeof window !== "undefined") {
   window.global = window;
 }
 
+await stateMem()
+
 function AuthProvider({ children }: { children: React.ReactNode }) {
   let [user, setUser] = React.useState<any>(getActiveUser())
-  stateMem()
+  
 
   React.useEffect(() => {
     if (user) {
