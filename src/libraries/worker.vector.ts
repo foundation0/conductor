@@ -19,8 +19,12 @@ import * as pdfjsWorker from "pdfjs-dist/build/pdf.worker"
 GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 import { env } from "@xenova/transformers"
+import { getModel } from "./models"
 
 env.backends.onnx.wasm.wasmPaths = "/assets/wasm/"
+// env.localModelPath = "/models/"
+env.allowRemoteModels = true
+env.allowLocalModels = false
 
 export async function extractPDFContent(pdfData: ArrayBuffer): Promise<string> {
   let content = ""
@@ -59,11 +63,6 @@ export async function extractPDFContent(pdfData: ArrayBuffer): Promise<string> {
 // @ts-ignore
 globalThis.Buffer = b4a
 
-type ModelCacheT = {
-  [key in EmbeddingModelsT]?: any
-}
-
-const MODEL_CACHE: ModelCacheT = {}
 const INDEX_CACHE: { [key: string]: any } = {}
 
 export async function chunkText({
@@ -158,19 +157,7 @@ export async function vectorizeText({
   model: EmbeddingModelsT
   chunks: string[]
 }) {
-  let embed_model = MODEL_CACHE[model]
-  if (!embed_model) {
-    switch (model) {
-      case "MiniLM-L6-v2":
-        embed_model = MODEL_CACHE[model] =
-          new HuggingFaceTransformersEmbeddings({
-            modelName: "Xenova/all-MiniLM-L6-v2",
-          })
-        break
-      default:
-        return { error: `Unknown model: ${model}` }
-    }
-  }
+  let embed_model = await getModel({ model })
 
   const embeddings = await embed_model.embedDocuments(chunks)
 
@@ -197,19 +184,7 @@ export async function queryIndex({
   result_count?: number
   update?: boolean
 }) {
-  let embed_model = MODEL_CACHE[model]
-  if (!embed_model) {
-    switch (model) {
-      case "MiniLM-L6-v2":
-        embed_model = MODEL_CACHE[model] =
-          new HuggingFaceTransformersEmbeddings({
-            modelName: "Xenova/all-MiniLM-L6-v2",
-          })
-        break
-      default:
-        return { error: `Unknown model: ${model}` }
-    }
-  }
+  let embed_model = await getModel({ model })
 
   let store: any
   switch (indexer) {

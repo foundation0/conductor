@@ -5,9 +5,9 @@
   "type": "module",
   "license": "SSPL-1.0",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 127.0.0.1",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
     "@async-util/fetch": "git+https://github.com/mjp0/fetch.git",
@@ -26,6 +26,8 @@
     "@types/b4a": "^1.6.4",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-syntax-highlighter": "^15.5.11",
+    "@visheratin/tokenizers": "^0.1.5",
+    "@visheratin/web-ai": "^1.4.5",
     "@xenova/transformers": "^2.10.1",
     "async": "^3.2.5",
     "b4a": "^1.6.4",
@@ -40,7 +42,7 @@
     "highlight.js": "^11.9.0",
     "humanize": "^0.0.9",
     "idb-keyval": "^6.2.1",
-    "langchain": "^0.0.204",
+    "langchain": "^0.0.206",
     "lodash": "^4.17.21",
     "lottie-light-react": "^2.4.0",
     "material-file-icons": "^2.4.0",
@@ -51,7 +53,7 @@
     "nanoid": "^5.0.4",
     "p-debounce": "^4.0.0",
     "pdfjs-dist": "^4.0.269",
-    "posthog-js": "^1.94.3",
+    "posthog-js": "^1.95.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
@@ -87,10 +89,10 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.14.202",
-    "@types/react": "^18.2.43",
+    "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.17",
     "@types/react-resizable": "^3.0.7",
-    "@vite-pwa/assets-generator": "^0.1.0",
+    "@vite-pwa/assets-generator": "^0.2.1",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",

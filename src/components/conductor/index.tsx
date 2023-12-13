@@ -1,5 +1,11 @@
 import WorkspaceSelector from "@/components/workspace/selector"
-import { Outlet, useBeforeUnload, useLoaderData, useNavigate, useParams } from "react-router-dom"
+import {
+  Outlet,
+  useBeforeUnload,
+  useLoaderData,
+  useNavigate,
+  useParams,
+} from "react-router-dom"
 import PromptIcon from "@/assets/prompt.svg"
 import { useLocation } from "react-router-dom"
 import _ from "lodash"
@@ -21,9 +27,14 @@ import { BuyCredits } from "@/components/modals/buy_credits"
 import useMemory from "@/components/hooks/useMemory"
 import { mAppT, mBalancesT } from "@/data/schemas/memory"
 import { error } from "@/libraries/logging"
-import { getBalance, getBytesBalance, getWalletStatus } from "@/components/user/wallet"
+import {
+  getBalance,
+  getBytesBalance,
+  getWalletStatus,
+} from "@/components/user/wallet"
 import { emit } from "@/libraries/events"
 import { PricingTable } from "../modals/pricing_table"
+import { pipeline } from "@xenova/transformers"
 
 export default function Conductor() {
   const { app_state, user_state, ai_state } = useLoaderData() as {
@@ -31,7 +42,9 @@ export default function Conductor() {
     user_state: UserT
     ai_state: AIsT
   }
-  const [active_sessions_elements, setActiveSessionsElements] = useState<any>([])
+  const [active_sessions_elements, setActiveSessionsElements] = useState<any>(
+    [],
+  )
   const location = useLocation()
   const auth = useAuth()
   const navigate = useNavigate()
@@ -51,9 +64,22 @@ export default function Conductor() {
     id: "balances",
   })
 
+  async function setup() {
+    // const e = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", {
+    //   progress_callback: (p: any) => {
+    //     console.log(`Progress: ${p}%`, p)
+    //   },
+    // })
+    // console.log(e)
+  }
+
   // Fetch balances
   useEffect(() => {
-    getBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
+    setup()
+    getBalance({
+      public_key: user_state.public_key,
+      master_key: user_state.master_key,
+    }).then((balance) => {
       if (typeof balance === "object" && "error" in balance) {
         console.error(balance)
         return
@@ -62,7 +88,10 @@ export default function Conductor() {
       mem_balances.credits = balance
       if (balance <= 0) emit({ type: "insufficient_funds" })
     })
-    getBytesBalance({ public_key: user_state.public_key, master_key: user_state.master_key }).then((balance) => {
+    getBytesBalance({
+      public_key: user_state.public_key,
+      master_key: user_state.master_key,
+    }).then((balance) => {
       if (typeof balance === "object" && "error" in balance) {
         console.error(balance)
         return
@@ -70,7 +99,10 @@ export default function Conductor() {
       if (!_.isNumber(balance)) balance = parseFloat(balance)
       mem_balances.bytes = balance
     })
-    getWalletStatus({ public_key: user_state.public_key, master_key: user_state.master_key }).then((wallet_status) => {
+    getWalletStatus({
+      public_key: user_state.public_key,
+      master_key: user_state.master_key,
+    }).then((wallet_status) => {
       if (typeof wallet_status === "object" && "error" in wallet_status) {
         console.error(wallet_status)
         return
@@ -93,13 +125,16 @@ export default function Conductor() {
         return
       }
       session_id = session?.id
-      if (window.location.pathname === "/c/") navigate(`/c/${workspace_id}/${session_id}`)
+      if (window.location.pathname === "/c/")
+        navigate(`/c/${workspace_id}/${session_id}`)
     }
     mem.workspace_id = workspace_id
     mem.session_id = session_id
   }, [JSON.stringify([workspace_id, session_id])])
 
-  const [guest_mode, setGuestMode] = useState<boolean>(getLS({ key: "guest-mode" }))
+  const [guest_mode, setGuestMode] = useState<boolean>(
+    getLS({ key: "guest-mode" }),
+  )
 
   const unload = useCallback(() => {
     // remove guest-mode if it exists
@@ -118,8 +153,11 @@ export default function Conductor() {
 
       // in all cases, update icon and author
       module_specs = module_specs.map((m) => {
-        m.meta.icon = module_specs.find((bm) => bm.id === m.id)?.meta.icon || m.meta.icon
-        m.meta.author = module_specs.find((bm) => bm.id === m.id)?.meta.author || m.meta.author
+        m.meta.icon =
+          module_specs.find((bm) => bm.id === m.id)?.meta.icon || m.meta.icon
+        m.meta.author =
+          module_specs.find((bm) => bm.id === m.id)?.meta.author ||
+          m.meta.author
         // mark openai is inactive
         if (m.id === "openai") {
           m.active = false
@@ -152,7 +190,10 @@ export default function Conductor() {
   }, [location.pathname])
 
   useEffect(() => {
-    if (auth?.user && !user_state?.experiences?.find((e) => e.id === "onboarding/v1")) {
+    if (
+      auth?.user &&
+      !user_state?.experiences?.find((e) => e.id === "onboarding/v1")
+    ) {
       // get the first workspace and its first session
       const workspace = user_state.workspaces[0]
       const group = workspace?.groups[0]
@@ -168,10 +209,13 @@ export default function Conductor() {
     setActiveSessionsElements(
       _.keys(app_state.active_sessions).map((key) => {
         const sess = app_state.active_sessions[key]
-        const workspace = _.find(user_state.workspaces, { id: sess.workspace_id })
+        const workspace = _.find(user_state.workspaces, {
+          id: sess.workspace_id,
+        })
         const group = workspace?.groups?.find((g) => g.id === sess.group_id)
         const folder = group?.folders?.find((f) => f.id === sess.folder_id)
-        const session = folder?.sessions?.find((s) => s.id === sess.session_id) ?? null
+        const session =
+          folder?.sessions?.find((s) => s.id === sess.session_id) ?? null
         if (!session) return null
         return (
           <Link key={sess.session_id} to={`/c/${workspace?.id}/${session?.id}`}>
@@ -186,12 +230,14 @@ export default function Conductor() {
             </div>
           </Link>
         )
-      })
+      }),
     )
   }, [JSON.stringify([app_state.active_sessions])])
 
   return (
-    <div className={`flex flex-col flex-1 m-0 p-0 dark h-full h-[100dvh] bg-[#111]/60 mt-0.5`}>
+    <div
+      className={`flex flex-col flex-1 m-0 p-0 dark h-full h-[100dvh] bg-[#111]/60 mt-0.5`}
+    >
       {/* {guest_mode && (
         <div className="h-6 w-full flex justify-center items-center text-[11px] font-semibold text-zinc-300">
           <div className="text-yellow-500">You are using guest mode, no history is saved</div>
@@ -206,29 +252,37 @@ export default function Conductor() {
           </div>
         </div>
       )} */}
-      <main id="Conductor" className={`flex flex-row flex-1 m-0 p-0 h-full h-[100dvh] dark bg-[#111]/60 mt-0.5`}>
+      <main
+        id="Conductor"
+        className={`flex flex-row flex-1 m-0 p-0 h-full h-[100dvh] dark bg-[#111]/60 mt-0.5`}
+      >
         <WorkspaceSelector />
         <div id="WorkspaceView" className="flex flex-1 m-0.5 overflow-hidden">
-          {location.pathname !== "/c/" ? (
+          {location.pathname !== "/c/" ?
             <Outlet />
-          ) : (
-            <div className="flex justify-center items-center w-full">
+          : <div className="flex justify-center items-center w-full">
               <div>
                 <div className="flex justify-center items-center w-full">
                   <img src={PromptIcon} className="w-48 h-48 opacity-10" />
                 </div>
-                {user_state?.experiences?.find((e) => e.id === "onboarding/v1") && (
+                {user_state?.experiences?.find(
+                  (e) => e.id === "onboarding/v1",
+                ) && (
                   <>
-                    <div className="text-center text-2xl font-semibold text-zinc-200">Welcome to Conductor</div>
+                    <div className="text-center text-2xl font-semibold text-zinc-200">
+                      Welcome to Conductor
+                    </div>
                     <div className="mt-6 text-center text-md font-semibold text-zinc-400 mb-2">
                       Continue where you left off
                     </div>
-                    <div className="flex flex-col gap-2">{active_sessions_elements}</div>
+                    <div className="flex flex-col gap-2">
+                      {active_sessions_elements}
+                    </div>
                   </>
                 )}
               </div>
             </div>
-          )}
+          }
         </div>
         <ConvertGuest />
         <div className="models">
