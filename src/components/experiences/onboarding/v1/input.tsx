@@ -12,9 +12,9 @@ export default function Tabs() {
 
   useEffect(() => {
     ph().capture("experiences/onboarding/v1/input")
-    markExperienceAsComplete({ experience_id: "onboarding/v1", user_state }).then(() => {
+    /* markExperienceAsComplete({ experience_id: "onboarding/v1", user_state }).then(() => {
       navigate(`/c/${workspace_id}/${session_id}`, { replace: true })
-    })
+    }) */
   }, [])
 
   return (
@@ -22,9 +22,9 @@ export default function Tabs() {
       <p className="flex text-xl font-semibold items-center">The Conductor Input</p>
       <p className="">
         This field here is what you use to talk to the AI. Right now, it's only text but in near future, you might find
-        a microphone icon on it, and maybe even ability to add files...
+        a microphone icon on it, and ability to add images...
       </p>
-      <p className="">If you have ever sent a message before, prompt input should feel familiar 😉</p>
+      <p className="">If you have ever used ChatGPT, input should feel familiar 😉</p>
     </div>
   )
 }

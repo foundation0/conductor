@@ -16,6 +16,8 @@ import { UserT } from "@/data/schemas/user"
 import { getActiveUser } from "./active_user"
 import { fetchWithTimeout } from "./utilities"
 import { get as getLS } from "@/data/storage/localStorage"
+import { ErrorT } from "@/data/schemas/common"
+import models from "@/modules/models.json"
 
 export async function mPrices() {
   const mem: mPricesT = createMemoryState({
@@ -24,8 +26,11 @@ export async function mPrices() {
       prices: [],
     },
   })
-  const pricing = await getPricing()
-  if ("error" in pricing) return console.error(pricing.error)
+  let pricing: mPricesT['prices'] | ErrorT = await getPricing()
+  if ("error" in pricing) {
+    console.error(pricing.error)
+    pricing = []
+  }
   mem.prices = _(pricing)
     .map((vendor: any) => {
       return vendor.modules.map((module: any) => {
@@ -63,8 +68,7 @@ export async function mBalances() {
     master_key: user_state.master_key,
   }).then((balance) => {
     if (typeof balance === "object" && "error" in balance) {
-      console.error(balance)
-      return
+      balance = 0
     }
     if (!_.isNumber(balance)) balance = parseFloat(balance)
     mem.credits = balance
@@ -75,8 +79,7 @@ export async function mBalances() {
     master_key: user_state.master_key,
   }).then((balance) => {
     if (typeof balance === "object" && "error" in balance) {
-      console.error(balance)
-      return
+      balance = 0
     }
     if (!_.isNumber(balance)) balance = parseFloat(balance)
     mem.bytes = balance
@@ -97,8 +100,9 @@ export async function mModules() {
     }
   } catch (error) {}
   if (updated_mods.length === 0) {
-    const models_cache = await getLS({ key: "cache.models.json" })
+    let models_cache = await getLS({ key: "cache.models.json" })
     if (models_cache) updated_mods = models_cache
+    else models_cache = models // use the fixed models.json as last resort
   }
   const mem_modules: mModulesT = createMemoryState({
     id: "modules",

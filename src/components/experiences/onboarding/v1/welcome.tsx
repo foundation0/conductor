@@ -20,7 +20,7 @@ export default function Welcome() {
         documents, images, audio, video, 3D and agents.
       </p>
       <p className="">
-        In its current form, Conductor gives you powerful tools to organize and manage your AI work.
+        Already in its current form, Conductor gives you more powerful tools to organize and manage your AI work than any other tool in the market.
       </p>
       <p>
         <strong>Next</strong>, you'll get a super quick introduction to the interface so you can hit the ground running.

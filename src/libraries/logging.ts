@@ -3,17 +3,19 @@ import Posthog from "posthog-js"
 
 let posthog: any = null
 
-export function error({ message, data, type }: { message: string; data?: any; type?: string }): false {
+export function error({ message, data, type, notification = true }: { message: string; data?: any; type?: string, notification?: boolean }): false {
   // const lid = await AppStateActions.addLogItem({
   //   type: "error",
   //   message,
   //   data,
   // })
-  if(type){
-    emit({ type, data: { message, data } })
+  if(notification) {
+    if(type){
+      emit({ type, data: { message, data } })
+    }
+    emit({ type: "new_error", data: { type: type || "error", message, data } })
+    ph()?.capture("error", { message, data })
   }
-  emit({ type: "new_error", data: { type: type || "error", message, data } })
-  ph()?.capture("error", { message, data })
   console.error(message, data)
   return false
 }

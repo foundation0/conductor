@@ -1,22 +1,13 @@
-import { emit } from "@/libraries/events"
 import { ph } from "@/libraries/logging"
 import { useEffect } from "react"
 
-export default function WorkspaceOrganizer() {
+export default function Data() {
   useEffect(() => {
-    ph().capture("experiences/onboarding/v1/workspace_organizer")
-    /* return () => {
-      emit({
-        type: 'workspace/changeSidebarTab',
-        data: {
-          sidebar_tab: 'data'
-        }
-      })
-    } */
+    ph().capture("experiences/onboarding/v1/data")
   }, [])
   return (
     <div className="flex flex-col gap-3 text-left">
-      <p className="flex text-xl font-semibold items-center">Session organizer</p>
+      <p className="flex text-xl font-semibold items-center">Workspace data</p>
       <p className="">Session organizer has one job: to keep your sessions organized.</p>
       <p className="">
         In each workspace, you can have multiple groups and each group can have multiple folders. Folders are where your

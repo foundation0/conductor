@@ -64,6 +64,10 @@ export async function PEClient<T>({ host, onData, onDone, onError }: PEArgsT): P
           return onError && onError(`Unknown type of response: ${JSON.stringify(data)}`)
         }
       }
+      ws.onerror = (e) => {
+        console.error('websocket connection error')
+        return onError && onError({ error: 'websocket connection error', code: 'unknown' })
+      }
     },
   }
   return API

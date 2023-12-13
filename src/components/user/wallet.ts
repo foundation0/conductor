@@ -282,7 +282,7 @@ export async function getPricing(): Promise<[] | ErrorT> {
     type: "GetPricing",
   }
 
-  let b: any = await new Promise(async (resolve) => {
+  let b: any = await new Promise(async (resolve, reject) => {
     let output: any = []
     const ULE = await PEClient({
       host: `${config.services.ule_URI}`,
@@ -299,7 +299,8 @@ export async function getPricing(): Promise<[] | ErrorT> {
           status: "error",
           surpress: false,
         }
-        if (error.message === "canceled") return resolve(output)
+        // if (error.message === "canceled") return resolve(output)
+        resolve({ error })
       },
     })
     ULE.compute(payload)

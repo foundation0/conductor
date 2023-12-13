@@ -36,48 +36,7 @@ export function RegisterPage() {
     fieldFocus({ selector: "#username" })
   }, [])
 
-  /* 
-  useEffect(() => {
-    const msgs = [
-      "Hi there, welcome to Conductor!",
-      "Conductor is a unified interface for all things AI.\r\r\rConductor's goal is to make AI usable for every one.",
-      "I'm here to help you get started.",
-    ]
-    // split per character and add each character to the latest message, once done, move to the next message
-    forEachSeries(msgs, (msg: string, msg_done: Function) => {
-      // for each message, split into characters and send to processChar
-      const chars = msg.split("")
-      // use setTimeout to send each character to processChar with 50ms delay
-      // console.log(messages)
-      forEachSeries(
-        chars,
-        (char: string, char_done: Function) => {
-          setChar({ m: char, t: new Date().getTime() })
-          setTimeout(char_done, 25)
-        },
-        () => {
-          setChar({ m: "::newmessage::", t: new Date().getTime() })
-          setTimeout(msg_done, 1000)
-        }
-      )
-      // when done, create a new message in messages and move to the next msg
-    })
-  }, [])
-
-  useEffect(() => {
-    // if (char.length === 0) return
-    const messages_clone = _.cloneDeep(messages)
-    if (char.m === "::newmessage::") {
-      messages_clone[messages_clone.length - 1] = messages_clone[messages_clone.length - 1].slice(0, -1)
-      messages_clone.push("")
-      setMessages(messages_clone)
-      return
-    }
-
-    messages_clone[messages_clone.length - 1] = messages_clone[messages_clone.length - 1].slice(0, -1) + char.m + "▮"
-    setMessages(messages_clone)
-  }, [char.t])
- */
+  
   return (
     <div className="flex flex-row h-full w-full bg-zinc-900" style={{ backgroundImage: `data:${PromptIcon}` }}>
       <div className="flex flex-1 flex-col flex-grow h-full justify-center items-center bg-zinc-800/50 border-r border-r-zinc-700/30">

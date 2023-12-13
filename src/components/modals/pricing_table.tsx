@@ -13,7 +13,7 @@ export function PricingTable() {
     action: () => {
       // open modal
       const dialog = document.getElementById("PricingTable") as HTMLDialogElement
-      dialog.showModal()
+      dialog?.showModal()
     },
   })
 

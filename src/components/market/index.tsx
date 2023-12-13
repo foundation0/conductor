@@ -274,7 +274,7 @@ export default function Market() {
                             className="w-4 h-4 text-zinc-400 hover:text-zinc-300 cursor-pointer"
                             onClick={() => {
                               // @ts-ignore
-                              window[`settings-${module.id}`].showModal()
+                              window[`settings-${module.id}`]?.showModal()
                             }}
                           />
                         </div>

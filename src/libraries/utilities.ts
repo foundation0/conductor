@@ -131,7 +131,7 @@ export async function fetchWithTimeout(
           }
           resolve(response)
         } else {
-          reject(new Error("Failed to fetch"))
+          reject("Failed to fetch")
         }
       })
       .catch((error) => {

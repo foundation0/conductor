@@ -24,6 +24,9 @@ import {
   WorkspaceOrganizer,
   WorkspaceSelector,
   WorkspaceSidebar,
+  Data,
+  InputActions,
+  Notepad
 } from "@/components/experiences/onboarding/v1"
 import AppstateActions from "@/data/actions/app"
 import { Resizable } from "react-resizable"
@@ -31,6 +34,7 @@ import "react-resizable/css/styles.css"
 import eventEmitter, { emit } from "@/libraries/events"
 import useMemory from "@/components/hooks/useMemory"
 import { mAppT } from "@/data/schemas/memory"
+import { useEvent } from "../hooks/useEvent"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
@@ -138,6 +142,11 @@ export default function Workspace() {
       content: <WorkspaceOrganizer />,
       placement: "right-end",
     },
+    /* {
+      target: ".DataOrganizer",
+      content: <Data />,
+      placement: "right-end",
+    }, */
     {
       target: "#OpenTabs",
       content: <Tabs />,
@@ -148,17 +157,22 @@ export default function Workspace() {
       content: <Input />,
       placement: "top",
     },
+    {
+      target: ".InputActions",
+      content: <InputActions />,
+      placement: "top",
+    },
+    {
+      target: ".NotepadButton",
+      content: <Notepad />,
+      placement: "top",
+    },
   ]
 
   useEffect(() => {
     if (!user_state?.experiences?.find((e) => e.id === "onboarding/v1")) {
       setRunOnboarding(true)
     }
-    /* for testing: resets onboarding 
-    let new_user_state = { ...user_state }
-    new_user_state.experiences = []
-    UserActions.updateUser(new_user_state)
-    */
   }, [])
 
   useEffect(() => {
@@ -175,6 +189,13 @@ export default function Workspace() {
     eventEmitter.emit("layout_resize")
     // setPreference({ key: 'organizer-width', value: size.width });
   }
+
+  useEvent({
+    name: "workspace/changeSidebarTab",
+    action: async ({ sidebar_tab } : { sidebar_tab: string }) => {
+      setActiveSidebarTab(sidebar_tab)
+    }
+  })
 
   return (
     <div className="flex flex-1">

@@ -277,7 +277,7 @@ export default function DataOrganizer() {
   })
 
   return (
-    <div className={`h-full w-full flex flex-col gap-3`}>
+    <div className={`DataOrganizer h-full w-full flex flex-col gap-3`}>
       <div
         onClick={function () {
           open()

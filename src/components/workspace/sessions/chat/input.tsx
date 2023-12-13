@@ -273,7 +273,7 @@ export default function Input({
                 (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)
               }
             >
-              <div className="flex flex-row gap-2 mr-3">
+              <div className="InputActions flex flex-row gap-2 mr-3">
                 <button>{/* <AISelector session_id={session_id} /> */}</button>
                 <div
                   className="flex flex-col justify-center items-center mr-0.5 tooltip tooltip-top  w-[15px]"

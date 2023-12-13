@@ -14,8 +14,12 @@ export function BuyCredits() {
     name: "insufficient_funds",
     action: () => {
       // open modal
-      const dialog = document.getElementById("BuyCredits") as HTMLDialogElement
-      dialog.showModal()
+      if (user_state?.experiences?.find((e) => e.id === "onboarding/v1")) {
+        const dialog = document.getElementById(
+          "BuyCredits",
+        ) as HTMLDialogElement
+        dialog?.showModal()
+      }
     },
   })
 
@@ -47,11 +51,13 @@ export function BuyCredits() {
             Looks like you are out of credits
           </div>
           <div className="text-md font-semibold text-center">
-            Purchase credits to access paid models. You are still able to use free models but expect slower and shorter responses.
+            Purchase credits to access paid models. You are still able to use
+            free models but expect slower and shorter responses.
           </div>
           <div className="text-sm text-zinc-400 mb-4 flex flex-col gap-2">
             <p>
-              Pricing is based on what you use. Credits work with any supported model. No monthly fees or commitments.
+              Pricing is based on what you use. Credits work with any supported
+              model. No monthly fees or commitments.
             </p>
             <div
               className="underline cursor-pointer font-semibold transition-all hover:text-zinc-100"

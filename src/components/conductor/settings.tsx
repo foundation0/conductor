@@ -276,7 +276,7 @@ export default function Settings(props: any) {
                   <span
                     className="text-xs ml-3 link text-blue-400 hover:text-blue-100 transition-all cursor-pointer"
                     onClick={async () => {
-                      if (getLS({ key: "guest-mode" })) return (window as any)["ConvertGuest"].showModal()
+                      // if (getLS({ key: "guest-mode" })) return (window as any)["ConvertGuest"].showModal()
                       const { error: err } = (await buyCreditsWithStripe({ user_id: user_state.id })) as any
                       if (err) {
                         console.error(err)

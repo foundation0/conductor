@@ -73,7 +73,7 @@ export async function setCF({ value, key }: SetT) {
       return null
     }
   } catch (e: any) {
-    return error({ message: e?.message, data: e })
+    return error({ message: e?.message, data: e, notification: false })
   }
 }
 
@@ -93,6 +93,6 @@ export async function getCF({ key }: { key: string }) {
       return null
     }
   } catch (e: any) {
-    return error({ message: e?.message, data: e })
+    return error({ message: e?.message, data: e, notification: false })
   }
 }

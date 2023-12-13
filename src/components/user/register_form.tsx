@@ -67,10 +67,11 @@ export function RegisterForm({ convert_guest }: { convert_guest?: boolean }) {
     await setActiveUser(created_user.user as UserT)
     ph().capture("auth/_registration")
     setTimeout(() => {
-      auth.signin({ username: created_user.user.meta?.username || username, password }, () => {
+      // navigate('/c/login')
+      auth.signin({ username: created_user.user.meta?.username || username, password, user: created_user.user, buffer: created_user.buffer }, () => {
         navigate('/c/')
       })
-    }, 200)
+    }, 500)
   }
 
   useEffect(() => {
@@ -178,7 +179,7 @@ export function RegisterForm({ convert_guest }: { convert_guest?: boolean }) {
             <span className="text-[11px] w-full font-normal text-zinc-400 bg-zinc-900/40 py-1 px-2 rounded flex justify-start items-center ">
               <AiTwotoneAlert className="text-yellow-300 inline-block mr-2 w-4 h-4" />
               <p>
-                Anyone who knows your username has access to this, so <u>make sure the reminder not your password</u> or
+                Anyone who knows your username has access to this, so <u>make sure the reminder is not your password</u> or
                 easily guessable.
               </p>
             </span>

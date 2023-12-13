@@ -13,8 +13,8 @@ import {
   signMessage,
 } from "@/security/common"
 import { get, set } from "./cloudflare"
-import { get as getKV, set as setKV} from "idb-keyval"
-import { pack } from "msgpackr"
+import { get as getKV, set as setKV } from "idb-keyval"
+import { pack, unpack } from "msgpackr"
 import { verify } from "@noble/secp256k1"
 import { BufferObjectS, UserS } from "@/data/schemas/user"
 import { z } from "zod"
@@ -22,10 +22,19 @@ import { error, ph } from "./logging"
 import { generateUser } from "./user"
 import UsersActions from "@/data/actions/users"
 import { UserT } from "@/data/loaders/user"
+import b4a from "b4a"
 
 interface AuthContextType {
   user: any
-  signin: ({ username, password }: { username: string; password: string }, callback: VoidFunction) => void
+  signin: (
+    {
+      username,
+      password,
+      user,
+      buffer,
+    }: { username: string; password: string; user?: any; buffer?: any },
+    callback: VoidFunction,
+  ) => void
   signout: (callback: VoidFunction) => void
 }
 
@@ -75,13 +84,25 @@ export async function createUser({
   const buffer_key = buf2hex({ input: createHash({ str: username }) })
   const user_exists = await get({ key: buffer_key })
   if (user_exists) return error({ message: "user already exists" })
-  const master_key_buf = custom_master_key ? hex2buf({ input: custom_master_key }) : randomBytes(64)
+  const master_key_buf =
+    custom_master_key ? hex2buf({ input: custom_master_key }) : randomBytes(64)
   const master_key = buf2hex({ input: master_key_buf })
-  const user_key = buf2hex({ input: createHash({ str: master_key + username }) })
-  const master_password = buf2hex({ input: createHash({ str: master_key + "master-password" }) })
+  const user_key = buf2hex({
+    input: createHash({ str: master_key + username }),
+  })
+  const master_password = buf2hex({
+    input: createHash({ str: master_key + "master-password" }),
+  })
   const key_pair = keyPair({ seed: master_key_buf })
 
-  const buffer = await createBuffer({ username, password, reminder, user_key, master_password, key_pair })
+  const buffer = await createBuffer({
+    username,
+    password,
+    reminder,
+    user_key,
+    master_password,
+    key_pair,
+  })
   if (!buffer) return error({ message: "invalid buffer" })
 
   const user: Partial<z.infer<typeof UserS>> = {
@@ -100,15 +121,24 @@ export async function createUser({
   const user_encrypted = encrypt({ data: user_parsed, key: master_password })
   const user_packed = pack(user_encrypted)
   const signature = await signMessage(user_packed, key_pair.secret_key)
-  const valid = verify(signature, createHash({ str: user_packed }), key_pair.public_key)
+  const valid = verify(
+    signature,
+    createHash({ str: user_packed }),
+    key_pair.public_key,
+  )
   if (!valid) {
     error({ message: "invalid signature" })
     return null
   }
-  const user_final = pack({ data: user_encrypted, signature, public_key: key_pair.public_key })
+  const user_final = pack({
+    data: user_encrypted,
+    signature,
+    public_key: key_pair.public_key,
+  })
 
   // save user
   await set({ key: user_key, value: user_final })
+  await setKV(user_key, user_final)
   /* CF KV isn't fast enough for this
   const u = await get({ key: user_key })
   if(!u || !b4a.equals(b4a.from(u), user_packed)) {
@@ -119,13 +149,22 @@ export async function createUser({
   // save buffer
   const buf_packed = pack(buffer.buffer)
   const buf_signature = await signMessage(buf_packed, key_pair.secret_key)
-  const buf_valid = verify(buf_signature, createHash({ str: buf_packed }), key_pair.public_key)
+  const buf_valid = verify(
+    buf_signature,
+    createHash({ str: buf_packed }),
+    key_pair.public_key,
+  )
   if (!buf_valid) {
     error({ message: "invalid buf_signature" })
     return null
   }
-  const buffer_packed = pack({ data: buffer.buffer, signature: buf_signature, public_key: key_pair.public_key })
+  const buffer_packed = pack({
+    data: buffer.buffer,
+    signature: buf_signature,
+    public_key: key_pair.public_key,
+  })
   await set({ key: buffer.buffer_key, value: buffer_packed })
+  await setKV(buffer.buffer_key, buffer_packed)
   /* CF KV isn't fast enough for this 
   const b = await get({ key: buffer.buffer_key })
   if(!b || !b4a.equals(b4a.from(b), buffer.buffer)) {
@@ -174,37 +213,82 @@ export async function createBuffer({
   return { buffer, buffer_key }
 }
 
-export async function authenticateUser({ username, password }: { username: string; password: string }) {
+export async function authenticateUser({
+  username,
+  password,
+  user,
+  buffer,
+}: {
+  username: string
+  password: string
+  user?: any
+  buffer?: { data: z.infer<typeof BufferObjectS> }
+}) {
   // get buffer
   const buffer_key = buf2hex({ input: createHash({ str: username }) })
-  const buffer: { data: z.infer<typeof BufferObjectS> } = await get({ key: buffer_key })
-  if (!buffer || !BufferObjectS.safeParse(buffer.data).success) return error({ message: "invalid buffer" })
+  if (!buffer) buffer = await get({ key: buffer_key })
+  if (!buffer) {
+    buffer = await getKV(buffer_key)
+    if (b4a.isBuffer(buffer)) buffer = unpack(buffer)
+  }
+
+  if (
+    !buffer ||
+    (buffer?.data && !BufferObjectS.safeParse(buffer.data).success)
+  )
+    return error({ message: "invalid buffer" })
 
   // try to open buffer
-  const opened_buffer = decrypt({ ...buffer.data.o, key: password })
-  if (!opened_buffer) return error({ message: "invalid password" })
+  let opened_buffer: any
+  if (buffer?.data) {
+    opened_buffer = decrypt({ ...buffer.data.o, key: password })
+    if (!opened_buffer) return error({ message: "invalid password" })
+  } else if ("buffer" in buffer) {
+    opened_buffer = buffer.buffer
+  } else {
+    return error({ message: "invalid buffer" })
+  }
 
   // get user
-  const user = await get({ key: opened_buffer.user_key })
-  if (!user) return error({ message: "user not found" })
+  if (!user) user = await get({ key: opened_buffer.user_key })
+  if (!user) {
+    user = await getKV(opened_buffer.user_key)
+    if (b4a.isBuffer(user)) user = unpack(user)
+  }
+  if (!user) return error({ message: "user not found or invalid user" })
 
   // try to open user
-  const opened_user = decrypt({ ...user.data, key: opened_buffer.master_password })
-  if (!opened_user) return error({ message: "invalid master password" })
-  if (!UserS.safeParse(opened_user).success) return error({ message: "invalid user" })
+  let opened_user: UserT
+  if (user?.data) {
+    opened_user = decrypt({
+      ...user.data,
+      key: opened_buffer.master_password,
+    })
+    if (!opened_user) return error({ message: "invalid master password" })
+  } else {
+    opened_user = user
+  }
+  if (!UserS.safeParse(opened_user).success)
+    return error({ message: "invalid user" })
 
   return opened_user
 }
 
-export async function convertGuestData({ guest_user, user }: { guest_user: UserT; user: UserT }) {
+export async function convertGuestData({
+  guest_user,
+  user,
+}: {
+  guest_user: UserT
+  user: UserT
+}) {
   // go over each table and copy/paste data to new table
 
   const tables = ["ais", "appstate", "notepads", "sessions", "user"]
   for (const name of tables) {
     const key = `${guest_user.meta.username}:${name}`
     const data = await getKV(key)
-    if(!data) return error({ message: "Guest data not found", data: { key } })
-    if(name === 'user') {
+    if (!data) return error({ message: "Guest data not found", data: { key } })
+    if (name === "user") {
       data.meta = user.meta
     }
     await setKV(`${user.meta.username}:${name}`, data)

@@ -166,11 +166,11 @@ export async function getRemote({
           }
         }
       } else {
-        mem[name] = { status: "error", updated_at: new Date().getTime() }
+        //mem[name] = { status: "error", updated_at: new Date().getTime() }
       }
     })
     .catch((e: any) => {
-      mem[name] = { status: "error", updated_at: new Date().getTime() }
+      // mem[name] = { status: "error", updated_at: new Date().getTime() }
     })
 }
 
@@ -398,21 +398,5 @@ export const store = async <TData>({
     }
   }
 
-  /* listen({
-    type: "sessions/change",
-    action: async ({ session_id }: { session_id: string }) => {
-      if (name !== session_id) return
-      if (!active_user) {
-        error({ message: "no active user" })
-        return null
-      }
-      if (!enc_key) {
-        error({ message: "no encryption key" })
-        return null
-      }
-      getRemote({ mem, remote_key, name, active_user, enc_key, ztype, s: store, API })
-    },
-  }) */
   return API
-  // } else return s //throw new Error("Store not found")
 }

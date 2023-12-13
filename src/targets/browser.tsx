@@ -43,7 +43,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     ph()
   }, [])
 
-  let signin = async (newUser: { username: string; password: string }, callback: VoidFunction) => {
+  let signin = async (newUser: { username: string; password: string, user?: any, buffer?: any }, callback: VoidFunction) => {
     const user = await authenticateUser(newUser)
     if (!user) return error({ message: "authentication failed" })
     await setActiveUser(user)
