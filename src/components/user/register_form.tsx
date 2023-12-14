@@ -99,7 +99,7 @@ export function RegisterForm({ convert_guest }: { convert_guest?: boolean }) {
 
   return (
     <form className="flex flex-col w-full justify-start items-start max-w-screen-sm" onSubmit={handleSubmit}>
-      <div className="text-lg font-semibold text-zinc-400 mb-5">Create an account (it's free)</div>
+      <div className="text-lg font-semibold text-zinc-400 mb-5">Let's make you an account (it's free)</div>
       <div className="flex flex-col w-full gap-2">
         <label className="flex flex-row bg-zinc-700/30 border border-zinc-900 border-t-zinc-700 rounded-lg items-center  pl-4 text-xs  font-semibold">
           Username:
