@@ -30,7 +30,7 @@ export default function WorkspaceSelector() {
   return (
     <div id="WorkspaceSelector" className="flex">
       <div className="flex w-fit">
-        <div className="flex flex-col h-full justify-center items-center px-2">
+        <div className="flex flex-col h-full justify-center items-center pl-2 pr-1">
           <div className="Logo flex items-center justify-center h-12">
             <img src={PromptIcon} className="w-4 h-4 opacity-60" />
           </div>
