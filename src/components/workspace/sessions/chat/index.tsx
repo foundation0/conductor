@@ -88,7 +88,9 @@ export default function Chat({
   const mem_session = useMemory<mChatSessionT>({
     id: `session-${session_id}`,
   })
+  if(!mem_session) return
   const { module, session, messages, generation } = mem_session
+  if(!session || !messages || !generation) return
 
   const {
     raw: raw_messages,
