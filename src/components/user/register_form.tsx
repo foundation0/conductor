@@ -33,7 +33,7 @@ export function RegisterForm({ convert_guest }: { convert_guest?: boolean }) {
     if (reminder.length < 10) {
       if (
         !confirm(
-          "Your password reminder seems very short, are you sure it's enough?\n\nPrompt is built privacy-first and everything is encrypted to the teeth, but an unfortunate side-effect of that is that the Conductor team can not recover lost passwords. That means that your reminder is the only way for you to recover a forgotten password."
+          "Your password reminder seems very short, are you sure it's enough?\n\nConductor is built privacy-first and everything is encrypted to the teeth, but an unfortunate side-effect of that is that the Conductor team can not recover lost passwords. That means that your reminder is the only way for you to recover a forgotten password."
         )
       )
         return
