@@ -68,7 +68,7 @@ export default function Input({
     getModuleDetails({
       model,
     }).then((_m) => {
-      if (!_m) return error({ message: "Failed to get module details" })
+      if (!_m) return error({ message: "Failed to get module details", notification: false })
       mem.module_name = _m.module.name || ""
       const ctx_len = _m.module.context_len
       if (!ctx_len) return error({ message: "Failed to get context length" })

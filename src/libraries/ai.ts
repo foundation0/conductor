@@ -12,6 +12,7 @@ import { mModulesT, ModelT, mPricesT } from "@/data/schemas/memory"
 import { getMemoryState } from "./memory"
 import { DataT } from "@/data/schemas/data"
 import { getWorker } from "./workers"
+import { ErrorT } from "@/data/schemas/common"
 
 export function AIToInstruction({ ai }: { ai: AIT }) {
   const instructions = `### INSTRUCTIONS ###
@@ -249,9 +250,14 @@ export async function compileInput({
   })
   return { input, ctx }
 }
-export async function getModuleDetails({ model }: { model: string }) {
+export async function getModuleDetails({ model }: { model: string }): Promise<{
+  module: ModelT["models"][0]
+  context_len: number
+  input_price: number
+  output_price: number
+  } | false> {
   const mem_modules = getMemoryState<mModulesT>({ id: "modules" })
-  if (!mem_modules) return error({ message: "modules not found" })
+  if (!mem_modules) return error({ message: "Modules not found" })
 
   const module: ModelT["models"][0] = _(mem_modules.modules)
     .map((vendor: any) => {
@@ -260,16 +266,16 @@ export async function getModuleDetails({ model }: { model: string }) {
     })
     .compact()
     .first()
-  if (!module) return error({ message: "module not found" })
+  if (!module) return error({ message: "Module not found" })
 
   const context_len = module.context_len
-  if (!context_len) return error({ message: "context_len not found" })
+  if (!context_len) return error({ message: "Module's context length not found" })
 
   // get pricing
   const mem_prices = getMemoryState<mPricesT>({ id: "prices" })
-  if (!mem_prices) return error({ message: "prices not found" })
+  if (!mem_prices) return error({ message: "Prices not found. Are you offline?" })
   const pricing = mem_prices.prices.find((p) => p.id === model)
-  if (!pricing) return error({ message: "pricing not found" })
+  if (!pricing) return error({ message: "Model prices not found. Are you offline?" })
 
   // make sure input_price and output_price are numbers
   const input_price = Number(pricing.input_price)

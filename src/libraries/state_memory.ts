@@ -18,6 +18,7 @@ import { fetchWithTimeout } from "./utilities"
 import { get as getLS } from "@/data/storage/localStorage"
 import { ErrorT } from "@/data/schemas/common"
 import models from "@/modules/models.json"
+import { emit } from "./events"
 
 export async function mPrices() {
   const mem: mPricesT = createMemoryState({
@@ -90,7 +91,7 @@ export async function mBalances() {
 }
 
 export async function mModules() {
-  let updated_mods: [] = []
+  let updated_mods = models as mModulesT['modules']
   try {
     if (navigator.onLine) {
       updated_mods = (await fetchWithTimeout(
@@ -113,4 +114,9 @@ export async function mModules() {
 
 export default async () => {
   await Promise.all([mModules(), mPrices(), mBalances()])
+  
+  // update modules if in case they've already loaded
+  emit({
+    type: 'modules/update'
+  })
 }
