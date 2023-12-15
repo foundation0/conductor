@@ -15,7 +15,10 @@ import IntersectIcon from "@/assets/icons/intersect.svg"
 import { fieldFocus } from "@/libraries/field_focus"
 import Lottie from "lottie-light-react"
 import WorkingOnIt from "@/assets/animations/working_on_it.json"
-import { MdKeyboardDoubleArrowLeft, MdKeyboardDoubleArrowRight } from "react-icons/md"
+import {
+  MdKeyboardDoubleArrowLeft,
+  MdKeyboardDoubleArrowRight,
+} from "react-icons/md"
 import Joyride, { Step } from "react-joyride"
 import {
   Input,
@@ -26,7 +29,7 @@ import {
   WorkspaceSidebar,
   Data,
   InputActions,
-  Notepad
+  Notepad,
 } from "@/components/experiences/onboarding/v1"
 import AppstateActions from "@/data/actions/app"
 import { Resizable } from "react-resizable"
@@ -192,9 +195,9 @@ export default function Workspace() {
 
   useEvent({
     name: "workspace/changeSidebarTab",
-    action: async ({ sidebar_tab } : { sidebar_tab: string }) => {
+    action: async ({ sidebar_tab }: { sidebar_tab: string }) => {
       setActiveSidebarTab(sidebar_tab)
-    }
+    },
   })
 
   return (
@@ -207,11 +210,9 @@ export default function Workspace() {
             data-tip="Maximize/minimize sidebar"
             onClick={() => setSidebarMinimized(!sidebar_minimized)}
           >
-            {sidebar_minimized ? (
+            {sidebar_minimized ?
               <MdKeyboardDoubleArrowRight className="text-zinc-400 w-3 h-3" />
-            ) : (
-              <MdKeyboardDoubleArrowLeft className="text-zinc-400 w-3 h-3" />
-            )}
+            : <MdKeyboardDoubleArrowLeft className="text-zinc-400 w-3 h-3" />}
           </div>
         </div>
         <Resizable
@@ -226,7 +227,9 @@ export default function Workspace() {
         >
           <div
             className={`h-[100dvh] transition-all ${
-              sidebar_minimized ? "w-0 hidden" : "w-60 min-w-[200px] max-w-lg flex flex-1 flex-col "
+              sidebar_minimized ? "w-0 hidden" : (
+                "w-60 min-w-[200px] max-w-lg flex flex-1 flex-col "
+              )
             }`}
             style={{ width: `${organizer_width}px` }}
           >
@@ -238,7 +241,10 @@ export default function Workspace() {
                 <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300 rounded-md">
                   {_.find(user_state.workspaces, { id: workspace_id })?.name}
                 </div>
-                <Link className="flex items-center" to={`/c/${workspace_id}/settings`}>
+                <Link
+                  className="flex items-center"
+                  to={`/c/${workspace_id}/settings`}
+                >
                   <MdSettingsSuggest className="w-4 h-4 text-zinc-400 hover:text-zinc-200 transition-all" />
                 </Link>
               </div>
@@ -250,16 +256,18 @@ export default function Workspace() {
                   <div
                     key={tab.id}
                     className={`flex flex-1 justify-center px-2 cursor-pointer tooltip tooltip-bottom ${
-                      active_sidebar_tab === tab.id ? "tab-active text-zinc-200" : "text-zinc-500"
+                      active_sidebar_tab === tab.id ?
+                        "tab-active text-zinc-200"
+                      : "text-zinc-500"
                     }`}
                     onClick={tab.onClick}
                     data-tip={tab.name}
                   >
                     <div
                       className={`flex w-7 h-7 rounded justify-center items-center saturate-0 transition-all ${
-                        active_sidebar_tab === tab.id
-                          ? " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 "
-                          : "text-zinc-500 "
+                        active_sidebar_tab === tab.id ?
+                          " text-zinc-200 bg-zinc-900/70 border-t border-t-zinc-700/70 saturate-100 contrast-100 "
+                        : "text-zinc-500 "
                       } border border-transparent hover:border-t hover:border-t-zinc-700/70 hover:bg-zinc-900/50 hover:saturate-100 hover:contrast-100`}
                     >
                       {tab.icon}
@@ -272,20 +280,52 @@ export default function Workspace() {
               id="WorkspaceSidebarContent"
               className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
             >
-              <Switch fallback={""}>
+              <div
+                className={`overflow-hidden ${
+                  active_sidebar_tab === "sessions" ? "" : "hidden"
+                }`}
+              >
+                <SessionOrganizer
+                  app_state={app_state}
+                  user_state={user_state}
+                />
+              </div>
+              <div
+                className={`overflow-hidden ${
+                  active_sidebar_tab === "data" ? "" : "hidden"
+                }`}
+              >
+                <DataOrganizer />
+              </div>
+              <div
+                className={`overflow-hidden ${
+                  active_sidebar_tab === "members" ? "" : "hidden"
+                }`}
+              >
+                <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
+                  <Lottie animationData={WorkingOnIt}></Lottie>
+                  <div className="text-md text-center">Coming soon&trade;</div>
+                </div>
+              </div>
+              <div
+                className={`overflow-hidden ${
+                  active_sidebar_tab === "market" ? "" : "hidden"
+                }`}
+              >
+                <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
+                  <Lottie animationData={WorkingOnIt}></Lottie>
+                  <div className="text-md text-center">Coming soon&trade;</div>
+                </div>
+              </div>
+              {/* <Switch fallback={""}>
                 <Match when={active_sidebar_tab === "sessions"}>
-                  <SessionOrganizer app_state={app_state} user_state={user_state} />
                 </Match>
                 <Match when={active_sidebar_tab === "data"}>
-                  <DataOrganizer />
                 </Match>
                 <Match when={["members", "market"].indexOf(active_sidebar_tab) !== -1}>
-                  <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
-                    <Lottie animationData={WorkingOnIt}></Lottie>
-                    <div className="text-md text-center">Coming soon&trade;</div>
-                  </div>
+                  
                 </Match>
-              </Switch>
+              </Switch> */}
             </div>
           </div>
         </Resizable>
