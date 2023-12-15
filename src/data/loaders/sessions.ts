@@ -33,6 +33,9 @@ export const state = async () => {
                   id: config.defaults.llm_module.id,
                   variant: config.defaults.llm_module.variant_id,
                 },
+                memory: {
+                  rag_mode: 'full'
+                }
               },
             },
           },
