@@ -287,24 +287,10 @@ export default function Workspace() {
                 </Match>
               </Switch>
             </div>
-            {/* <div id="WorkspaceSidebar" className="flex flex-col gap-1">
-              <div
-                id="Workspace"
-                className="flex flex-row bg-zinc-800 px-4 h-10 rounded-md border border-zinc-900/50 border-t-transparent"
-              >
-                <div className="flex flex-grow items-center font-semibold text-sm text-zinc-300 rounded-md">
-                  {_.find(user_state.workspaces, { id: workspace_id })?.name}
-                </div>
-                <Link className="flex items-center" to={`/c/${workspace_id}/settings`}>
-                  <MdSettingsSuggest className="w-4 h-4 text-zinc-400 hover:text-zinc-200 transition-all" />
-                </Link>
-              </div>
-              
-            </div> */}
           </div>
         </Resizable>
       </div>
-      <div id="View" className="flex flex-1 bg-zinc-850 m-0.5">
+      <div id="View" className="flex flex-1 bg-zinc-850 m-0.5 w-full">
         <Outlet />
       </div>
     </div>

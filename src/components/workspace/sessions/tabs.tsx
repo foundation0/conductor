@@ -47,6 +47,8 @@ export default function Tabs() {
 
   const containerRef = useRef<HTMLDivElement>(null)
 
+  const [relative_width, setRelativeWidth] = useState(0)
+
   const resizeHandler = () => {
     const e = document.getElementById("Tabs")
     if (e && containerRef.current) {
@@ -55,12 +57,16 @@ export default function Tabs() {
       if (!tabs_actions_e) return
       const tabs_width = parentWidth - tabs_actions_e?.offsetWidth
       const tabs_count = document.querySelectorAll("#OpenTabs a").length + 1
+      const _relativeWidth = tabs_width / tabs_count
       Array.from(document.querySelectorAll("#OpenTabs a")).forEach(
         (child: Element) => {
-          const relativeWidth = tabs_width / tabs_count
-          ;(child as HTMLElement).style.width = `${relativeWidth}px`
+          ;(child as HTMLElement).style.width = `${_relativeWidth}px`
         },
       )
+      if(_relativeWidth !== relative_width) {
+        setRelativeWidth(_relativeWidth)
+        setTimeout(resizeHandler, 1)
+      }
     }
   }
 
@@ -122,6 +128,7 @@ export default function Tabs() {
                 "tab-active bg-zinc-900/50 text-zinc-200"
               : " bg-zinc-800 hover:bg-zinc-900/50 text-zinc-600 hover:text-zinc-300"
             }`}
+            style={{ width: `${relative_width}px` }}
             key={s.id}
             to={`/c/${workspace_id}/${s.id}`}
             onClick={() => {
@@ -163,7 +170,7 @@ export default function Tabs() {
 
     // setOpenTabs(o)
     mem.open_tabs = o
-    setTimeout(resizeHandler, 100)
+    setTimeout(resizeHandler, 1000)
   }
 
   useEffect(() => {
@@ -343,7 +350,7 @@ export default function Tabs() {
       </div>
       <div
         id="OpenTabs"
-        className="tabs flex flex-row flex-1 items-center"
+        className="tabs flex flex-row flex-1 items-center overflow-hidden"
         ref={containerRef}
       >
         {open_tabs}
