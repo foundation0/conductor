@@ -59,7 +59,7 @@ export async function autoRename({
       onClose: () => {},
       onError: (data: any) => {
         has_error = true
-        error({ message: data.message || data.code, data })
+        error({ message: 'LLM provider server connection issues', data })
       },
     }
   )

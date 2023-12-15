@@ -334,14 +334,14 @@ export async function addMessage({
               return emit({ type: "insufficient_funds" })
             } else {
               if (!data.surpress)
-                error({ message: data.message || data.code, data })
+                error({ message: JSON.stringify(data.message) || data.code, data })
             }
-            onError && onError()
+            onError && onError(data)
           },
         },
       )) as { receipt: ReceiptT }
 
-      if (stream_response) {
+      if (stream_response && !has_error) {
         await reset()
 
         if (mem_session) mem_session.messages.branch_parent_id = false

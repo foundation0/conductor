@@ -1,8 +1,10 @@
 function override(key: string) {
   if (typeof window === "object") {
     const v = window.localStorage.getItem(key)
-    if (v) return v
-    else return false
+    if (v) {
+      console.log(`Overriding ${key} with ${v}`)
+      return v
+    } else return false
   } else return false
 }
 const config = {
@@ -39,9 +41,9 @@ const config = {
   },
   DB: {
     URI:
-      override("DB_URI") || import.meta.env.PROD ?
+      import.meta.env.PROD ?
         "https://db.services.foundation0.net/"
-      : "http://localhost:6002/",
+      : override("DB_URI") || "http://localhost:6002/",
     CF: {
       sync_interval: 1000 * 60,
       get_limit: 1000,
@@ -50,13 +52,13 @@ const config = {
   },
   services: {
     ule_URI:
-      override("ULE_URI") || import.meta.env.PROD ?
+      import.meta.env.PROD ?
         "wss://ule.services.foundation0.net"
-      : "ws://localhost:7001",
+      : override("ULE_URI") || "ws://localhost:7001",
     wallet_URI:
-      override("WALLET_URI") || import.meta.env.PROD ?
+      import.meta.env.PROD ?
         "https://billing.services.foundation0.net"
-      : "http://localhost:6001",
+      : override("WALLET_URI") || "http://localhost:6001",
   },
   features: {
     local_encryption: false, // DO NOT CHANGE THIS AFTER INITIAL SETUP OR YOU WILL LOSE ALL YOUR DATA - TODO: functions to migrate data from non-encrypted to encrypted
