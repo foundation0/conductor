@@ -123,7 +123,7 @@ export default function WorkspaceSelector() {
                   {_.get(user_state, "meta.profile_photos[0]") ? (
                     <img
                       src={_.get(user_state, "meta.profile_photos[0]")}
-                      className={`object-cover h-full ${
+                      className={`rounded-xl object-cover h-full ${
                         location.pathname === "/c/settings" ? "opacity-100" : "opacity-50"
                       } hover:opacity-100`}
                     />
