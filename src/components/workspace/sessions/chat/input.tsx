@@ -13,6 +13,7 @@ import { getModuleDetails } from "@/libraries/ai"
 import { error } from "@/libraries/logging"
 import { useEvent } from "@/components/hooks/useEvent"
 import { RiRobot2Fill } from "react-icons/ri"
+import { MdAddCircle } from "react-icons/md"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
 
@@ -68,7 +69,11 @@ export default function Input({
     getModuleDetails({
       model,
     }).then((_m) => {
-      if (!_m) return error({ message: "Failed to get module details", notification: false })
+      if (!_m)
+        return error({
+          message: "Failed to get module details",
+          notification: false,
+        })
       mem.module_name = _m.module.name || ""
       const ctx_len = _m.module.context_len
       if (!ctx_len) return error({ message: "Failed to get context length" })
@@ -171,6 +176,32 @@ export default function Input({
             : ""
           }`}
         >
+          <div
+            className={`ml-3 tooltip tooltip-top ${
+              (
+                !gen_in_progress &&
+                (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)
+              ) ?
+                ""
+              : "hidden"
+            }`}
+            data-tip="Add files"
+            onClick={() => {
+              emit({
+                type: "workspace/changeSidebarTab",
+                data: {
+                  sidebar_tab: "data",
+                },
+              })
+              setTimeout(() => {
+                emit({
+                  type: "data/open",
+                })
+              }, 500)
+            }}
+          >
+            <MdAddCircle className="w-4 h-4 text-zinc-500 hover:text-zinc-300 transition-all cursor-pointer" />
+          </div>
           {(
             !gen_in_progress &&
             _.last(messages)?.[1].type === "human" &&
@@ -226,7 +257,7 @@ export default function Input({
                 (_.last(messages)?.[1].type === "human" &&
                   _.last(messages)?.[1].hash !== "1337")
               }
-              className={`flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture `}
+              className={`flex flex-1 p-4 py-3 px-2 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture `}
               placeholder={
                 (
                   disabled ||
@@ -279,7 +310,9 @@ export default function Input({
                   className="flex flex-col justify-center items-center mr-0.5 tooltip tooltip-top  w-[15px]"
                   data-tip={`Using ${module_name}.\n${
                     memory_indicator !== "red" ?
-                      `${ctx_used > 1 ? 100 : _.round(ctx_used * 100)}% of memory used`
+                      `${
+                        ctx_used > 1 ? 100 : _.round(ctx_used * 100)
+                      }% of memory used`
                     : session.settings?.memory?.rag_mode === "full" ?
                       `Current reasoning engine out of memory.\nYou need minimum ${_.round(
                         ctx_sum * 0.8,

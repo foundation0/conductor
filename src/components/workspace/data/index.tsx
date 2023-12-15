@@ -20,6 +20,7 @@ import {
 import { DataT } from "@/data/schemas/data"
 import { mAppT, mChatSessionT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
+import { useEvent } from "@/components/hooks/useEvent"
 
 export default function DataOrganizer() {
   const mem_app: mAppT = useMemory({ id: "app" })
@@ -274,6 +275,11 @@ export default function DataOrganizer() {
     maxFiles: 10,
     maxSize: 100000000, // 100mb
     accept: supported_file_formats,
+  })
+
+  useEvent({
+    name: "data/open",
+    action: open
   })
 
   return (
