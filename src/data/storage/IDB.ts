@@ -176,7 +176,7 @@ export async function getRemote({
             cf_vstate?.data.length < (_.size(s) || 0)
           ) {
             // this is a broken sync, so we need to overwrite the remote store
-            await API.set(s);
+            await API.set(s)
           } else {
             // If the remote store has fewer messages than the local store, handle the situation accordingly
           }
@@ -354,7 +354,7 @@ export const store = async <TData>({
       emit({
         type: "store/update",
         data: {
-          session_id: name,
+          target: name,
         },
       })
       return true
@@ -373,7 +373,7 @@ export const store = async <TData>({
       return true
     },
     sync: async () => {
-      if(!active_user || !enc_key) return
+      if (!active_user || !enc_key) return
       mem[name] = { status: "syncing", updated_at: new Date().getTime() }
       const cf_store = await getRemote({
         mem,
@@ -387,36 +387,16 @@ export const store = async <TData>({
       })
       if (cf_store) {
         await API.set(cf_store, false, true, true)
-        emit({ type: "store/update", data: { target: name, session: cf_store } })
-      }
-      mem[name] = { status: "ready", updated_at: new Date().getTime() }
-    }
+        emit({
+          type: "store/update",
+          data: { target: name, session: cf_store },
+        })
+        mem[name] = { status: "ready", updated_at: new Date().getTime() }
+      } else mem[name] = { status: "ready", updated_at: new Date().getTime() }
+    },
   }
 
-  // If the store is not "users" and we have an active user, check if the cloud storage has a newer version
-  if (!["users"].includes(name) && !local_only) {
-    if (!active_user) {
-      error({ message: "no active user" })
-      return null
-    }
-    cf_store = await getRemote({
-      mem,
-      remote_key,
-      name,
-      active_user,
-      enc_key,
-      ztype,
-      s: store,
-      API,
-    })
-    if (cf_store) {
-      store = cf_store
-      skip_sync = true
-    }
-  }
-
-  // If the store exists, validate it against the schema and save it to the local storage if it doesn't exist
-  if (store) {
+  async function setStore({ store }: { store: TData }) {
     const s_check = ztype.safeParse(store)
     if (!s_check.success) {
       console.error(s_check.error)
@@ -429,9 +409,36 @@ export const store = async <TData>({
     } else {
       await set(key, store)
     }
-    emit({ type: "store/update", data: { session_id: name } })
+    emit({ type: "store/update", data: { target: name, session: store } })
 
-    mem[name] = { status: "ready", updated_at: new Date().getTime() }
+    // mem[name] = { status: "ready", updated_at: new Date().getTime() }
+  }
+
+  // If the store is not "users" and we have an active user, check if the cloud storage has a newer version
+  if (!["users"].includes(name) && !local_only) {
+    if (!active_user) {
+      error({ message: "no active user" })
+      return null
+    }
+    getRemote({
+      mem,
+      remote_key,
+      name,
+      active_user,
+      enc_key,
+      ztype,
+      s: store,
+      API,
+    }).then((cf_store) => {
+      if (cf_store) {
+        setStore({ store: cf_store })
+      }
+    })
+  }
+
+  // If the store exists, validate it against the schema and save it to the local storage if it doesn't exist
+  if (store) {
+    await setStore({ store })
     // }
 
     /* if (!cf_store && key_pair && remote_key && name !== "users" && !skip_sync) {

@@ -20,6 +20,7 @@ export default function SessionOrganizer({ app_state, user_state }: { app_state:
 
   const updateGroups = async () => {
     const { UserState } = await initLoaders()
+    await UserState.sync()
     const user_state = await UserState.get()
     const groups = _.find(user_state.workspaces, { id: workspace_id })?.groups
     if (!groups) return
@@ -47,6 +48,17 @@ export default function SessionOrganizer({ app_state, user_state }: { app_state:
       "workspace/change"
     ],
     action: updateGroups,
+  })
+
+  useEvent({
+    name: "store/update",
+    target: `user`,
+    action: ({ session }: { session: any }) => {
+      console.log("store/update", session)
+      // if (name === session_id) {
+      updateGroups()
+      // }
+    },
   })
 
   if (Object.keys(groups).length === 0) return <div className="flex flex-1">No groups</div>

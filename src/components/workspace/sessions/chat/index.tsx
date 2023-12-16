@@ -643,7 +643,7 @@ export default function Chat({
     action: ({ session }: { session: any }) => {
       console.log("store/update", session)
       // if (name === session_id) {
-      //   updateSession()
+      updateMessages({ raw_msgs: session })
       // }
     },
   })
