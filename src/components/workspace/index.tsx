@@ -281,7 +281,7 @@ export default function Workspace() {
               className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
             >
               <div
-                className={`overflow-hidden ${
+                className={`overflow-x-hidden w-full ${
                   active_sidebar_tab === "sessions" ? "" : "hidden"
                 }`}
               >
@@ -291,14 +291,14 @@ export default function Workspace() {
                 />
               </div>
               <div
-                className={`overflow-hidden ${
+                className={`overflow-x-hidden w-full ${
                   active_sidebar_tab === "data" ? "" : "hidden"
                 }`}
               >
                 <DataOrganizer />
               </div>
               <div
-                className={`overflow-hidden ${
+                className={`overflow-x-hidden w-full ${
                   active_sidebar_tab === "members" ? "" : "hidden"
                 }`}
               >
@@ -308,7 +308,7 @@ export default function Workspace() {
                 </div>
               </div>
               <div
-                className={`overflow-hidden ${
+                className={`overflow-x-hidden w-full ${
                   active_sidebar_tab === "market" ? "" : "hidden"
                 }`}
               >

@@ -26,10 +26,6 @@ export default function DataOrganizer() {
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
 
-  const mem_session = useMemory<mChatSessionT>({
-    id: `session-${session_id}`
-  })
-  if(!mem_session) return error({message: "no session"})
 
   const mem_data = useMemory<{
     sid: string
@@ -352,6 +348,9 @@ export default function DataOrganizer() {
                     {...d}
                     onClick={() => {
                       if (!sid) return error({ message: "no session id" })
+                      const mem_session = useMemory<mChatSessionT>({
+                        id: `session-${session_id}`
+                      })
                       mem_session?.session?.data?.push(d)
                       emit({
                         type: "sessions.addData",
@@ -360,6 +359,9 @@ export default function DataOrganizer() {
                     }}
                     onRemove={() => {
                       if (confirm("Are you sure you want to delete this?")) {
+                        const mem_session = useMemory<mChatSessionT>({
+                          id: `session-${session_id}`
+                        })
                         mem_session?.session?.data?.splice(
                           mem_session?.session?.data?.indexOf(d),
                           1,

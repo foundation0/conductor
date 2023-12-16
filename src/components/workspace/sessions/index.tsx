@@ -35,16 +35,21 @@ export default function Workspace() {
     const app_state: AppStateT = await AppState.get()
     const user_state = await UserState.get()
     // get all the sessions for this workspace
-    const workspace: WorkspaceT = _.find(user_state.workspaces, { id: mem_app.workspace_id })
+    const workspace: WorkspaceT = _.find(user_state.workspaces, {
+      id: mem_app.workspace_id,
+    })
     if (!workspace) return
 
     const workspace_open_sessions =
       app_state.open_sessions.filter(
-        (session: z.infer<typeof OpenSessionS>) => session.workspace_id === mem_app.workspace_id
+        (session: z.infer<typeof OpenSessionS>) =>
+          session.workspace_id === mem_app.workspace_id,
       ) || []
 
     const sids: { [key: string]: boolean } = {}
-    _.map(workspace_open_sessions, "session_id").forEach((id) => (sids[id] = true))
+    _.map(workspace_open_sessions, "session_id").forEach(
+      (id) => (sids[id] = true),
+    )
 
     const ws_sessions: { sessions: SessionT[] } = await query({
       type: "user.getSessions",
@@ -77,7 +82,8 @@ export default function Workspace() {
     const session_index = _.findIndex(mem.sessions, { id: mem_app.session_id })
     // get session_ids from active_sessions
 
-    if (session_index !== -1) mem.active_sessions = { ...sids, [mem_app.session_id]: true }
+    if (session_index !== -1)
+      mem.active_sessions = { ...sids, [mem_app.session_id]: true }
     else handleMissingSession({ session_id: mem_app.session_id })
   }
 
@@ -87,7 +93,10 @@ export default function Workspace() {
   }
 
   useEffect(() => update(), [])
-  useEffect(() => update(), [JSON.stringify([mem_app.workspace_id, mem_app.session_id])])
+  useEffect(
+    () => update(),
+    [JSON.stringify([mem_app.workspace_id, mem_app.session_id])],
+  )
 
   function setSidebar(sidebar: string) {
     setTimeout(() => eventEmitter.emit("layout_resize"), 200)
@@ -129,19 +138,28 @@ export default function Workspace() {
   // if session_id doesn't exist in sessions, run handleMissingSession
   useEffect(() => {
     const session_index = _.findIndex(mem.sessions, { id: mem_app.session_id })
-    if (session_index === -1) handleMissingSession({ session_id: mem_app.session_id })
+    if (session_index === -1)
+      handleMissingSession({ session_id: mem_app.session_id })
   }, [JSON.stringify(mem.sessions)])
 
   return (
     <div className="flex flex-1">
-      <div id="ContentTabs" className="flex flex-1 gap-1 grow flex-col overflow-hidden">
-        <div id="Tabs" className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950 rounded-md">
+      <div
+        id="ContentTabs"
+        className="flex flex-1 gap-1 grow flex-col overflow-hidden"
+      >
+        <div
+          id="Tabs"
+          className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950 rounded-md"
+        >
           <Tabs />
         </div>
         <div id="ContentViews" className="flex flex-1">
-          {_(mem.sessions)
+          {_(Object.keys(mem.active_sessions))
             .compact()
-            .map((session) => {
+            .map((session_id) => {
+              if (!session_id) return null
+              const session = _.find(mem.sessions, { id: session_id })
               if (!session) return null
               return (
                 <Session
@@ -153,6 +171,7 @@ export default function Workspace() {
                 />
               )
             })
+            .compact()
             .value()}
         </div>
       </div>

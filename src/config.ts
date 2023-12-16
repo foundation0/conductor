@@ -47,7 +47,7 @@ const config = {
     CF: {
       sync_interval: 1000 * 60,
       get_limit: 1000,
-      set_limit: 60000,
+      set_limit: 10000,
     },
   },
   services: {

@@ -12,6 +12,7 @@ import _ from "lodash"
 import useMemory from "@/components/hooks/useMemory"
 import { mChatSessionT } from "@/data/schemas/memory"
 import { SessionsT } from "@/data/schemas/sessions"
+import { initLoaders } from "@/data/loaders"
 
 export default function Session({
   workspace_id,
@@ -78,6 +79,21 @@ export default function Session({
     setPreference({ key: "notepad-width", value: mem.sidebar_width })
   }
 
+  async function refreshSession() {
+    const { MessagesState } = (await initLoaders()) as {
+      MessagesState: Function
+    }
+
+    const state = await MessagesState({ session_id })
+    state?.sync && state.sync()
+  }
+
+  useEffect(() => {
+    if (activated) {
+      refreshSession()
+    }
+  }, [activated])
+
   useEffect(() => {
     getPreference({ key: "notepad-width" }).then((width: string) => {
       if (width) {
@@ -130,7 +146,7 @@ export default function Session({
   return (
     <div
       className={`flex flex-1 flex-row ${
-        session_id !== (useParams().session_id as string) && "hidden"
+        session_id !== (useParams().session_id as string) ? "hidden" : ""
       }`}
     >
       <div

@@ -88,9 +88,10 @@ export default function Chat({
   const mem_session = useMemory<mChatSessionT>({
     id: `session-${session_id}`,
   })
-  if(!mem_session) return
+  if (!mem_session) return
   const { module, session, messages, generation } = mem_session
-  if(!session || !messages || !generation) return
+  console.log(session_id, mem_session)
+  if (!session || !messages || !generation) return
 
   const {
     raw: raw_messages,
@@ -313,12 +314,15 @@ export default function Chat({
       type: "sessions.getById",
       data: { session_id: sid },
     })
-    if(!session) return
+    if (!session) return
     mem_session.session = session
     const data = session?.data || []
     if (data) {
       // check if data has changed copared to data_refs
-      if (data.length === 0 || !_.isEqual(data, mem_session.context.data_refs)) {
+      if (
+        data.length === 0 ||
+        !_.isEqual(data, mem_session.context.data_refs)
+      ) {
         mem_session.context.data_refs = data
         computeAssociatedDataTokens()
       }
@@ -480,6 +484,67 @@ export default function Chat({
     )
   }
 
+  // refresh chat if session or workspace id changes
+  useEffect(() => {
+    if (session_id !== sid) {
+      // emit session change
+      emit({ type: "sessions/change", data: { session_id } })
+    }
+  }, [JSON.stringify([sid, workspace_id])])
+
+  // keep track of input height
+  useEffect(() => {
+    const e_input = eInput.current
+    if (!e_input) return
+    const input_observer = new ResizeObserver(() => {
+      setInputHeight(e_input.offsetHeight)
+    })
+    setInputHeight(e_input.offsetHeight)
+    input_observer.observe(e_input)
+
+    const e_container = eContainer.current
+    if (!e_container) return
+    const container_observer = new ResizeObserver(() => {
+      setContainerHeight(e_container.offsetHeight)
+    })
+    setContainerHeight(e_container.offsetHeight)
+    container_observer.observe(e_container)
+  }, [eInput?.current?.offsetHeight])
+
+  // set module
+  useEffect(() => {
+    updateModule()
+  }, [JSON.stringify([_.get(session, "settings.module") || {}, session])])
+
+  useEffect(() => {
+    updateSession()
+  }, [JSON.stringify([gen_in_progress, branch_parent_id])])
+
+  // update raw messages when msg_update_ts changes
+  useEffect(() => {
+    query<TextMessageT[]>({
+      type: "sessions.getMessages",
+      data: { session_id: sid },
+    }).then((msgs) => {
+      mem_session.messages.raw = msgs
+    })
+  }, [msg_update_ts])
+
+  // update active path when raw_messages changes
+  useEffect(() => {
+    updateMessages()
+  }, [JSON.stringify([raw_messages])])
+
+  // useEffect to add and remove the event listener
+  useEffect(() => {
+    window.addEventListener("resize", handleResize)
+
+    // Cleanup function to remove the event listener when the component unmounts
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [])
+
   useEvent({
     name: "sessions/module-change",
     target: session_id,
@@ -574,10 +639,12 @@ export default function Chat({
 
   useEvent({
     name: "store/update",
-    action: ({ name }: { name: string }) => {
-      if (name === session_id) {
-        updateSession()
-      }
+    target: session_id,
+    action: ({ session }: { session: any }) => {
+      console.log("store/update", session)
+      // if (name === session_id) {
+      //   updateSession()
+      // }
     },
   })
 
@@ -625,75 +692,14 @@ export default function Chat({
     },
   })
 
-  // refresh chat if session or workspace id changes
-  useEffect(() => {
-    if (session_id !== sid) {
-      // emit session change
-      emit({ type: "sessions/change", data: { session_id } })
-    }
-  }, [JSON.stringify([sid, workspace_id])])
-
-  // keep track of input height
-  useEffect(() => {
-    const e_input = eInput.current
-    if (!e_input) return
-    const input_observer = new ResizeObserver(() => {
-      setInputHeight(e_input.offsetHeight)
-    })
-    setInputHeight(e_input.offsetHeight)
-    input_observer.observe(e_input)
-
-    const e_container = eContainer.current
-    if (!e_container) return
-    const container_observer = new ResizeObserver(() => {
-      setContainerHeight(e_container.offsetHeight)
-    })
-    setContainerHeight(e_container.offsetHeight)
-    container_observer.observe(e_container)
-  }, [eInput?.current?.offsetHeight])
-
-  // set module
-  useEffect(() => {
-    updateModule()
-  }, [JSON.stringify([_.get(session, "settings.module") || {}, session])])
-
-  useEffect(() => {
-    updateSession()
-  }, [JSON.stringify([gen_in_progress, branch_parent_id])])
-
-  // update raw messages when msg_update_ts changes
-  useEffect(() => {
-    query<TextMessageT[]>({
-      type: "sessions.getMessages",
-      data: { session_id: sid },
-    }).then((msgs) => {
-      mem_session.messages.raw = msgs
-    })
-  }, [msg_update_ts])
-
-  // update active path when raw_messages changes
-  useEffect(() => {
-    updateMessages()
-  }, [JSON.stringify([raw_messages])])
-
-  // useEffect to add and remove the event listener
-  useEffect(() => {
-    window.addEventListener("resize", handleResize)
-
-    // Cleanup function to remove the event listener when the component unmounts
-    return () => {
-      window.removeEventListener("resize", handleResize)
-    }
-  }, [])
-
-  if (session_id !== (useParams().session_id as string)) return null
+  // if (session_id !== (useParams().session_id as string)) return null
   if (!session || !module) return null
   return (
-    <Switch>
+    <Switch fallback={<div>Syncing</div>}>
       <Match
         when={
-          stores_mem[session_id]
-            ?.status /*  === "ready" || stores_mem[session_id]?.status === "syncing" */
+          stores_mem[sid]?.status === "ready" ||
+          stores_mem[sid]?.status === "syncing"
         }
       >
         <div className="flex flex-1 flex-col relative" ref={eContainer}>

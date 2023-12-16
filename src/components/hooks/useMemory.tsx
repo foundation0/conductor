@@ -1,5 +1,5 @@
 import { useProxy } from "valtio/utils"
-import { createMemoryState, getMemoryState } from "@/libraries/memory"
+import { createMemoryState } from "@/libraries/memory"
 
 export default function useMemory<T>({ id, state }: { id: string; state?: { [key: string]: any } }): T {
   let _state = createMemoryState({ id, state })

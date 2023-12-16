@@ -19,7 +19,7 @@ export function set({ key, value }: SetT) {
     info({ message: `skipping CF setter for ${key}` })
     return Promise.resolve(true)
   }
-  const guest_mode = getLS({ key: "guest-mode" })
+  const guest_mode = false // getLS({ key: "guest-mode" })
   if (!guest_mode && !setters.has(key)) {
     info({ message: `setting up CF setter for ${key}` })
     setters.set(
