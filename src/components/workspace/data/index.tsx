@@ -21,11 +21,11 @@ import { DataT } from "@/data/schemas/data"
 import { mAppT, mChatSessionT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 import { useEvent } from "@/components/hooks/useEvent"
+import { getMemoryState } from "@/libraries/memory"
 
 export default function DataOrganizer() {
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
-
 
   const mem_data = useMemory<{
     sid: string
@@ -275,7 +275,7 @@ export default function DataOrganizer() {
 
   useEvent({
     name: "data/open",
-    action: open
+    action: open,
   })
 
   return (
@@ -348,9 +348,10 @@ export default function DataOrganizer() {
                     {...d}
                     onClick={() => {
                       if (!sid) return error({ message: "no session id" })
-                      const mem_session = useMemory<mChatSessionT>({
-                        id: `session-${session_id}`
+                      const mem_session = getMemoryState<mChatSessionT>({
+                        id: `session-${session_id}`,
                       })
+                      if (!mem_session) return error({ message: "no session" })
                       mem_session?.session?.data?.push(d)
                       emit({
                         type: "sessions.addData",
@@ -359,9 +360,11 @@ export default function DataOrganizer() {
                     }}
                     onRemove={() => {
                       if (confirm("Are you sure you want to delete this?")) {
-                        const mem_session = useMemory<mChatSessionT>({
-                          id: `session-${session_id}`
+                        const mem_session = getMemoryState<mChatSessionT>({
+                          id: `session-${session_id}`,
                         })
+                        if (!mem_session)
+                          return error({ message: "no session" })
                         mem_session?.session?.data?.splice(
                           mem_session?.session?.data?.indexOf(d),
                           1,
