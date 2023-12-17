@@ -47,7 +47,7 @@ export default function CreatePersona() {
             "Editing C1 can break Conductor's functionality as Conductor relies C1 to behave a certain way. Are you sure you want to edit C1?"
           )
         ) {
-          navigate(`/c/settings`)
+          navigate(`/c/modules`)
         }
       }
       const ai = _.find(ai_state, (ai) => ai.id === edit_ai_id)
@@ -167,7 +167,7 @@ export default function CreatePersona() {
     const ai = await AIActions.add({ persona: dat.persona, default_llm_module: dat.default_llm_module })
     if (!ai) return setCreationInProgress(false)
     setCreationInProgress(false)
-    navigate(`/c/settings`)
+    navigate(`/c/modules`)
   }
 
   const editPersona = async () => {
@@ -181,7 +181,7 @@ export default function CreatePersona() {
     updated.persona = dat.persona
     await AIActions.update({ ai: updated })
     setCreationInProgress(false)
-    navigate(`/c/settings`)
+    navigate(`/c/modules`)
   }
 
   useEffect(() => {
