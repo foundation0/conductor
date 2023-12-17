@@ -25,6 +25,7 @@ import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 import remarkGfm from "remark-gfm"
 import rehypeMermaid from "rehype-mermaid"
+import rehypeRaw from "rehype-raw"
 
 type MessageProps = {
   message: TextMessageT
@@ -308,7 +309,7 @@ const Message: React.FC<MessageProps> = ({
                       </code>
                 },
               }}
-              rehypePlugins={[]}
+              rehypePlugins={[rehypeRaw]}
               remarkPlugins={[remarkGfm]}
             >{`${message.text} ${
               message.id === "temp" ? "▮" : ""

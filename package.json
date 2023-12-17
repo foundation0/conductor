@@ -70,6 +70,7 @@
     "react-syntax-highlighter": "^15.5.0",
     "react-wrap-balancer": "^1.1.0",
     "rehype-mermaid": "^2.0.1",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
     "rich-textarea": "^0.24.4",
     "sass": "^1.69.5",
