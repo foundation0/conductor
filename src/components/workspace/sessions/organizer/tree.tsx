@@ -1,9 +1,20 @@
-import { GroupS } from "@/data/schemas/workspace"
+import { GroupS, WorkspaceS } from "@/data/schemas/workspace"
 import _ from "lodash"
 import { z } from "zod"
 import { RxDotsHorizontal, RxPlus } from "react-icons/rx"
-import { MdCheck, MdClose, MdOutlineKeyboardArrowDown, MdOutlineKeyboardArrowRight } from "react-icons/md"
-import { Link, useFetcher, useLoaderData, useNavigate, useParams } from "react-router-dom"
+import {
+  MdCheck,
+  MdClose,
+  MdOutlineKeyboardArrowDown,
+  MdOutlineKeyboardArrowRight,
+} from "react-icons/md"
+import {
+  Link,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+  useParams,
+} from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import AppStateActions from "@/data/actions/app"
@@ -21,6 +32,9 @@ import { emit, query } from "@/libraries/events"
 import { useEvent } from "@/components/hooks/useEvent"
 import useMemory from "@/components/hooks/useMemory"
 import { mAppT } from "@/data/schemas/memory"
+import { OpenSessionS } from "@/data/schemas/app"
+import { initLoaders } from "@/data/loaders"
+import { getMemoryState } from "@/libraries/memory"
 
 type GroupT = z.infer<typeof GroupS>
 type LoaderT = { app_state: AppStateT; user_state: UserT }
@@ -28,7 +42,10 @@ type LoaderT = { app_state: AppStateT; user_state: UserT }
 export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   const { app_state, user_state } = useLoaderData() as LoaderT
 
-  const mem: { groups: GroupT[] } = useMemory({ id: "session-organizer", state: { groups } })
+  const mem: { groups: GroupT[] } = useMemory({
+    id: "session-organizer",
+    state: { groups },
+  })
 
   const [field_edit_id, setFieldEditId] = useState("")
   const fetcher = useFetcher()
@@ -49,26 +66,43 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
     mem.groups = groups
   }
 
-  const toggleFolder = ({ folder_id, group_id }: { group_id: string; folder_id: string }) => {
+  const toggleFolder = ({
+    folder_id,
+    group_id,
+  }: {
+    group_id: string
+    folder_id: string
+  }) => {
     // check if folder is already open
     const open_folder = _.find(app_state.open_folders, { folder_id })
     if (open_folder) {
       // if it is, close it
-      const new_open_folders: any = app_state.open_folders.filter((open_folder) => open_folder.folder_id !== folder_id)
+      const new_open_folders: any = app_state.open_folders.filter(
+        (open_folder) => open_folder.folder_id !== folder_id,
+      )
       AppStateActions.updateAppState({
         open_folders: new_open_folders,
       })
     } else {
       // if it isn't, open it
       AppStateActions.updateAppState({
-        open_folders: [...app_state.open_folders, { _v: 1, folder_id, group_id, workspace_id: workspace_id || "" }],
+        open_folders: [
+          ...app_state.open_folders,
+          { _v: 1, folder_id, group_id, workspace_id: workspace_id || "" },
+        ],
       })
     }
 
     navigate(`/c/${workspace_id}/${session_id}`)
   }
 
-  const updateGroup = async ({ name, group_id }: { name: string; group_id: string }) => {
+  const updateGroup = async ({
+    name,
+    group_id,
+  }: {
+    name: string
+    group_id: string
+  }) => {
     await UserActions.renameItem({
       new_name: name,
       group_id,
@@ -76,7 +110,15 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
 
     navigate(`/c/${workspace_id}/${session_id}`)
   }
-  const updateFolder = async ({ name, group_id, folder_id }: { name: string; group_id: string; folder_id: string }) => {
+  const updateFolder = async ({
+    name,
+    group_id,
+    folder_id,
+  }: {
+    name: string
+    group_id: string
+    folder_id: string
+  }) => {
     await UserActions.renameItem({
       new_name: name,
       group_id,
@@ -126,7 +168,9 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   useEffect(() => {
     if (field_edit_id) {
       setTimeout(() => {
-        const e: HTMLInputElement | null = document.querySelector(`div[data-id="${field_edit_id}"] input`)
+        const e: HTMLInputElement | null = document.querySelector(
+          `div[data-id="${field_edit_id}"] input`,
+        )
         if (e) {
           e.focus()
           e.select()
@@ -157,7 +201,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       "user.deleteGroup.done",
       "user.deleteFolder.done",
       "user.renameItem.done",
-      "user.updateUser.done"
+      "user.updateUser.done",
     ],
     action: () => {
       setTimeout(updateGroups, 100)
@@ -171,7 +215,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       setFieldEditId(group.id)
     },
   })
-  
+
   useEvent({
     name: "user.addFolder.done",
     action: (data: any) => {
@@ -201,7 +245,9 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                 onBlur={resetFieldEditId}
                 cancelOnBlur={true}
                 saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                cancelButtonLabel={
+                  <MdClose className="w-3 h-3  text-zinc-200" />
+                }
                 onHoverCssClass={``}
                 value={group.name}
                 allowEdit={false}
@@ -213,7 +259,10 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                 field_edit_id === group.id ? "hidden" : ""
               }`}
             >
-              <div className="tooltip tooltip-bottom flex items-center justify-center" data-tip="Modify group...">
+              <div
+                className="tooltip tooltip-bottom flex items-center justify-center"
+                data-tip="Modify group..."
+              >
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button className="outline-none">
@@ -227,13 +276,21 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                       sideOffset={5}
                     >
                       <DropdownMenu.Item className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200">
-                        <button className="outline-none" onClick={() => setFieldEditId(group.id)}>
+                        <button
+                          className="outline-none"
+                          onClick={() => setFieldEditId(group.id)}
+                        >
                           Rename
                         </button>
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator />
 
-                      {_.size(_.find(user_state?.workspaces, { id: workspace_id })?.groups || []) > 1 ? (
+                      {(
+                        _.size(
+                          _.find(user_state?.workspaces, { id: workspace_id })
+                            ?.groups || [],
+                        ) > 1
+                      ) ?
                         <DropdownMenu.Item
                           className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200"
                           onClick={() => {
@@ -248,17 +305,17 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                               }
                             ) */
                             emit({
-                              type: 'user.deleteGroup',
+                              type: "user.deleteGroup",
                               data: {
                                 workspace_id,
                                 group_id: group.id,
-                              }
+                              },
                             })
                           }}
                         >
                           Delete
                         </DropdownMenu.Item>
-                      ) : null}
+                      : null}
 
                       <DropdownMenu.Arrow className="fill-zinc-600 border-zinc-600" />
                     </DropdownMenu.Content>
@@ -286,7 +343,10 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         onClick={() => {
                           emit({
                             type: "user.addGroup",
-                            data: { workspace_id: workspace_id, name: "New group" },
+                            data: {
+                              workspace_id: workspace_id,
+                              name: "New group",
+                            },
                           })
                           /* fetcher.submit(
                             {
@@ -315,7 +375,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                             {
                               method: "PUT",
                               action: `/c/workspace/folder`,
-                            }
+                            },
                           )
                         }}
                       >
@@ -329,7 +389,10 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
             </div>
           </div>
           {group.folders.map((folder) => (
-            <div key={folder.id} className={`OrganizerFolder flex flex-1 flex-col`}>
+            <div
+              key={folder.id}
+              className={`OrganizerFolder flex flex-1 flex-col`}
+            >
               <div className="flex flex-row items-center pb-1 text-xs font-semibold text-zinc-400">
                 <div
                   className={`flex h-5 items-center cursor-pointer`}
@@ -341,11 +404,14 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                     })
                   }}
                 >
-                  {app_state.open_folders.find((open_folder) => open_folder.folder_id === folder.id) ? (
+                  {(
+                    app_state.open_folders.find(
+                      (open_folder) => open_folder.folder_id === folder.id,
+                    )
+                  ) ?
                     <MdOutlineKeyboardArrowDown className="w-4 h-4 flex flex-row items-center" />
-                  ) : (
-                    <MdOutlineKeyboardArrowRight className="w-4 h-4 flex flex-row items-center" />
-                  )}
+                  : <MdOutlineKeyboardArrowRight className="w-4 h-4 flex flex-row items-center" />
+                  }
                 </div>
                 <div
                   className="flex flex-1 h-5 items-center cursor-pointer text-zinc-400 font-xs ph-no-capture"
@@ -363,21 +429,33 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                     editMode={field_edit_id === folder.id}
                     onSave={(name: any) => {
                       resetFieldEditId()
-                      updateFolder({ group_id: group.id, folder_id: folder.id, name })
+                      updateFolder({
+                        group_id: group.id,
+                        folder_id: folder.id,
+                        name,
+                      })
                       fieldFocus({ selector: "#input" })
                     }}
                     onCancel={resetFieldEditId}
                     onBlur={resetFieldEditId}
                     cancelOnBlur={true}
-                    saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                    cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                    saveButtonLabel={
+                      <MdCheck className="w-3 h-3 text-zinc-200" />
+                    }
+                    cancelButtonLabel={
+                      <MdClose className="w-3 h-3  text-zinc-200" />
+                    }
                     value={folder.name}
                     editComponent={<EditComponent />}
                     onHoverCssClass={``}
                     allowEdit={false}
                   />
                 </div>
-                <div className={`flex cursor-pointer ${field_edit_id === folder.id ? "hidden" : ""}`}>
+                <div
+                  className={`flex cursor-pointer ${
+                    field_edit_id === folder.id ? "hidden" : ""
+                  }`}
+                >
                   <div className="flex cursor-pointer flex-row gap-2 items-center justify-center mr-1">
                     <div
                       className="tooltip tooltip-bottom flex items-center justify-center"
@@ -396,13 +474,16 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                             sideOffset={5}
                           >
                             <DropdownMenu.Item className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200">
-                              <button className="outline-none" onClick={() => setFieldEditId(folder.id)}>
+                              <button
+                                className="outline-none"
+                                onClick={() => setFieldEditId(folder.id)}
+                              >
                                 Rename
                               </button>
                             </DropdownMenu.Item>
                             <DropdownMenu.Separator />
 
-                            {group.folders.length > 1 ? (
+                            {group.folders.length > 1 ?
                               <DropdownMenu.Item
                                 className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200"
                                 onClick={() => {
@@ -415,13 +496,13 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                                     {
                                       method: "DELETE",
                                       action: "/c/workspace/folder",
-                                    }
+                                    },
                                   )
                                 }}
                               >
                                 Delete
                               </DropdownMenu.Item>
-                            ) : null}
+                            : null}
 
                             <DropdownMenu.Arrow className="fill-zinc-600 border-zinc-600" />
                           </DropdownMenu.Content>
@@ -444,7 +525,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                             {
                               method: "PUT",
                               action: `/c/workspace/session`,
-                            }
+                            },
                           )
                         }}
                       >
@@ -454,8 +535,12 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                   </div>
                 </div>
               </div>
-              {app_state.open_folders.find((open_folder) => open_folder.folder_id === folder.id) ? (
-                folder.sessions && folder.sessions.length > 0 ? (
+              {(
+                app_state.open_folders.find(
+                  (open_folder) => open_folder.folder_id === folder.id,
+                )
+              ) ?
+                folder.sessions && folder.sessions.length > 0 ?
                   folder.sessions?.map((session) => (
                     <div
                       key={session.id}
@@ -466,16 +551,25 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                     >
                       <div className="flex items-center">
                         <PiChatCircleDotsBold
-                          className={`w-4 h-4 pr-1 ${session.id === session_id ? " text-zinc-100" : "text-zinc-500 "}`}
+                          className={`w-4 h-4 pr-1 ${
+                            session.id === session_id ?
+                              " text-zinc-100"
+                            : "text-zinc-500 "
+                          }`}
                         />
                       </div>
                       <Link
                         className={`flex flex-1 relative items-center cursor-pointer text-xs font-semibold text-ellipsis overflow-hidden ph-no-capture transition-all ${
-                          session.id === session_id ? " text-zinc-100" : "text-zinc-400  hover:text-zinc-100"
+                          session.id === session_id ?
+                            " text-zinc-100"
+                          : "text-zinc-400  hover:text-zinc-100"
                         }`}
                         to={`/c/${workspace_id}/${session.id}`}
                         onClick={() => {
-                          emit({ type: "sessions/change", data: { session_id: session.id } })
+                          emit({
+                            type: "sessions/change",
+                            data: { session_id: session.id },
+                          })
                         }}
                       >
                         <EasyEdit
@@ -483,15 +577,24 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                           editMode={field_edit_id === session.id}
                           onSave={(name: any) => {
                             resetFieldEditId()
-                            updateSession({ group_id: group.id, folder_id: folder.id, session_id: session.id, name })
+                            updateSession({
+                              group_id: group.id,
+                              folder_id: folder.id,
+                              session_id: session.id,
+                              name,
+                            })
                             fieldFocus({ selector: "#input" })
                             return false
                           }}
                           onCancel={resetFieldEditId}
                           onBlur={resetFieldEditId}
                           cancelOnBlur={true}
-                          saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                          cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                          saveButtonLabel={
+                            <MdCheck className="w-3 h-3 text-zinc-200" />
+                          }
+                          cancelButtonLabel={
+                            <MdClose className="w-3 h-3  text-zinc-200" />
+                          }
                           value={session.name}
                           editComponent={<EditComponent />}
                           onHoverCssClass={``}
@@ -504,13 +607,18 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                           field_edit_id === session.id ? "hidden" : ""
                         }`}
                       >
-                        <div className="tooltip tooltip-bottom" data-tip="Modify session...">
+                        <div
+                          className="tooltip tooltip-bottom"
+                          data-tip="Modify session..."
+                        >
                           <DropdownMenu.Root>
                             <DropdownMenu.Trigger asChild>
                               <button className="outline-none">
                                 <RxDotsHorizontal
                                   className={`w-3 h-3 flex flex-1 items-center cursor-pointer font-semibold text-sm ${
-                                    session.id === session_id ? " text-zinc-100" : "text-zinc-400"
+                                    session.id === session_id ?
+                                      " text-zinc-100"
+                                    : "text-zinc-400"
                                   }`}
                                 />
                               </button>
@@ -521,24 +629,100 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                                 sideOffset={5}
                               >
                                 <DropdownMenu.Item className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200">
-                                  <button className="outline-none" onClick={() => setFieldEditId(session.id)}>
+                                  <button
+                                    className="outline-none"
+                                    onClick={() => setFieldEditId(session.id)}
+                                  >
                                     Rename
                                   </button>
                                 </DropdownMenu.Item>
                                 <DropdownMenu.Item
                                   className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200"
-                                  onClick={() => {
-                                    fetcher.submit(
-                                      {
-                                        workspace_id: workspace_id || "",
-                                        group_id: group.id,
-                                        folder_id: folder.id,
-                                        session_id: session.id,
-                                      },
-                                      {
-                                        method: "DELETE",
-                                        action: `/c/workspace/session`,
+                                  onClick={async () => {
+                                    let next_session_id = ""
+                                    const mem_app = getMemoryState<mAppT>({
+                                      id: "app",
+                                    })
+
+                                    if (
+                                      session.id ===
+                                      (mem_app && mem_app?.session_id)
+                                    ) {
+                                      const { UserState, AppState } =
+                                        await initLoaders()
+                                      const user_state: UserT =
+                                        await UserState.get()
+                                      const app_state: AppStateT =
+                                        await AppState.get()
+                                      const active_workspace =
+                                        user_state.workspaces.find(
+                                          (ws) => ws.id === workspace_id,
+                                        ) as z.infer<typeof WorkspaceS>
+                                      if (
+                                        !workspace_id ||
+                                        active_workspace === null
+                                      )
+                                        return
+
+                                      const workspace_open_sessions =
+                                        _(app_state.open_sessions)
+                                          .filter((open_session: any) => {
+                                            // get session data from workspaces.groups.folders.sessions
+                                            const s = _.find(
+                                              active_workspace.groups.flatMap(
+                                                (g) =>
+                                                  g.folders.flatMap(
+                                                    (f) => f.sessions,
+                                                  ),
+                                              ),
+                                              { id: open_session.session_id },
+                                            )
+
+                                            if (!s) return false
+                                            return true
+                                          })
+                                          .filter(
+                                            (
+                                              session: z.infer<
+                                                typeof OpenSessionS
+                                              >,
+                                            ) =>
+                                              session.workspace_id ===
+                                              workspace_id,
+                                          )
+                                          .uniqBy("session_id")
+                                          .value() || []
+                                      const session_index = _.findIndex(
+                                        workspace_open_sessions,
+                                        { session_id },
+                                      )
+                                      if (session_index !== -1) {
+                                        const next_session =
+                                          workspace_open_sessions[
+                                            session_index === 0 ?
+                                              session_index + 1
+                                            : session_index - 1
+                                          ]
+                                        if (next_session)
+                                          next_session_id =
+                                            next_session.session_id
                                       }
+                                    }
+                                    await query({
+                                      type: "sessions.deleteSession",
+                                      data: {
+                                        folder_id: folder.id || "",
+                                        group_id: group.id || "",
+                                        workspace_id: workspace_id || "",
+                                        session_id: session.id || "",
+                                      },
+                                    })
+                                    // if (next_session_id)
+                                    navigate(
+                                      `/c/${workspace_id}/${
+                                        next_session_id ||
+                                        (mem_app && mem_app?.session_id)
+                                      }`,
                                     )
                                   }}
                                 >
@@ -552,12 +736,11 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                       </div>
                     </div>
                   ))
-                ) : (
-                  <div className="OrganizerSession flex flex-1 flex-row pl-4 text-xs font-semibold text-zinc-400">
+                : <div className="OrganizerSession flex flex-1 flex-row pl-4 text-xs font-semibold text-zinc-400">
                     No sessions
                   </div>
-                )
-              ) : null}
+
+              : null}
             </div>
           ))}
         </div>
