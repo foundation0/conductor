@@ -278,6 +278,11 @@ export default function DataOrganizer() {
     action: open,
   })
 
+  useEvent({
+    name: ["data/update", "data.delete.done"],
+    action: updateDataState
+  })
+
   return (
     <div className={`DataOrganizer h-full w-full flex flex-col gap-3`}>
       <div
