@@ -2,8 +2,25 @@
   &>*:not(:last-child) {
     margin-bottom: 1rem;
   }
+
   letter-spacing: 0.01rem;
 
+
+  table {
+    @apply table table-xs;
+    tr {
+      @apply border-b-zinc-700;
+      &:last-child {
+        @apply border-b-zinc-700;
+      }
+    }
+  }
+
+  input {
+    &[type=checkbox] {
+      
+    }
+  }
 
   li li {
     padding-left: 1rem;
@@ -23,9 +40,11 @@
     list-style: auto;
     list-style-position: inside;
     margin-bottom: 1rem;
+
     strong {
       @apply text-white;
     }
+
     &::marker {
       font-weight: bold;
       color: #ffffff8a;
@@ -64,7 +83,7 @@
   code {
     border-radius: 5px;
     color: #c9d1d9;
-    background: #0d1117;
+    background: #171c24;
     font-size: 0.8rem;
     padding: 2px 5px;
   }
@@ -83,6 +102,7 @@
     }
   }
 }
+
 
 .branch {
   p {

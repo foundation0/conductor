@@ -1,4 +1,9 @@
-import React, { JSXElementConstructor, ReactElement, useEffect, useState } from "react"
+import React, {
+  JSXElementConstructor,
+  ReactElement,
+  useEffect,
+  useState,
+} from "react"
 import { TextMessageT } from "@/data/loaders/sessions"
 import ReactMarkdown from "react-markdown"
 import { MdCheck, MdContentCopy, MdEdit } from "react-icons/md"
@@ -18,6 +23,8 @@ import { RxCornerBottomLeft } from "react-icons/rx"
 import { useEvent } from "@/components/hooks/useEvent"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
+import remarkGfm from "remark-gfm"
+import rehypeMermaid from "rehype-mermaid"
 
 type MessageProps = {
   message: TextMessageT
@@ -29,7 +36,13 @@ type MessageProps = {
 
 let mouse_over_timer: any = null
 
-const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className, avatar }) => {
+const Message: React.FC<MessageProps> = ({
+  message,
+  isActive,
+  onClick,
+  className,
+  avatar,
+}) => {
   const navigate = useNavigate()
   // const workspace_id = useParams().workspace_id
   // const session_id = useParams().session_id
@@ -64,7 +77,9 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
   function closeSelection() {
     window?.getSelection()?.empty()
     setUsedIcon("")
-    const selection_box = document.querySelector("div[data-side=top]") as HTMLElement
+    const selection_box = document.querySelector(
+      "div[data-side=top]",
+    ) as HTMLElement
     if (selection_box) selection_box.style.opacity = "0"
   }
 
@@ -72,7 +87,15 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
     if (used_icon_id) setTimeout(closeSelection, selector_delay)
   }, [used_icon_id])
 
-  const addToClipboard = async ({ text, msg_id, icon_id }: { text: string; msg_id: string; icon_id?: string }) => {
+  const addToClipboard = async ({
+    text,
+    msg_id,
+    icon_id,
+  }: {
+    text: string
+    msg_id: string
+    icon_id?: string
+  }) => {
     if (text && msg_id && session_id) {
       if (icon_id) setUsedIcon(icon_id)
       await NotepadActions.add({ session_id, data: text, msg_id, type: "text" })
@@ -88,7 +111,9 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
       onMouseLeave={() => handleMouseHover(false)}
       className="flex flex-row"
     >
-      {!isActive && <RxCornerBottomLeft className="w-3 h-3 text-zinc-700 flex-shrink-0" />}
+      {!isActive && (
+        <RxCornerBottomLeft className="w-3 h-3 text-zinc-700 flex-shrink-0" />
+      )}
       {avatar && (
         <div className="flex flex-shrink">
           <div className="flex">
@@ -107,11 +132,17 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
         <Selection.Trigger className="flex ph-no-capture">
           <div
             className={`chat flex flex-col max-w-screen-lg border-2 border-zinc-900/80  text-sm rounded-lg justify-start items-start relative transition-all ${
-              isActive
-                ? " text-zinc-200 py-2 px-4 "
-                : "bg-zinc-800 text-zinc-400 text-xs hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden text-left m-0 py-1 px-3"
-            } ${message.type === "ai" ? "bg-zinc-800" : "border-zinc-800 bg-zinc-800 text-zinc-300"}
-          ${className} ${message.hash === "1337" ? "italic text-xs opacity-100" : ""}`}
+              isActive ?
+                " text-zinc-200 py-2 px-4 "
+              : "bg-zinc-800 text-zinc-400 text-xs hover:bg-zinc-700 border-zinc-700 cursor-pointer overflow-x-hidden text-left m-0 py-1 px-3"
+            } ${
+              message.type === "ai" ?
+                "bg-zinc-800"
+              : "border-zinc-800 bg-zinc-800 text-zinc-300"
+            }
+          ${className} ${
+            message.hash === "1337" ? "italic text-xs opacity-100" : ""
+          }`}
             onClick={() => {
               if (!isActive) {
                 onClick()
@@ -123,23 +154,28 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                 className="flex gap-3 border-2 border-zinc-900/70 backdrop-blur bg-zinc-900/50 absolute right-1 -top-9 text-xs overflow-visible whitespace-nowrap py-1.5 px-3 rounded-t-xl  mt-2"
                 onMouseEnter={() => handleMouseHover(true)}
               >
-                <div className="tooltip-top tooltip" data-tip="Copy message to clipboard">
-                  {used_icon_id === message.id + "all/copy" ? (
+                <div
+                  className="tooltip-top tooltip"
+                  data-tip="Copy message to clipboard"
+                >
+                  {used_icon_id === message.id + "all/copy" ?
                     <MdCheck />
-                  ) : (
-                    <MdContentCopy
+                  : <MdContentCopy
                       className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
                       onClick={() => {
-                        copyToClipboard(message.text, message.id + "all/copy", setUsedIcon)
+                        copyToClipboard(
+                          message.text,
+                          message.id + "all/copy",
+                          setUsedIcon,
+                        )
                       }}
                     />
-                  )}
+                  }
                 </div>
                 <div className="tooltip tooltip-top" data-tip="Save to notepad">
-                  {used_icon_id === message.id + "all/clip" ? (
+                  {used_icon_id === message.id + "all/clip" ?
                     <MdCheck />
-                  ) : (
-                    <BiNotepad
+                  : <BiNotepad
                       className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
                       onClick={() => {
                         addToClipboard({
@@ -149,9 +185,12 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                         })
                       }}
                     />
-                  )}
+                  }
                 </div>
-                <div className="tooltip tooltip-top" data-tip="Editing coming soon">
+                <div
+                  className="tooltip tooltip-top"
+                  data-tip="Editing coming soon"
+                >
                   <MdEdit
                     className="h-3 w-3 cursor-not-allowed hover:text-zinc-200 text-zinc-400"
                     /* onClick={() => {
@@ -169,76 +208,111 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
               components={{
                 code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || "")
-                  return match ? (
-                    <div
-                      className="relative"
-                      /* onMouseEnter={handleMouseHoverCode}
+                  return match ?
+                      <div
+                        className="relative"
+                        /* onMouseEnter={handleMouseHoverCode}
                   onMouseLeave={handleMouseHoverCode}  */
-                    >
-                      <div className="flex gap-2 absolute right-2 top-0 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2">
-                        <div className="tooltip-left tooltip" data-tip="Verify code (coming soon)">
-                          {used_icon_id ===
-                          message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "scan" ? (
-                            <MdCheck />
-                          ) : (
-                            <GoCodescan
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={() => {
-                                alert("Coming soon")
-                              }}
-                            />
-                          )}
+                      >
+                        <div className="flex gap-2 absolute right-2 top-0 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2">
+                          <div
+                            className="tooltip-left tooltip"
+                            data-tip="Verify code (coming soon)"
+                          >
+                            {(
+                              used_icon_id ===
+                              message.id +
+                                createHash({
+                                  str: String(children).replace(/\n$/, ""),
+                                }) +
+                                "scan"
+                            ) ?
+                              <MdCheck />
+                            : <GoCodescan
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={() => {
+                                  alert("Coming soon")
+                                }}
+                              />
+                            }
+                          </div>
+                          <div
+                            className="tooltip-left tooltip"
+                            data-tip="Copy code to clipboard"
+                          >
+                            {(
+                              used_icon_id ===
+                              message.id +
+                                createHash({
+                                  str: String(children).replace(/\n$/, ""),
+                                }) +
+                                "copy"
+                            ) ?
+                              <MdCheck />
+                            : <MdContentCopy
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={() => {
+                                  copyToClipboard(
+                                    String(children).replace(/\n$/, ""),
+                                    message.id +
+                                      createHash({
+                                        str: String(children).replace(
+                                          /\n$/,
+                                          "",
+                                        ),
+                                      }) +
+                                      "copy",
+                                    setUsedIcon,
+                                  )
+                                }}
+                              />
+                            }
+                          </div>
+                          <div
+                            className="tooltip tooltip-left"
+                            data-tip="Save code to notepad"
+                          >
+                            {used_icon_id === message.id + "all/clip" ?
+                              <MdCheck />
+                            : <BiNotepad
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={() => {
+                                  addToClipboard({
+                                    text: `\`\`\`${match[1] || ""}\n${String(
+                                      children,
+                                    ).replace(/\n$/, "")}\n\`\`\``,
+                                    msg_id: message.id,
+                                    icon_id:
+                                      message.id +
+                                      createHash({
+                                        str: String(children).replace(
+                                          /\n$/,
+                                          "",
+                                        ),
+                                      }) +
+                                      "notepad",
+                                  })
+                                }}
+                              />
+                            }
+                          </div>
                         </div>
-                        <div className="tooltip-left tooltip" data-tip="Copy code to clipboard">
-                          {used_icon_id ===
-                          message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "copy" ? (
-                            <MdCheck />
-                          ) : (
-                            <MdContentCopy
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={() => {
-                                copyToClipboard(
-                                  String(children).replace(/\n$/, ""),
-                                  message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "copy",
-                                  setUsedIcon
-                                )
-                              }}
-                            />
-                          )}
-                        </div>
-                        <div className="tooltip tooltip-left" data-tip="Save code to notepad">
-                          {used_icon_id === message.id + "all/clip" ? (
-                            <MdCheck />
-                          ) : (
-                            <BiNotepad
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={() => {
-                                addToClipboard({
-                                  text: `\`\`\`${match[1] || ""}\n${String(children).replace(/\n$/, "")}\n\`\`\``,
-                                  msg_id: message.id,
-                                  icon_id:
-                                    message.id + createHash({ str: String(children).replace(/\n$/, "") }) + "notepad",
-                                })
-                              }}
-                            />
-                          )}
-                        </div>
+                        <SyntaxHighlighter
+                          children={String(children).replace(/\n$/, "")}
+                          style={vscDarkPlus}
+                          language={match[1]}
+                        />
                       </div>
-                      <SyntaxHighlighter
-                        children={String(children).replace(/\n$/, "")}
-                        style={vscDarkPlus}
-                        language={match[1]}
-                      />
-                    </div>
-                  ) : (
-                    <code {...props} className={className}>
-                      {children}
-                    </code>
-                  )
+                    : <code {...props} className={className}>
+                        {children}
+                      </code>
                 },
               }}
               rehypePlugins={[]}
-            >{`${message.text} ${message.id === "temp" ? "▮" : ""}`}</ReactMarkdown>
+              remarkPlugins={[remarkGfm]}
+            >{`${message.text} ${
+              message.id === "temp" ? "▮" : ""
+            }`}</ReactMarkdown>
           </div>
         </Selection.Trigger>
         <Selection.Portal>
@@ -251,33 +325,53 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                   onMouseEnter={() => handleMouseHover(true)}
                   onMouseLeave={() => handleMouseHover(false)}
                 >
-                  {used_icon_id ===
-                  message.id + createHash({ str: window?.getSelection()?.toString() || "" }) + "copy" ? (
+                  {(
+                    used_icon_id ===
+                    message.id +
+                      createHash({
+                        str: window?.getSelection()?.toString() || "",
+                      }) +
+                      "copy"
+                  ) ?
                     <MdCheck />
-                  ) : (
-                    <div className="tooltip tooltip-top" data-tip="Copy to clipboard">
+                  : <div
+                      className="tooltip tooltip-top"
+                      data-tip="Copy to clipboard"
+                    >
                       <MdContentCopy
                         className="h-3 w-3"
                         onClick={() => {
                           copyToClipboard(
                             window?.getSelection()?.toString() || "",
-                            message.id + createHash({ str: window?.getSelection()?.toString() || "" }) + "copy",
-                            setUsedIcon
+                            message.id +
+                              createHash({
+                                str: window?.getSelection()?.toString() || "",
+                              }) +
+                              "copy",
+                            setUsedIcon,
                           )
                         }}
                       />
                     </div>
-                  )}
+                  }
                 </Toolbar.ToggleItem>
                 <Toolbar.ToggleItem
                   className="flex-shrink-0 flex-grow-0 basis-auto h-3 px-2 rounded inline-flex leading-none items-center justify-center ml-0.5 outline-none focus:outline-none active:outline-none focus:relative first:ml-0 text-xs cursor-pointer hover:text-zinc-200"
                   value="inbox"
                 >
-                  {used_icon_id ===
-                  message.id + createHash({ str: window?.getSelection()?.toString() || "" }) + "clip" ? (
+                  {(
+                    used_icon_id ===
+                    message.id +
+                      createHash({
+                        str: window?.getSelection()?.toString() || "",
+                      }) +
+                      "clip"
+                  ) ?
                     <MdCheck />
-                  ) : (
-                    <div className="tooltip tooltip-top" data-tip="Save to notepad">
+                  : <div
+                      className="tooltip tooltip-top"
+                      data-tip="Save to notepad"
+                    >
                       <BiNotepad
                         className="h-3 w-3"
                         onClick={() => {
@@ -285,12 +379,16 @@ const Message: React.FC<MessageProps> = ({ message, isActive, onClick, className
                             text: window?.getSelection()?.toString() || "",
                             msg_id: message.id,
                             icon_id:
-                              message.id + createHash({ str: window?.getSelection()?.toString() || "" }) + "clip",
+                              message.id +
+                              createHash({
+                                str: window?.getSelection()?.toString() || "",
+                              }) +
+                              "clip",
                           })
                         }}
                       />
                     </div>
-                  )}
+                  }
                 </Toolbar.ToggleItem>
               </Toolbar.ToggleGroup>
             </Toolbar.Root>
