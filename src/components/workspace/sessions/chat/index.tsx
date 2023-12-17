@@ -90,7 +90,7 @@ export default function Chat({
   })
   if (!mem_session) return
   const { module, session, messages, generation } = mem_session
-  
+
   if (!session || !messages || !generation) return
 
   const {
@@ -289,7 +289,7 @@ export default function Chat({
 
   async function computeAssociatedDataTokens() {
     const fctx = await createFullContext({ session_id: sid })
-    if(!fctx) return error({message: "Failed to create full context"})
+    if (!fctx) return error({ message: "Failed to create full context" })
     const ctx = fctx.ctx
     if (ctx) {
       const toks = await tokenizeInput({
@@ -697,7 +697,13 @@ export default function Chat({
   // if (session_id !== (useParams().session_id as string)) return null
   if (!session || !module) return null
   return (
-    <Switch fallback={<div>Syncing</div>}>
+    <Switch
+      fallback={
+        <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 font-semibold">
+          Loading session...
+        </div>
+      }
+    >
       <Match
         when={
           stores_mem[sid]?.status === "ready" ||

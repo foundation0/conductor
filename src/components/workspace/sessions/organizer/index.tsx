@@ -12,7 +12,13 @@ import useMemory from "@/components/hooks/useMemory"
 
 type GroupT = z.infer<typeof GroupS>
 
-export default function SessionOrganizer({ app_state, user_state }: { app_state: AppStateT; user_state: UserT }) {
+export default function SessionOrganizer({
+  app_state,
+  user_state,
+}: {
+  app_state: AppStateT
+  user_state: UserT
+}) {
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id } = mem_app
   // const workspace_id = useParams().workspace_id as string
@@ -45,7 +51,7 @@ export default function SessionOrganizer({ app_state, user_state }: { app_state:
       "sessions.deleteSession.done",
       "app.changeActiveSession.done",
       "app.removeOpenSession.done",
-      "workspace/change"
+      "workspace/change",
     ],
     action: updateGroups,
   })
@@ -54,13 +60,15 @@ export default function SessionOrganizer({ app_state, user_state }: { app_state:
     name: "store/update",
     target: `user`,
     action: ({ session }: { session: any }) => {
-      console.log("store/update", session)
-      // if (name === session_id) {
       updateGroups()
-      // }
     },
   })
 
-  if (Object.keys(groups).length === 0) return <div className="flex flex-1">No groups</div>
+  if (Object.keys(groups).length === 0)
+    return (
+      <div className="flex flex-1 justify-center items-center align-center flex-row h-full text-xs font-semibold text-zinc-500">
+        Loading organizer...
+      </div>
+    )
   return <GroupsTree groups={groups} />
 }
