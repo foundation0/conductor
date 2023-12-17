@@ -8,7 +8,12 @@ import { calculateTokenCost } from "./token_cost_calculator"
 import { queryIndex } from "./data"
 import { query } from "./events"
 import { DataRefT } from "@/data/schemas/workspace"
-import { mModulesT, ModelT, mPricesT } from "@/data/schemas/memory"
+import {
+  mChatSessionT,
+  mModulesT,
+  ModelT,
+  mPricesT,
+} from "@/data/schemas/memory"
 import { getMemoryState } from "./memory"
 import { DataT } from "@/data/schemas/data"
 import { getWorker } from "./workers"
@@ -95,7 +100,7 @@ export async function createSimilarityContext({
     type: "sessions.getById",
     data: { session_id },
   })
-  if(!session) return false
+  if (!session) return false
   const module_meta = await getModuleDetails({
     model: session.settings.module.variant,
   })
@@ -122,9 +127,18 @@ export async function createSimilarityContext({
     result_count: 10,
   })
   let ctx = ""
+  let included_data_refs: string[] = []
 
+  const mem_session: mChatSessionT | false = getMemoryState<mChatSessionT>({
+    id: `session-${session_id}`,
+  })
+  let total_used_tokens = 0
+  if (mem_session) {
+    total_used_tokens =
+      mem_session.messages?.tokens + mem_session.input?.tokens || 0
+  }
   if (context && context?.length > 0) {
-    ctx = `## CONTEXT ##\n\n`
+    ctx = `# CONTEXT:\n\n`
     for (let i = 0; i < context.length; i++) {
       const c = context[i]
       const _c = `ID: ${c.metadata.id}\nDOC NAME: ${c.metadata.name}\n\n${c.pageContent}\n\n---\n\n`
@@ -133,18 +147,16 @@ export async function createSimilarityContext({
         model: session.settings.module.variant,
         input: _ctx,
       })
-      if (toks && toks?.usedTokens > module_meta.context_len - 500) break
-      else ctx = _ctx
+      if (toks) {
+        const tokens_with_context = toks?.usedTokens + total_used_tokens
+        if ((tokens_with_context + 500) > module_meta.context_len) break
+        ctx = _ctx
+        included_data_refs.push(c.metadata.id)
+      } else break
     }
-    ctx += `\n\n## CONTEXT ENDS ##\n\n`
-    /* ctx = `## CONTEXT ##\n\n${context
-      .map(
-        (c) =>
-          `ID: ${c.metadata.id}\nDOC NAME: ${c.metadata.name}\n\n${c.pageContent}`,
-      )
-      .join("\n\n---\n\n")}\n\n## CONTEXT ENDS ##\n\n` */
+    ctx += `\n\n# CONVERSATION:\n\n`
   }
-  return ctx
+  return { ctx, included_data_refs }
 }
 
 export async function createFullContext({
@@ -192,11 +204,13 @@ export async function createFullContext({
     })
 
   // concat all data into a single string
-  const context = associated_data
-    .map((d) => `Name: ${d.meta?.name}\n\n${d.data.content}`)
+  const ctx = associated_data
+    .map((d) => {
+      return `Name: ${d.meta?.name}\n\n${d.data.content}`
+    })
     .join("\n\n---\n\n")
 
-  return context
+  return { ctx, included_data_refs: associated_data.map((d) => d.id) }
 }
 
 export async function compileInput({
@@ -212,15 +226,26 @@ export async function compileInput({
 }) {
   // create context
   let ctx: string | false = ""
+  let included_data_refs: string[] = []
+
   switch (rag_mode) {
     case "none":
       ctx = ""
+      included_data_refs = []
       break
     case "similarity":
-      ctx = await createSimilarityContext({ messages, session_id })
+      const _sc = await createSimilarityContext({ messages, session_id })
+      if (_sc) {
+        ctx = _sc.ctx
+        included_data_refs = _sc.included_data_refs
+      }
       break
     case "full":
-      ctx = await createFullContext({ session_id })
+      const _fc = await createFullContext({ session_id })
+      if (_fc) {
+        ctx = _fc.ctx
+        included_data_refs = _fc.included_data_refs
+      }
       break
   }
   if (!ctx) ctx = ""
@@ -248,14 +273,17 @@ export async function compileInput({
         throw new Error(`Unknown message type: ${msg?.type}`)
     }
   })
-  return { input, ctx }
+  return { input, ctx, included_data_refs }
 }
-export async function getModuleDetails({ model }: { model: string }): Promise<{
-  module: ModelT["models"][0]
-  context_len: number
-  input_price: number
-  output_price: number
-  } | false> {
+export async function getModuleDetails({ model }: { model: string }): Promise<
+  | {
+      module: ModelT["models"][0]
+      context_len: number
+      input_price: number
+      output_price: number
+    }
+  | false
+> {
   const mem_modules = getMemoryState<mModulesT>({ id: "modules" })
   if (!mem_modules) return error({ message: "Modules not found" })
 
@@ -269,13 +297,16 @@ export async function getModuleDetails({ model }: { model: string }): Promise<{
   if (!module) return error({ message: "Module not found" })
 
   const context_len = module.context_len
-  if (!context_len) return error({ message: "Module's context length not found" })
+  if (!context_len)
+    return error({ message: "Module's context length not found" })
 
   // get pricing
   const mem_prices = getMemoryState<mPricesT>({ id: "prices" })
-  if (!mem_prices) return error({ message: "Prices not found. Are you offline?" })
+  if (!mem_prices)
+    return error({ message: "Prices not found. Are you offline?" })
   const pricing = mem_prices.prices.find((p) => p.id === model)
-  if (!pricing) return error({ message: "Model prices not found. Are you offline?" })
+  if (!pricing)
+    return error({ message: "Model prices not found. Are you offline?" })
 
   // make sure input_price and output_price are numbers
   const input_price = Number(pricing.input_price)
@@ -358,12 +389,12 @@ export async function compileSlidingWindowMemory({
 }) {
   const _m = await getModuleDetails({ model })
   if (!_m) return error({ message: "module not found" })
-  const { module, context_len, input_price, output_price } = _m
+  const { module, input_price, output_price } = _m
 
   // reverse messages
   const _msgs = _(messages).reject({ status: "deleted" }).value()
 
-  const { input, ctx } = await compileInput({
+  const { input, ctx, included_data_refs } = await compileInput({
     session_id,
     rag_mode,
     messages: [
@@ -381,6 +412,7 @@ export async function compileSlidingWindowMemory({
   })
   if (!module?.tokenizer?.tokenizer_type || !module?.tokenizer?.tokenizer_name)
     return error({ message: "tokenizer not found" })
+
   const costs = await calculateTokenCost({
     tokenizer_type: module?.tokenizer?.tokenizer_type,
     tokenizer_name: module?.tokenizer?.tokenizer_name,
@@ -399,6 +431,7 @@ export async function compileSlidingWindowMemory({
   return {
     history: _msgs,
     included_ids: _.map(_msgs, "id"),
+    included_data_refs,
     token_count: costs.usedTokens,
     usd_cost: costs.usedUSD,
     prompt,

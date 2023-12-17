@@ -87,10 +87,6 @@ export async function addMessage({
   })
   if (!mem_session) return error({ message: "no session" })
 
-  // set the module
-  //const { SessionState } = await initLoaders()
-  //const sessions_state = await SessionState.get()
-  // const session = sessions_state.active[session_id]
   const { session } = mem_session
   const module_id = _.get(session, "settings.module.id")
   let active_module = await Module(module_id)
@@ -118,14 +114,6 @@ export async function addMessage({
       message: "no context length",
       data: { module_id: module.specs.id },
     })
-  // get module meta from mem_modules based on the variant
-  /* const module_meta = _(mem_modules.modules)
-    .map((vendor: any) => {
-      const model = vendor.models.find((model: any) => model.id === variant.id)
-      return model
-    })
-    .compact()
-    .first() */
 
   const { parent_id, resend } = await getParentId({
     raw_messages,
@@ -241,7 +229,8 @@ export async function addMessage({
           hash: "123",
           text: message,
           meta: meta || { role: "msg" },
-          context: memory.ctx,
+          // context: memory.ctx,
+          context_refs: memory.included_data_refs || [],
           source: `user:${user_state.id}`,
           active: true,
           parent_id,
@@ -334,7 +323,10 @@ export async function addMessage({
               return emit({ type: "insufficient_funds" })
             } else {
               if (!data.surpress)
-                error({ message: JSON.stringify(data.message) || data.code, data })
+                error({
+                  message: JSON.stringify(data.message) || data.code,
+                  data,
+                })
             }
             onError && onError(data)
           },
