@@ -5,6 +5,18 @@
     tab-size: 2;
   }
 
+  table {
+    @apply table table-xs;
+
+    tr {
+      @apply border-b-zinc-700;
+
+      &:last-child {
+        @apply border-b-zinc-700;
+      }
+    }
+  }
+
   .code {
     @apply my-4;
 

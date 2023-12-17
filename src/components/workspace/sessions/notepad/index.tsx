@@ -1,9 +1,8 @@
-import { useLoaderData, useNavigate, useParams } from "react-router-dom"
-import _, { update } from "lodash"
+import { useLoaderData, useNavigate } from "react-router-dom"
+import _ from "lodash"
 import { NotepadsT } from "@/data/loaders/notepad"
 import { NotepadS, NotepadT } from "@/data/schemas/notepad"
-import { useEffect, useState } from "react"
-import { z } from "zod"
+import { useEffect } from "react"
 // @ts-ignore
 import {
   MdCheck,
@@ -27,12 +26,13 @@ import { BiTrash } from "react-icons/bi"
 import { UserT } from "@/data/loaders/user"
 import { BiNotepad } from "react-icons/bi"
 import { useEvent } from "@/components/hooks/useEvent"
-import { emit, query } from "@/libraries/events"
-import SessionsActions from "@/data/actions/sessions"
+import { emit } from "@/libraries/events"
 import dayjs from "dayjs"
 import { initLoaders } from "@/data/loaders"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
+import remarkGfm from "remark-gfm"
+import rehypeRaw from "rehype-raw"
 
 export default function Notepad() {
   const { notepad_state, user_state } = useLoaderData() as {
@@ -74,9 +74,7 @@ export default function Notepad() {
   const { notepad, edited_clip, dirty_clip, field_edit_id, used_icon_id } =
     mem_notepad
 
-  async function updateNotepad({
-    notepad,
-  }: { notepad?: NotepadT; } = {}) {
+  async function updateNotepad({ notepad }: { notepad?: NotepadT } = {}) {
     const _sid = session_id
     // console.log("update notepad", session_id)
     if (notepad && notepad.session_id === _sid)
@@ -524,7 +522,7 @@ export default function Notepad() {
                       }}
                       onBlur={() => {
                         // if (!dirty_clip) return setFieldEditId("")
-                        
+
                         if (!dirty_clip) return (mem_notepad.field_edit_id = "")
                         // else mem_notepad.edited_clip = e.target.value
                       }}
@@ -598,7 +596,8 @@ export default function Notepad() {
                                 </code>
                           },
                         }}
-                        rehypePlugins={[]}
+                        rehypePlugins={[rehypeRaw]}
+                        remarkPlugins={[remarkGfm]}
                       >
                         {c.data}
                       </ReactMarkdown>
