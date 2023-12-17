@@ -7,6 +7,7 @@ export const state = async () => await store<UsersT>({
   name: "users",
   username: "::public::",
   enc_key: "::public::",
+  local_only: true,
   initial: async (): Promise<UsersT> => {
     return {}
   },
