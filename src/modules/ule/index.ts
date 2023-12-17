@@ -145,7 +145,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
     const messages: msgT[] = [
       {
         type: "system",
-        text: prompt.instructions || "You are a helpful assistant",
+        text: (prompt.instructions || "You are a helpful assistant") + "\n\n" + prompt.context + "\n\n",
       },
       ..._(history).map((message) => {
         if (message.type === "human" && message.text) {
@@ -170,9 +170,9 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
 
     if (_.last(messages)?.type === "user") {
       // prepend context to the message
-      if (prompt.context) {
+      /* if (prompt.context) {
         messages[messages.length - 1].text = prompt.context + "\n\n" + messages[messages.length - 1].text
-      }
+      } */
     }
 
     ULE.compute({
