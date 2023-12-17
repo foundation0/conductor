@@ -90,7 +90,7 @@ export default function Chat({
   })
   if (!mem_session) return
   const { module, session, messages, generation } = mem_session
-  console.log(session_id, mem_session)
+  
   if (!session || !messages || !generation) return
 
   const {
@@ -139,7 +139,7 @@ export default function Chat({
   }: {
     message: TextMessageT
   }) {
-    const ms = await MessagesState({ session_id: sid })
+    /* const ms = await MessagesState({ session_id: sid })
     const raw_messages: TextMessageT[] = ms?.get()
     const activePath = computeActivePath(raw_messages || [])
 
@@ -147,13 +147,13 @@ export default function Chat({
       messages: raw_messages || [],
       first_id: "first",
       activePath,
-    })
+    }) */
     // find the message in processed_messages
     const msg_index = _.findIndex(
-      processed_messages,
+      mem_session.messages.active,
       (msg) => msg[1].id === message.id,
     )
-    let new_processed_messages = _.cloneDeep(processed_messages || [])
+    let new_processed_messages = _.cloneDeep(mem_session.messages.active || [])
     if (msg_index === -1) {
       // if message is not found, append it to the end
       new_processed_messages?.push([[], message, []])
@@ -288,10 +288,12 @@ export default function Chat({
   }
 
   async function computeAssociatedDataTokens() {
-    const full_context = await createFullContext({ session_id: sid })
-    if (full_context) {
+    const fctx = await createFullContext({ session_id: sid })
+    if(!fctx) return error({message: "Failed to create full context"})
+    const ctx = fctx.ctx
+    if (ctx) {
       const toks = await tokenizeInput({
-        input: full_context,
+        input: ctx,
         model: mem_session.session.settings.module.variant,
       })
       if (toks) {
