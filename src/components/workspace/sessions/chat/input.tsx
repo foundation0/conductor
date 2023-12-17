@@ -177,7 +177,7 @@ export default function Input({
           }`}
         >
           <div
-            className={`ml-3 tooltip tooltip-top ${
+            className={`ml-3 mr-0 transition-all tooltip tooltip-top ${
               (
                 !gen_in_progress &&
                 (_.last(messages)?.[1].type === "ai" || _.size(messages) === 0)
@@ -257,7 +257,10 @@ export default function Input({
                 (_.last(messages)?.[1].type === "human" &&
                   _.last(messages)?.[1].hash !== "1337")
               }
-              className={`flex flex-1 p-4 py-3 px-2 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture `}
+              className={`flex flex-1 p-4 py-3 px-2 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture ${disabled ||
+                is_new_branch || gen_in_progress ||
+                (_.last(messages)?.[1].type === "human" &&
+                  _.last(messages)?.[1].hash !== "1337") ? "pl-4" : ""}`}
               placeholder={
                 (
                   disabled ||
@@ -405,9 +408,46 @@ export default function Input({
                 !is_new_branch
               }
             >
-              <button type="submit" className={button_class + " text-xs pl-4"}>
-                Resend message
-              </button>
+              <>
+                <button
+                  type="submit"
+                  className={button_class + " text-xs pl-4 pr-0"}
+                >
+                  Resend message
+                </button>
+                <div
+                  className="flex flex-col justify-center items-center mr-4 pl-2 tooltip tooltip-top w-[15px]"
+                  data-tip={`Using ${module_name}.\n${
+                    memory_indicator !== "red" ?
+                      `${
+                        ctx_used > 1 ? 100 : _.round(ctx_used * 100)
+                      }% of memory used`
+                    : session.settings?.memory?.rag_mode === "full" ?
+                      `Current reasoning engine out of memory.\nYou need minimum ${_.round(
+                        ctx_sum * 0.8,
+                      )} word memory\nto continue.\n\nYou can also switch to relevance mode.`
+                    : `Relevance mode activate.\n100% of memory used.`
+                  }`}
+                >
+                  <RiRobot2Fill
+                    className={`w-[12px] cursor-pointer ${
+                      memory_indicator === "yellow" && "text-yellow-400"
+                    } ${memory_indicator === "green" && "text-green-400"}  ${
+                      memory_indicator === "red" && "text-red-400"
+                    }`}
+                    onClick={() => {
+                      /* const d = document.getElementById(`session-${session_id}-ai-select`) as HTMLDialogElement | null
+                      d && d.showModal() */
+                      emit({
+                        type: "settings/toggle",
+                        data: {
+                          target: session_id,
+                        },
+                      })
+                    }}
+                  />
+                </div>
+              </>
             </Match>
           </Switch>
         </div>
