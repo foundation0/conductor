@@ -35,6 +35,12 @@ import {
 import { emit } from "@/libraries/events"
 import { PricingTable } from "../modals/pricing_table"
 import { pipeline } from "@xenova/transformers"
+import {
+  Input as InputIntro,
+  InputActions,
+} from "@/components/experiences/input_introduction/v1"
+import Joyride, { Step } from "react-joyride"
+import { useEvent } from "../hooks/useEvent"
 
 export default function Conductor() {
   const { app_state, user_state, ai_state } = useLoaderData() as {
@@ -233,6 +239,19 @@ export default function Conductor() {
       }),
     )
   }, [JSON.stringify([app_state.active_sessions])])
+
+  const steps_input: Step[] = [
+    {
+      target: "#input",
+      content: <InputIntro />,
+      disableBeacon: true,
+    },
+    {
+      target: ".InputActions",
+      content: <InputActions />,
+      disableBeacon: true,
+    },
+  ]
 
   return (
     <div

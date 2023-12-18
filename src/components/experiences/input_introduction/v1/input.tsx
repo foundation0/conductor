@@ -4,11 +4,7 @@ import { useLoaderData, useNavigate, useParams } from "react-router-dom"
 import { markExperienceAsComplete } from "../.."
 import { UserT } from "@/data/loaders/user"
 
-export default function Tabs() {
-  const navigate = useNavigate()
-  const workspace_id = useParams().workspace_id
-  const session_id = useParams().session_id
-  const { user_state } = useLoaderData() as { user_state: UserT }
+export default function Input() {
 
   useEffect(() => {
     ph().capture("experiences/onboarding/v1/input")

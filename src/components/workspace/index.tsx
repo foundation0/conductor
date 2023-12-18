@@ -21,14 +21,12 @@ import {
 } from "react-icons/md"
 import Joyride, { Step } from "react-joyride"
 import {
-  Input,
   Tabs,
   Welcome,
   WorkspaceOrganizer,
   WorkspaceSelector,
   WorkspaceSidebar,
   Data,
-  InputActions,
   Notepad,
 } from "@/components/experiences/onboarding/v1"
 import AppstateActions from "@/data/actions/app"
@@ -38,6 +36,7 @@ import eventEmitter, { emit } from "@/libraries/events"
 import useMemory from "@/components/hooks/useMemory"
 import { mAppT } from "@/data/schemas/memory"
 import { useEvent } from "../hooks/useEvent"
+
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
@@ -155,7 +154,7 @@ export default function Workspace() {
       content: <Tabs />,
       placement: "bottom",
     },
-    {
+    /* {
       target: "#Input",
       content: <Input />,
       placement: "top",
@@ -164,7 +163,7 @@ export default function Workspace() {
       target: ".InputActions",
       content: <InputActions />,
       placement: "top",
-    },
+    }, */
     {
       target: ".NotepadButton",
       content: <Notepad />,
@@ -199,6 +198,7 @@ export default function Workspace() {
       setActiveSidebarTab(sidebar_tab)
     },
   })
+  
 
   return (
     <div className="flex flex-1">

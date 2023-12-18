@@ -14,6 +14,12 @@ import { error } from "@/libraries/logging"
 import { useEvent } from "@/components/hooks/useEvent"
 import { RiRobot2Fill } from "react-icons/ri"
 import { MdAddCircle } from "react-icons/md"
+import { initLoaders } from "@/data/loaders"
+import Joyride, { Step } from "react-joyride"
+import {
+  Input as InputIntro,
+  InputActions,
+} from "@/components/experiences/input_introduction/v1"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
 
@@ -139,6 +145,37 @@ export default function Input({
     JSON.stringify([mem_session.context.tokens, mem_session.messages.tokens]),
   ])
 
+  const steps: Step[] = [
+    {
+      target: "#input",
+      content: <InputIntro />,
+      disableBeacon: true,
+    },
+    {
+      target: ".InputActions",
+      content: <InputActions />,
+      disableBeacon: true,
+    },
+  ]
+
+  const [run_introduction, setRunIntroduction] = useState<boolean>(false)
+
+  async function introduction() {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    if (
+      !user_state?.experiences?.find(
+        (e: any) => e.id === "input_introduction/v1",
+      )
+    ) {
+      setRunIntroduction(true)
+    }
+  }
+
+/*   useEffect(() => {
+    introduction()
+  }, []) */
+
   function sendMessage() {
     if (gen_in_progress) return
     send({ message })
@@ -150,6 +187,8 @@ export default function Input({
 
   return (
     <div className="flex flex-1 justify-center items-center">
+      <Joyride steps={steps} run={run_introduction} continuous={true} />
+
       <form
         className={
           (
@@ -257,10 +296,17 @@ export default function Input({
                 (_.last(messages)?.[1].type === "human" &&
                   _.last(messages)?.[1].hash !== "1337")
               }
-              className={`flex flex-1 p-4 py-3 px-2 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture ${disabled ||
-                is_new_branch || gen_in_progress ||
-                (_.last(messages)?.[1].type === "human" &&
-                  _.last(messages)?.[1].hash !== "1337") ? "pl-4" : ""}`}
+              className={`flex flex-1 p-4 py-3 px-2 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent ph-no-capture ${
+                (
+                  disabled ||
+                  is_new_branch ||
+                  gen_in_progress ||
+                  (_.last(messages)?.[1].type === "human" &&
+                    _.last(messages)?.[1].hash !== "1337")
+                ) ?
+                  "pl-4"
+                : ""
+              }`}
               placeholder={
                 (
                   disabled ||
@@ -271,6 +317,10 @@ export default function Input({
                   "thinking..."
                 : "Type a message"
               }
+              onClick={() => {
+                // introduction()
+                
+              }}
             />}
           <Switch>
             <Match

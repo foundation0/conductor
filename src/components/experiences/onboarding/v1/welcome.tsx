@@ -5,29 +5,42 @@ export default function Welcome() {
   useEffect(() => {
     ph().capture("experiences/onboarding/v1/welcome")
   }, [])
-  
+
   return (
-    <div className="flex flex-col gap-3 text-left">
-      <p className="flex text-xl font-semibold items-center">
+    <div className="flex flex-col gap-3 text-left text-zinc-300">
+      <p className="flex text-xl font-semibold items-center text-zinc-100">
         Welcome to Conductor{" "}
         <span className="flex text-[10px] h-5 font-bold uppercase bg-zinc-900 border border-yellow-300/50 px-2 py-1 ml-2 rounded justify-center items-center">
           Beta
         </span>
       </p>
-      <p className="">Hi there, a few important words before we let you get into it...</p>
       <p className="">
-        Today, Conductor is <i>"ChatGPT for creators & professionals"</i>. But soon, Conductor will go beyond chat with support for
+        In its current form, Conductor is{" "}
+        <strong>"multi-model ChatGPT&trade; for creators & professionals"</strong>. But soon you can create
         documents, images, audio, video, 3D and agents.
       </p>
       <p className="">
-        Already in its current form, Conductor gives you more powerful tools to organize and manage your AI work than any other tool in the market.
+        Conductor is designed to make it easy to use AIs for creating, researching and producing whatever is on your mind.
+      </p>
+      <p className="text-lg font-bold text-zinc-100">
+        All the AIs at your fingertips
       </p>
       <p>
-        <strong>Next</strong>, you'll get a super quick introduction to the interface so you can hit the ground running.
+        Conductor is not like ChatGPT&trade; where you can only use OpenAI models. With
+        Conductor, you can use any AI available in the market.
+      </p>
+      <p>
+        If you don't like the results you are getting, change the AI and try again.
+      </p>
+      <div className="h-[1px] w-full bg-zinc-700"/>
+      <p>
+        <strong className="text-zinc-100">Next</strong>, to get you started fast, you'll get a super quick introduction to the
+        interface.
       </p>
       <div className="bg-zinc-900 p-3 pt-2 text-xs font-light rounded border border-zinc-700">
-        <strong>Important!</strong> Conductor is a community-driven project. If you want a feature in Conductor, let us know,
-        and the community will build it. Find us at{" "}
+        <strong>Important!</strong> Conductor is a community-driven, open-source project. If
+        you want a feature in Conductor, let us know, and the community will
+        build it. Find us at{" "}
         <a
           href="https://github.com/foundation0/conductor"
           target="_blank"
