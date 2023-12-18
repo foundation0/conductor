@@ -5,7 +5,13 @@ import UserActions from "@/data/actions/user"
 import UsersActions from "@/data/actions/users"
 import _ from "lodash"
 import EasyEdit from "react-easy-edit"
-import { MdCheck, MdClose, MdSettingsSuggest, MdOutlineAddAPhoto, MdOutlineRemoveCircle } from "react-icons/md"
+import {
+  MdCheck,
+  MdClose,
+  MdSettingsSuggest,
+  MdOutlineAddAPhoto,
+  MdOutlineRemoveCircle,
+} from "react-icons/md"
 import { getAddress, hex2buf } from "@/security/common"
 import IntersectIcon from "@/assets/icons/intersect.svg"
 import PersonaIcon from "@/assets/icons/persona.svg"
@@ -19,7 +25,12 @@ import { RiAddCircleFill } from "react-icons/ri"
 import { LuSettings2 } from "react-icons/lu"
 import { BiBlock } from "react-icons/bi"
 import { parseBoolean, parseNumber } from "@/libraries/utilities"
-import { getBalance, getBytesBalance, getFreeBalance, getWalletStatus } from "@/components/user/wallet"
+import {
+  getBalance,
+  getBytesBalance,
+  getFreeBalance,
+  getWalletStatus,
+} from "@/components/user/wallet"
 import { ModuleSettings } from "../market/module_settings"
 import { buyCreditsWithStripe } from "@/libraries/payments"
 import { getModules } from "@/modules"
@@ -33,7 +44,10 @@ import { mBalancesT } from "@/data/schemas/memory"
 export default function Settings(props: any) {
   const navigate = useNavigate()
   let auth = useAuth()
-  const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
+  const { user_state, ai_state } = useLoaderData() as {
+    user_state: UserT
+    ai_state: AIsT
+  }
   /* const [field_edit_id, setFieldEditId] = useState("")
   const [balance, setBalance] = useState<number | string>("loading...")
   const [bytes_balance, setBytesBalance] = useState<number | string>("loading...")
@@ -53,7 +67,7 @@ export default function Settings(props: any) {
   })
   const { field_edit_id, module_list } = mem
 
-  const mem_balance: mBalancesT = useMemory({ id: 'balances' })
+  const mem_balance: mBalancesT = useMemory({ id: "balances" })
   const { credits, bytes, status } = mem_balance
 
   // initialization
@@ -65,7 +79,15 @@ export default function Settings(props: any) {
     const mods = await getModules()
     mem.module_list = mods
   }
-  const handleEdit = async ({ value, name, module_id }: { value: string; name: string; module_id?: string }) => {
+  const handleEdit = async ({
+    value,
+    name,
+    module_id,
+  }: {
+    value: string
+    name: string
+    module_id?: string
+  }) => {
     // field name is concatenated with . to denote nested fields
     let field_name = name.split(".")
     const field_value = parseNumber(parseBoolean(value))
@@ -73,11 +95,17 @@ export default function Settings(props: any) {
       const index = _.findIndex(user_state.modules.installed, { id: module_id })
       field_name = [`modules`, `installed`, index.toString(), ...field_name]
     }
-    const new_user_state = { ...user_state, ..._.set(user_state, field_name, field_value) }
+    const new_user_state = {
+      ...user_state,
+      ..._.set(user_state, field_name, field_value),
+    }
     await UserActions.updateUser(new_user_state)
 
     // pass profile updates to local users list
-    if (field_name[0] === "meta" && ["name", "profile_photos"].indexOf(field_name[1]) !== -1) {
+    if (
+      field_name[0] === "meta" &&
+      ["name", "profile_photos"].indexOf(field_name[1]) !== -1
+    ) {
       const public_user = await UsersActions.getUser({ id: user_state.id })
       const f_name = field_name.slice(1).join(".")
       const updated_public_user = _.set(public_user, f_name, field_value)
@@ -103,7 +131,9 @@ export default function Settings(props: any) {
   useEffect(() => {
     if (field_edit_id) {
       setTimeout(() => {
-        const e: HTMLInputElement | null = document.querySelector(`div[data-id="${field_edit_id}"] input`)
+        const e: HTMLInputElement | null = document.querySelector(
+          `div[data-id="${field_edit_id}"] input`,
+        )
         if (e) {
           e.focus()
           e.select()
@@ -116,7 +146,9 @@ export default function Settings(props: any) {
     if (fileRejections.length > 0) {
       fileRejections.map(({ file, errors }: any) => {
         return error({
-          message: `File ${file.name} was rejected: ${errors.map((e: any) => e.message).join(", ")}`,
+          message: `File ${file.name} was rejected: ${errors
+            .map((e: any) => e.message)
+            .join(", ")}`,
           data: errors,
         })
       })
@@ -148,7 +180,9 @@ export default function Settings(props: any) {
   return (
     <div className="Settings content flex flex-col flex-grow items-center m-10 mb-0">
       <div className="flex flex-col w-full justify-start items-start max-w-2xl">
-        <div className="text-lg text-zinc-400 shadow font-semibold">Global Settings</div>
+        <div className="text-lg text-zinc-400 shadow font-semibold">
+          Global Settings
+        </div>
 
         <div className="text-xs text-zinc-400 shadow">version {version}</div>
         <hr className="w-full border-zinc-700 my-4" />
@@ -162,7 +196,10 @@ export default function Settings(props: any) {
               className="relative flex w-20 h-20 rounded-full bg-zinc-800/80 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-2xl font-bold text-zinc-500 mb-2"
             >
               {_.size(user_state.meta?.profile_photos) > 0 && (
-                <img src={_.first(user_state.meta?.profile_photos) || ""} className="object-cover h-full" />
+                <img
+                  src={_.first(user_state.meta?.profile_photos) || ""}
+                  className="object-cover h-full"
+                />
               )}
               <input {...getInputProps()} />
               <MdOutlineAddAPhoto className="absolute opacity-80 hover:opacity-100 text-zinc-200 w-5 h-5 cursor-pointer" />
@@ -182,15 +219,21 @@ export default function Settings(props: any) {
             <div className="flex flex-col w-full gap-4 ">
               <div className="w-full">
                 <div className="flex flex-row w-full gap-4 h-8">
-                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Id</div>
+                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
+                    Id
+                  </div>
                   <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
-                    {getAddress({ public_key: hex2buf({ input: user_state.public_key }) })}
+                    {getAddress({
+                      public_key: hex2buf({ input: user_state.public_key }),
+                    })}
                   </div>
                 </div>
               </div>
               <div className="w-full">
                 <div className="flex flex-row w-full gap-4 h-8">
-                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Username</div>
+                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
+                    Username
+                  </div>
                   <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
                     @{user_state.meta?.username}
                   </div>
@@ -198,7 +241,9 @@ export default function Settings(props: any) {
               </div>
               <div className="w-full">
                 <div className="flex flex-row w-full gap-4 h-8">
-                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Display name</div>
+                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
+                    Display name
+                  </div>
                   <div
                     className="flex flex-grow text-end text-sm justify-center items-center mr-2"
                     onClick={() => {
@@ -215,10 +260,18 @@ export default function Settings(props: any) {
                       onCancel={() => (mem.field_edit_id = "")}
                       onBlur={() => (mem.field_edit_id = "")}
                       cancelOnBlur={true}
-                      saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                      cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                      saveButtonLabel={
+                        <MdCheck className="w-3 h-3 text-zinc-200" />
+                      }
+                      cancelButtonLabel={
+                        <MdClose className="w-3 h-3  text-zinc-200" />
+                      }
                       onHoverCssClassName={`cursor-pointer`}
-                      value={user_state.meta?.name || user_state.meta?.username || "click to add"}
+                      value={
+                        user_state.meta?.name ||
+                        user_state.meta?.username ||
+                        "click to add"
+                      }
                       editComponent={<EditComponent />}
                     />
                   </div>
@@ -226,7 +279,9 @@ export default function Settings(props: any) {
               </div>
               <div className="w-full">
                 <div className="flex flex-row w-full gap-4 h-8">
-                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Email</div>
+                  <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
+                    Email
+                  </div>
                   <div
                     className="flex flex-grow text-end text-sm justify-center items-center mr-2"
                     onClick={() => {
@@ -243,8 +298,12 @@ export default function Settings(props: any) {
                       onCancel={() => (mem.field_edit_id = "")}
                       onBlur={() => (mem.field_edit_id = "")}
                       cancelOnBlur={true}
-                      saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-                      cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+                      saveButtonLabel={
+                        <MdCheck className="w-3 h-3 text-zinc-200" />
+                      }
+                      cancelButtonLabel={
+                        <MdClose className="w-3 h-3  text-zinc-200" />
+                      }
                       onHoverCssClassName={`cursor-pointer`}
                       value={user_state.meta?.email || "click to add"}
                       editComponent={<EditComponent />}
@@ -263,7 +322,9 @@ export default function Settings(props: any) {
           <div className="flex flex-col w-full gap-4 ">
             <div className="w-full">
               <div className="flex flex-row w-full gap-4 h-8">
-                <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Status</div>
+                <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
+                  Status
+                </div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
                   {status === "no_wallet" ? "waiting for funds" : status}
                 </div>
@@ -277,14 +338,25 @@ export default function Settings(props: any) {
                     className="text-xs ml-3 link text-blue-400 hover:text-blue-100 transition-all cursor-pointer"
                     onClick={async () => {
                       // if (getLS({ key: "guest-mode" })) return (window as any)["ConvertGuest"].showModal()
-                      const { error: err } = (await buyCreditsWithStripe({ user_id: user_state.id })) as any
+                      const { error: err } = (await buyCreditsWithStripe({
+                        user_id: user_state.id,
+                      })) as any
                       if (err) {
                         console.error(err)
-                        error({ message: "Something went wrong, we are investigating..." })
+                        error({
+                          message:
+                            "Something went wrong, we are investigating...",
+                        })
                       }
                     }}
                   >
                     Buy credits
+                  </span>
+                  <span
+                    className="text-xs ml-3 link text-blue-400 hover:text-blue-100 transition-all cursor-pointer"
+                    onClick={() => emit({ type: "pricing_table/show" })}
+                  >
+                    View computing prices
                   </span>
                 </div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
@@ -294,7 +366,9 @@ export default function Settings(props: any) {
             </div>
             <div className="w-full">
               <div className="flex flex-row w-full gap-4 h-8">
-                <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Stored bytes </div>
+                <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
+                  Stored bytes{" "}
+                </div>
                 <div className="flex flex-grow text-end text-sm justify-end text-zinc-500 mr-2">
                   {humanize.filesize(bytes)}
                 </div>
@@ -308,7 +382,7 @@ export default function Settings(props: any) {
         <div className="flex flex-row w-full gap-2">
           <CallHistory />
         </div>
-        
+
         {/* <div className=" text-zinc-400 shadow font-semibold text-lg mt-10 mb-3 w-full border-b border-b-zinc-700">
           AIs
         </div>
