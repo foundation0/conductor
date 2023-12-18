@@ -13,7 +13,7 @@ export default function WorkspaceCreate() {
     <div className="flex flex-col flex-grow justify-center items-center ">
       <div className="flex flex-col max-w-sm">
         <div className="flex flex-row mb-5">
-          <div className="flex flex-shrink-0 items-center mr-4 justify-center w-28 h-28 p-0 px-0 rounded-3xl cursor-pointer border-zinc-700 border-2 border-dashed text-zinc-600 hover:bg-zinc-850 hover:text-zinc-500 hover:border-zinc-500">
+          <div className="flex flex-shrink-0 items-center mr-4 justify-center w-28 h-28 p-0 px-0 rounded-3xl border-zinc-700 border-2 border-dashed text-zinc-600">
             <HiPlus className="w-8 h-8 " />
           </div>
           <div className="flex flex-col justify-center">
