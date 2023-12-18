@@ -279,8 +279,8 @@ export default function DataOrganizer() {
   })
 
   useEvent({
-    name: ["data/update", "data.delete.done"],
-    action: updateDataState
+    name: ["data/update", "data.delete.done", "data.rename.done"],
+    action: updateDataState,
   })
 
   return (
@@ -360,7 +360,11 @@ export default function DataOrganizer() {
                       mem_session?.session?.data?.push(d)
                       emit({
                         type: "sessions.addData",
-                        data: { target: sid, session_id: url_session_id, data: d },
+                        data: {
+                          target: sid,
+                          session_id: url_session_id,
+                          data: d,
+                        },
                       })
                     }}
                     onRemove={() => {
@@ -382,14 +386,14 @@ export default function DataOrganizer() {
                     }}
                     menu={[
                       {
-                        label: "View item",
+                        label: "View",
                         callback: function () {
                           if (!sid) return error({ message: "no session id" })
                           previewData({ id: d.id })
                         },
                       },
                       {
-                        label: "Add item to current session",
+                        label: "Add to current session",
                         callback: function () {
                           if (!sid) return error({ message: "no session id" })
                           emit({
@@ -399,7 +403,17 @@ export default function DataOrganizer() {
                         },
                       },
                       {
-                        label: "Delete item",
+                        label: "Rename",
+                        callback: function () {
+                          if (!sid) return error({ message: "no session id" })
+                          emit({
+                            type: "data/toggle_edit",
+                            data: { target: d.id }
+                          })
+                        },
+                      },
+                      {
+                        label: "Delete",
                         callback: function () {
                           if (
                             confirm("Are you sure you want to delete this?")

@@ -59,6 +59,28 @@ const API: { [key: string]: Function } = {
     await store.destroy()
     emit({ type: "data.delete.done" })
   },
+  rename: async ({ id, name }: { id: string; name: string }) => {
+    const { DataState } = await initLoaders()
+    const store = await DataState({ id })
+    // get existing data
+    const data = await store.get()
+    // update name
+    data.meta.name = name
+    // validate data
+    const validated = DataS.safeParse(data)
+    if (!validated.success) {
+      return error({
+        message: "invalid data",
+        data: {
+          data,
+        },
+      })
+    }
+    // save data
+    await store.set(validated?.data, false, true)
+
+    emit({ type: "data.rename.done" })
+  }
 }
 
 listen({

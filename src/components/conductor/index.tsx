@@ -41,6 +41,7 @@ import {
 } from "@/components/experiences/input_introduction/v1"
 import Joyride, { Step } from "react-joyride"
 import { useEvent } from "../hooks/useEvent"
+import { AddData } from "../modals/add_data"
 
 export default function Conductor() {
   const { app_state, user_state, ai_state } = useLoaderData() as {
@@ -304,15 +305,12 @@ export default function Conductor() {
           }
         </div>
         <ConvertGuest />
-        <div className="models">
+        <div className="modals">
           <BuyCredits />
           <PricingTable />
+          <AddData />
         </div>
       </main>
-      <>
-        <BuyCredits />
-        <PricingTable />
-      </>
     </div>
   )
 }

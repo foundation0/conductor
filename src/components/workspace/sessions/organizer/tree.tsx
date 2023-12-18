@@ -544,7 +544,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                   folder.sessions?.map((session) => (
                     <div
                       key={session.id}
-                      className={`OrganizerSession flex flex-1 flex-row pl-3 h-5 py-0 mb-0.5 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-900 hover:border-t-zinc-700/70 rounded transition-all ${
+                      className={`OrganizerSession flex flex-1 items-center flex-row pl-3 h-5 py-0 mb-0.5 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-900 hover:border-t-zinc-700/70 rounded transition-all ${
                         session.id === session_id ? "" : ""
                       }`}
                       data-id={session.id}
@@ -559,7 +559,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         />
                       </div>
                       <Link
-                        className={`flex flex-1 relative items-center cursor-pointer text-xs font-semibold text-ellipsis overflow-hidden ph-no-capture transition-all ${
+                        className={`flex flex-1 h-5 relative items-center cursor-pointer text-xs font-semibold text-ellipsis overflow-hidden ph-no-capture transition-all ${
                           session.id === session_id ?
                             " text-zinc-100"
                           : "text-zinc-400  hover:text-zinc-100"

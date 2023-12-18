@@ -247,10 +247,10 @@ export default function Notepad() {
     if (!combined) return error({ message: "Failed to add to data" })
     const { text, session_name } = combined
     emit({
-      type: "data.import",
+      type: "AddData/show",
       data: {
         file: {
-          name: session_name ? session_name + ".txt" : "notepad.txt",
+          name: session_name ? session_name : "notepad",
         },
         mime: "text/plain",
         content: text,
@@ -484,7 +484,7 @@ export default function Notepad() {
                                 e.preventDefault()
                                 e.stopPropagation()
                                 emit({
-                                  type: "data.import",
+                                  type: "AddData/show",
                                   data: {
                                     file: {
                                       name:

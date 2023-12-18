@@ -1,6 +1,11 @@
 import { initLoaders } from "@/data/loaders"
 import { z } from "zod"
-import { SessionS, DataRefT, WorkspaceS, WorkspaceT } from "@/data/schemas/workspace"
+import {
+  SessionS,
+  DataRefT,
+  WorkspaceS,
+  WorkspaceT,
+} from "@/data/schemas/workspace"
 import _ from "lodash"
 import { UserS, UserT } from "@/data/schemas/user"
 import { nanoid } from "nanoid"
@@ -22,14 +27,20 @@ const API: { [key: string]: Function } = {
     const updated_state: UserT = { ...s, ...state }
     const parsed = UserS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
-    await UserState.set(parsed.data, false, true )
+    await UserState.set(parsed.data, false, true)
 
     emit({ type: "user.updateUser.done", data: parsed.data })
 
     return parsed.data
   },
 
-  addGroup: async ({ name, workspace_id }: { workspace_id: string; name?: string }) => {
+  addGroup: async ({
+    name,
+    workspace_id,
+  }: {
+    workspace_id: string
+    name?: string
+  }) => {
     const { UserState } = await initLoaders()
     // create new group in user_state
     let us: UserT = _.cloneDeep(await UserState.get())
@@ -49,37 +60,59 @@ const API: { [key: string]: Function } = {
       return workspace
     })
 
-    emit({ type: "user.addGroup.done", data: { workspace_id, group: new_group } })
+    emit({
+      type: "user.addGroup.done",
+      data: { workspace_id, group: new_group },
+    })
 
     return API.updateUser(us)
   },
   async getGroups({ workspace_id }: { workspace_id: string }) {
     const { UserState } = await initLoaders()
     const user_state = await UserState.get()
-    const workspace: WorkspaceT = _.find(user_state.workspaces, { id: workspace_id })
+    const workspace: WorkspaceT = _.find(user_state.workspaces, {
+      id: workspace_id,
+    })
     if (!workspace) return
     return workspace.groups || []
   },
-  deleteGroup: async ({ workspace_id, group_id }: { workspace_id: string; group_id: string }) => {
+  deleteGroup: async ({
+    workspace_id,
+    group_id,
+  }: {
+    workspace_id: string
+    group_id: string
+  }) => {
     if (!workspace_id || !group_id)
-      return error({ message: "Missing workspace_id or group_id", data: { workspace_id, group_id } })
+      return error({
+        message: "Missing workspace_id or group_id",
+        data: { workspace_id, group_id },
+      })
     const { UserState, AppState, SessionState } = await initLoaders()
 
     // delete group's sessions from app_state.open_sessions
     const as: AppStateT = _.cloneDeep(await AppState.get())
-    const new_open_sessions = as.open_sessions.filter((open_session) => open_session.group_id !== group_id)
+    const new_open_sessions = as.open_sessions.filter(
+      (open_session) => open_session.group_id !== group_id,
+    )
     as.open_sessions = new_open_sessions
     await AppStateActions.updateAppState(as)
 
     // delete group's sessions from sessions
     const sessions: SessionsT = await SessionState.get()
-    const group_sessions = _.find(UserState.get().workspaces, { id: workspace_id })?.groups.map((group: any) => {
+    const group_sessions = _.find(UserState.get().workspaces, {
+      id: workspace_id,
+    })?.groups.map((group: any) => {
       if (group.id === group_id) {
         return group.folders.map((folder: any) => folder.sessions)
       }
     })[0] as z.infer<typeof SessionS>[] | []
     if (_.size(group_sessions) > 0) {
-      const new_sessions: SessionsT = { _v: 1, active: {}, _updated: new Date().getTime() }
+      const new_sessions: SessionsT = {
+        _v: 1,
+        active: {},
+        _updated: new Date().getTime(),
+      }
       // filter out sessions that are in the group
       Object.keys(sessions.active).forEach((ses_id) => {
         if (!group_sessions.find((session) => session?.id === ses_id)) {
@@ -91,7 +124,9 @@ const API: { [key: string]: Function } = {
 
     // delete group from user_state
     let us: UserT = _.cloneDeep(await UserState.get())
-    const updated_groups = _.find(us.workspaces, { id: workspace_id })?.groups.filter((group) => group.id !== group_id)
+    const updated_groups = _.find(us.workspaces, {
+      id: workspace_id,
+    })?.groups.filter((group) => group.id !== group_id)
     if (!updated_groups) return
     us.workspaces = _.map(us.workspaces, (workspace) => {
       if (workspace.id === workspace_id && workspace.groups) {
@@ -102,13 +137,23 @@ const API: { [key: string]: Function } = {
     await API.updateUser(us)
 
     // delete group from app_state
-    const new_open_folders = as.open_folders.filter((open_folder) => open_folder.group_id !== group_id)
+    const new_open_folders = as.open_folders.filter(
+      (open_folder) => open_folder.group_id !== group_id,
+    )
     as.open_folders = new_open_folders
     await AppStateActions.updateAppState(as)
 
     emit({ type: "user.deleteGroup.done", data: { workspace_id, group_id } })
   },
-  addFolder: async ({ name, group_id, workspace_id }: { workspace_id: string; group_id: string; name?: string }) => {
+  addFolder: async ({
+    name,
+    group_id,
+    workspace_id,
+  }: {
+    workspace_id: string
+    group_id: string
+    name?: string
+  }) => {
     const { UserState, AppState } = await initLoaders()
     // create new folder in user_state
     let us: UserT = _.cloneDeep(await UserState.get())
@@ -118,7 +163,9 @@ const API: { [key: string]: Function } = {
       name: name || "New folder",
       sessions: [],
     }
-    const updated_group = _.find(us.workspaces, { id: workspace_id })?.groups.map((group) => {
+    const updated_group = _.find(us.workspaces, {
+      id: workspace_id,
+    })?.groups.map((group) => {
       if (group.id === group_id) {
         group.folders = [...group.folders, new_folder]
       }
@@ -137,11 +184,19 @@ const API: { [key: string]: Function } = {
     const as: AppStateT = _.cloneDeep(await AppState.get())
     as.open_folders = [
       ...as.open_folders,
-      { _v: 1, folder_id: new_folder.id, group_id: group_id, workspace_id: workspace_id },
+      {
+        _v: 1,
+        folder_id: new_folder.id,
+        group_id: group_id,
+        workspace_id: workspace_id,
+      },
     ]
     await AppStateActions.updateAppState(as)
 
-    emit({ type: "user.addFolder.done", data: { workspace_id, group_id, folder: new_folder } })
+    emit({
+      type: "user.addFolder.done",
+      data: { workspace_id, group_id, folder: new_folder },
+    })
   },
   deleteFolder: async ({
     workspace_id,
@@ -155,15 +210,21 @@ const API: { [key: string]: Function } = {
     const { UserState, AppState, SessionState } = await initLoaders()
     // delete folder's sessions from app_state.open_sessions
     const as: AppStateT = _.cloneDeep(await AppState.get())
-    const new_open_sessions = as.open_sessions.filter((open_session) => open_session.folder_id !== folder_id)
+    const new_open_sessions = as.open_sessions.filter(
+      (open_session) => open_session.folder_id !== folder_id,
+    )
     as.open_sessions = new_open_sessions
     await AppStateActions.updateAppState(as)
 
     // delete folder from user_state
     let us: UserT = _.cloneDeep(await UserState.get())
-    const updated_group = _.find(us.workspaces, { id: workspace_id })?.groups.map((group) => {
+    const updated_group = _.find(us.workspaces, {
+      id: workspace_id,
+    })?.groups.map((group) => {
       if (group.id === group_id) {
-        group.folders = group.folders.filter((folder) => folder.id !== folder_id)
+        group.folders = group.folders.filter(
+          (folder) => folder.id !== folder_id,
+        )
       }
       return group
     })
@@ -201,11 +262,16 @@ const API: { [key: string]: Function } = {
     await SessionsActions.updateSessions(new_sessions)
 
     // delete folder from app_state
-    const new_open_folders = as.open_folders.filter((open_folder) => open_folder.folder_id !== folder_id)
+    const new_open_folders = as.open_folders.filter(
+      (open_folder) => open_folder.folder_id !== folder_id,
+    )
     as.open_folders = new_open_folders
     await AppStateActions.updateAppState(as)
 
-    emit({ type: "user.deleteFolder.done", data: { workspace_id, folder_id, group_id } })
+    emit({
+      type: "user.deleteFolder.done",
+      data: { workspace_id, folder_id, group_id },
+    })
   },
   addSession: async function ({
     active_workspace,
@@ -241,31 +307,34 @@ const API: { [key: string]: Function } = {
     // add new session to correct folder
     const folder_index = _.findIndex(g.folders, (f) => f.id === folder_id)
     updated_state.workspaces = updated_state.workspaces.map((ws) =>
-      ws.id !== active_workspace.id
-        ? ws
-        : {
-            ...ws,
-            groups: ws.groups.map((gr) =>
-              gr.id !== group_id
-                ? gr
-                : {
-                    ...gr,
-                    folders: gr.folders.map((fd, i) =>
-                      i !== folder_index
-                        ? fd
-                        : {
-                            ...fd,
-                            sessions: [...(fd.sessions || []), new_session],
-                          }
-                    ),
-                  }
-            ),
-          }
+      ws.id !== active_workspace.id ?
+        ws
+      : {
+          ...ws,
+          groups: ws.groups.map((gr) =>
+            gr.id !== group_id ?
+              gr
+            : {
+                ...gr,
+                folders: gr.folders.map((fd, i) =>
+                  i !== folder_index ? fd : (
+                    {
+                      ...fd,
+                      sessions: [...(fd.sessions || []), new_session],
+                    }
+                  ),
+                ),
+              },
+          ),
+        },
     )
 
     await UserState.set(updated_state)
 
-    emit({ type: "user.addSession.done", data: { session: new_session, group_id, folder_id } })
+    emit({
+      type: "user.addSession.done",
+      data: { session: new_session, group_id, folder_id },
+    })
 
     return { session: new_session, group_id, folder_id }
   },
@@ -317,7 +386,10 @@ const API: { [key: string]: Function } = {
         },
       ],
     }
-    await UserState.set({ ...user_state, workspaces: [...user_state.workspaces, new_workspace] })
+    await UserState.set({
+      ...user_state,
+      workspaces: [...user_state.workspaces, new_workspace],
+    })
 
     // add new workspace to app state
     await addWorkspaceToAppState({ workspace: new_workspace })
@@ -335,8 +407,8 @@ const API: { [key: string]: Function } = {
       settings: {
         module: new_workspace.defaults.llm_module as any,
         memory: {
-          rag_mode: 'full'
-        }
+          rag_mode: "full",
+        },
       },
     }
     await SessionState.set(new_sessions)
@@ -363,7 +435,9 @@ const API: { [key: string]: Function } = {
     let us = _.cloneDeep(user_state)
     if (group_id && !folder_id) {
       // rename group in user_state
-      const updated_group = _.find(us.workspaces, { id: app_state.active_workspace_id })?.groups.map((group) => {
+      const updated_group = _.find(us.workspaces, {
+        id: app_state.active_workspace_id,
+      })?.groups.map((group) => {
         if (group.id === group_id) {
           group.name = new_name
         }
@@ -371,7 +445,10 @@ const API: { [key: string]: Function } = {
       })
       if (!updated_group) return
       us.workspaces = _.map(us.workspaces, (workspace) => {
-        if (workspace.id === app_state.active_workspace_id && workspace.groups) {
+        if (
+          workspace.id === app_state.active_workspace_id &&
+          workspace.groups
+        ) {
           workspace.groups = updated_group
         }
         return workspace
@@ -379,7 +456,9 @@ const API: { [key: string]: Function } = {
     }
     if (group_id && folder_id && !session_id) {
       // rename folder in user_state
-      const updated_group = _.find(us.workspaces, { id: app_state.active_workspace_id })?.groups.map((group) => {
+      const updated_group = _.find(us.workspaces, {
+        id: app_state.active_workspace_id,
+      })?.groups.map((group) => {
         if (group.id === group_id) {
           group.folders.map((folder) => {
             if (folder.id === folder_id) {
@@ -392,7 +471,10 @@ const API: { [key: string]: Function } = {
       })
       if (!updated_group) return
       us.workspaces = _.map(us.workspaces, (workspace) => {
-        if (workspace.id === app_state.active_workspace_id && workspace.groups) {
+        if (
+          workspace.id === app_state.active_workspace_id &&
+          workspace.groups
+        ) {
           workspace.groups = updated_group
         }
         return workspace
@@ -401,7 +483,9 @@ const API: { [key: string]: Function } = {
 
     if (group_id && folder_id && session_id) {
       // rename session in user_state
-      const updated_group = _.find(us.workspaces, { id: app_state.active_workspace_id })?.groups.map((group) => {
+      const updated_group = _.find(us.workspaces, {
+        id: app_state.active_workspace_id,
+      })?.groups.map((group) => {
         if (group.id === group_id) {
           group.folders.map((folder) => {
             if (folder.id === folder_id) {
@@ -419,7 +503,10 @@ const API: { [key: string]: Function } = {
       })
       if (!updated_group) return
       us.workspaces = _.map(us.workspaces, (workspace) => {
-        if (workspace.id === app_state.active_workspace_id && workspace.groups) {
+        if (
+          workspace.id === app_state.active_workspace_id &&
+          workspace.groups
+        ) {
           workspace.groups = updated_group
         }
         return workspace
@@ -427,17 +514,35 @@ const API: { [key: string]: Function } = {
     }
     await UserState.set(us)
 
-    emit({ type: "user.renameItem.done", data: { group_id, folder_id, session_id, new_name } })
+    emit({
+      type: "user.renameItem.done",
+      data: { group_id, folder_id, session_id, new_name },
+    })
   },
-  async addDataToWorkspace({ workspace_id, data }: { workspace_id: string; data: DataRefT }) {
+  async addDataToWorkspace({
+    workspace_id,
+    data,
+  }: {
+    workspace_id: string
+    data: DataRefT
+  }) {
     const { UserState } = await initLoaders()
     const user_state = await UserState.get()
     const updated_state: UserT = { ...user_state }
-    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
+    const workspace_index = _.findIndex(
+      updated_state.workspaces,
+      (ws) => ws.id === workspace_id,
+    )
     // check if data.id exists already
-    const data_exists = _.find(updated_state.workspaces[workspace_index].data, { id: data.id })
+    const data_exists = _.find(updated_state.workspaces[workspace_index].data, {
+      id: data.id,
+    })
     if (data_exists) return
-    _.set(updated_state, `workspaces[${workspace_index}].data`, updated_state.workspaces?.[workspace_index]?.data || [])
+    _.set(
+      updated_state,
+      `workspaces[${workspace_index}].data`,
+      updated_state.workspaces?.[workspace_index]?.data || [],
+    )
     updated_state.workspaces?.[workspace_index]?.data?.push(data)
     // validate
     const parsed = UserS.safeParse(updated_state)
@@ -452,12 +557,72 @@ const API: { [key: string]: Function } = {
       },
     })
   },
-  async deleteDataFromWorkspace({ workspace_id, data_id }: { workspace_id: string; data_id: string }) {
+  async renameDataInWorkspace({
+    workspace_id,
+    data_id,
+    name,
+  }: {
+    workspace_id: string
+    data_id: string
+    name: string
+  }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    let updated_state: UserT = { ...user_state }
+    const workspace_index = _.findIndex(
+      updated_state.workspaces,
+      (ws) => ws.id === workspace_id,
+    )
+    const data_index = _.findIndex(
+      updated_state.workspaces[workspace_index].data,
+      { id: data_id },
+    )
+    if (data_index === -1) return
+    if (
+      !_.get(
+        updated_state,
+        `workspaces[${workspace_index}].data[${data_index}].name`,
+      )
+    )
+      return
+    updated_state = _.set(
+      updated_state,
+      `workspaces[${workspace_index}].data[${data_index}].name`,
+      name,
+    )
+
+    // validate
+    const parsed = UserS.safeParse(updated_state)
+    if (!parsed.success) throw new Error("Invalid state")
+    await UserState.set(parsed.data)
+
+    emit({
+      type: "user.renameDataInWorkspace.done",
+      data: {
+        workspace_id,
+        data_id,
+        name,
+      },
+    })
+  },
+  async deleteDataFromWorkspace({
+    workspace_id,
+    data_id,
+  }: {
+    workspace_id: string
+    data_id: string
+  }) {
     const { UserState } = await initLoaders()
     const user_state = await UserState.get()
     const updated_state: UserT = { ...user_state }
-    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
-    const data_index = _.findIndex(updated_state.workspaces[workspace_index].data, { id: data_id })
+    const workspace_index = _.findIndex(
+      updated_state.workspaces,
+      (ws) => ws.id === workspace_id,
+    )
+    const data_index = _.findIndex(
+      updated_state.workspaces[workspace_index].data,
+      { id: data_id },
+    )
     if (data_index === -1) return
     updated_state.workspaces[workspace_index]?.data?.splice(data_index, 1)
     // validate
@@ -477,21 +642,41 @@ const API: { [key: string]: Function } = {
       },
     })
   },
-  async addDataToGroup({ workspace_id, group_id, data }: { workspace_id: string; group_id: string; data: DataRefT }) {
+  async addDataToGroup({
+    workspace_id,
+    group_id,
+    data,
+  }: {
+    workspace_id: string
+    group_id: string
+    data: DataRefT
+  }) {
     const { UserState } = await initLoaders()
     const user_state = await UserState.get()
     const updated_state: UserT = { ...user_state }
-    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
-    const group_index = _.findIndex(updated_state.workspaces[workspace_index].groups, { id: group_id })
+    const workspace_index = _.findIndex(
+      updated_state.workspaces,
+      (ws) => ws.id === workspace_id,
+    )
+    const group_index = _.findIndex(
+      updated_state.workspaces[workspace_index].groups,
+      { id: group_id },
+    )
     // check if data.id exists already
-    const data_exists = _.find(updated_state.workspaces[workspace_index].groups[group_index]?.data, { id: data.id })
+    const data_exists = _.find(
+      updated_state.workspaces[workspace_index].groups[group_index]?.data,
+      { id: data.id },
+    )
     if (data_exists) return
     _.set(
       updated_state,
       `workspaces[${workspace_index}].groups[${group_index}].data`,
-      updated_state.workspaces?.[workspace_index]?.groups?.[group_index]?.data || []
+      updated_state.workspaces?.[workspace_index]?.groups?.[group_index]
+        ?.data || [],
     )
-    updated_state.workspaces?.[workspace_index]?.groups?.[group_index]?.data?.push(data)
+    updated_state.workspaces?.[workspace_index]?.groups?.[
+      group_index
+    ]?.data?.push(data)
     // validate
     const parsed = UserS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
@@ -518,11 +703,23 @@ const API: { [key: string]: Function } = {
     const { UserState } = await initLoaders()
     const user_state = await UserState.get()
     const updated_state: UserT = { ...user_state }
-    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
-    const group_index = _.findIndex(updated_state.workspaces[workspace_index].groups, { id: group_id })
-    const data_index = _.findIndex(updated_state.workspaces[workspace_index].groups[group_index]?.data, data_id)
+    const workspace_index = _.findIndex(
+      updated_state.workspaces,
+      (ws) => ws.id === workspace_id,
+    )
+    const group_index = _.findIndex(
+      updated_state.workspaces[workspace_index].groups,
+      { id: group_id },
+    )
+    const data_index = _.findIndex(
+      updated_state.workspaces[workspace_index].groups[group_index]?.data,
+      data_id,
+    )
     if (data_index === -1) return
-    updated_state.workspaces[workspace_index].groups[group_index]?.data?.splice(data_index, 1)
+    updated_state.workspaces[workspace_index].groups[group_index]?.data?.splice(
+      data_index,
+      1,
+    )
     // validate
     const parsed = UserS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
@@ -551,23 +748,37 @@ const API: { [key: string]: Function } = {
     const { UserState } = await initLoaders()
     const user_state = await UserState.get()
     const updated_state: UserT = { ...user_state }
-    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
-    const group_index = _.findIndex(updated_state.workspaces[workspace_index].groups, { id: group_id })
-    const folder_index = _.findIndex(updated_state.workspaces[workspace_index].groups[group_index]?.folders, {
-      id: folder_id,
-    })
+    const workspace_index = _.findIndex(
+      updated_state.workspaces,
+      (ws) => ws.id === workspace_id,
+    )
+    const group_index = _.findIndex(
+      updated_state.workspaces[workspace_index].groups,
+      { id: group_id },
+    )
+    const folder_index = _.findIndex(
+      updated_state.workspaces[workspace_index].groups[group_index]?.folders,
+      {
+        id: folder_id,
+      },
+    )
     // check if data.id exists already
     const data_exists = _.find(
-      updated_state.workspaces[workspace_index].groups[group_index]?.folders[folder_index]?.data,
-      { id: data.id }
+      updated_state.workspaces[workspace_index].groups[group_index]?.folders[
+        folder_index
+      ]?.data,
+      { id: data.id },
     )
     if (data_exists) return
     _.set(
       updated_state,
       `workspaces[${workspace_index}].groups[${group_index}].folders[${folder_index}].data`,
-      updated_state.workspaces?.[workspace_index]?.groups?.[group_index]?.folders?.[folder_index]?.data || []
+      updated_state.workspaces?.[workspace_index]?.groups?.[group_index]
+        ?.folders?.[folder_index]?.data || [],
     )
-    updated_state.workspaces?.[workspace_index]?.groups?.[group_index]?.folders?.[folder_index]?.data?.push(data)
+    updated_state.workspaces?.[workspace_index]?.groups?.[
+      group_index
+    ]?.folders?.[folder_index]?.data?.push(data)
     // validate
     const parsed = UserS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
@@ -597,17 +808,30 @@ const API: { [key: string]: Function } = {
     const { UserState } = await initLoaders()
     const user_state = await UserState.get()
     const updated_state: UserT = { ...user_state }
-    const workspace_index = _.findIndex(updated_state.workspaces, (ws) => ws.id === workspace_id)
-    const group_index = _.findIndex(updated_state.workspaces[workspace_index].groups, { id: group_id })
-    const folder_index = _.findIndex(updated_state.workspaces[workspace_index].groups[group_index]?.folders, {
-      id: folder_id,
-    })
+    const workspace_index = _.findIndex(
+      updated_state.workspaces,
+      (ws) => ws.id === workspace_id,
+    )
+    const group_index = _.findIndex(
+      updated_state.workspaces[workspace_index].groups,
+      { id: group_id },
+    )
+    const folder_index = _.findIndex(
+      updated_state.workspaces[workspace_index].groups[group_index]?.folders,
+      {
+        id: folder_id,
+      },
+    )
     const data_index = _.findIndex(
-      updated_state.workspaces[workspace_index].groups[group_index]?.folders[folder_index]?.data,
-      data_id
+      updated_state.workspaces[workspace_index].groups[group_index]?.folders[
+        folder_index
+      ]?.data,
+      data_id,
     )
     if (data_index === -1) return
-    updated_state.workspaces[workspace_index].groups[group_index]?.folders[folder_index]?.data?.splice(data_index, 1)
+    updated_state.workspaces[workspace_index].groups[group_index]?.folders[
+      folder_index
+    ]?.data?.splice(data_index, 1)
     // validate
     const parsed = UserS.safeParse(updated_state)
     if (!parsed.success) throw new Error("Invalid state")
@@ -626,9 +850,15 @@ const API: { [key: string]: Function } = {
   async getSessions({ workspace_id }: { workspace_id: string }) {
     const { UserState } = await initLoaders()
     const user_state = await UserState.get()
-    const workspace: WorkspaceT = _.find(user_state.workspaces, { id: workspace_id })
+    const workspace: WorkspaceT = _.find(user_state.workspaces, {
+      id: workspace_id,
+    })
     if (!workspace) return
-    const sessions = _.flatten(workspace.groups.map((group) => group.folders.map((folder) => folder.sessions)))
+    const sessions = _.flatten(
+      workspace.groups.map((group) =>
+        group.folders.map((folder) => folder.sessions),
+      ),
+    )
     return { sessions: _.flatten(sessions) }
   },
 }
@@ -642,7 +872,8 @@ listen({
       const response = await API[method](data)
       if (typeof callback === "function") callback(response)
     } else {
-      if (typeof callback === "function") callback({ error: "method not found", data: { ...data, e } })
+      if (typeof callback === "function")
+        callback({ error: "method not found", data: { ...data, e } })
     }
   },
 })

@@ -52,6 +52,7 @@ export const DataS = z.object({
     filename: z.string().optional(),
     created_at: z.string().catch(() => new Date().toISOString()),
     updated_at: z.string().optional(),
+    tags: z.array(z.string()).optional(),
   }),
   data: z.discriminatedUnion("mime", [TextS, BinaryS]),
 })
