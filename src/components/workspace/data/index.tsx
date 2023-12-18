@@ -26,7 +26,7 @@ import { getMemoryState } from "@/libraries/memory"
 export default function DataOrganizer() {
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
-
+  const url_session_id = useParams().session_id as string
   const mem_data = useMemory<{
     sid: string
     data_state: DataRefT[]
@@ -360,7 +360,7 @@ export default function DataOrganizer() {
                       mem_session?.session?.data?.push(d)
                       emit({
                         type: "sessions.addData",
-                        data: { target: sid, session_id: sid, data: d },
+                        data: { target: sid, session_id: url_session_id, data: d },
                       })
                     }}
                     onRemove={() => {
