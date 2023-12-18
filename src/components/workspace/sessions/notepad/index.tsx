@@ -272,7 +272,7 @@ export default function Notepad() {
   }
 
   return (
-    <div className="Notepad flex flex-col px-3 pt-2 gap-6 w-full bg-zinc-800  overflow-auto overflow-x-hidden">
+    <div className="Notepad flex flex-col px-3 pt-2 gap-6 w-full bg-zinc-900 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30 overflow-auto overflow-x-hidden">
       <div className="flex flex-row text-zinc-300 text-sm font-semibold pb-1">
         <div className="flex-grow">Notepad</div>
         <div className="flex items-center">
@@ -336,18 +336,18 @@ export default function Notepad() {
             ?.map((c) => {
               return (
                 <div
-                  className={`flex flex-col w-auto rounded-xl px-4 py-3 text-xs relative cursor-text bg-zinc-900 ph-no-capture ${
+                  className={`flex flex-col w-auto rounded-xl px-4 py-3 text-xs relative cursor-text bg-zinc-800/50 border-2 border-zinc-900/80 text-sm rounded-lg ph-no-capture ${
                     field_edit_id === c.id + "all/edit" ?
-                      "border-2 border-dashed border-zinc-700"
+                      "border-dashed"
                     : ""
                   }`}
                   key={c.id}
                   id={c.id}
                 >
                   <div
-                    className={`flex gap-2  bg-zinc-900 absolute right-2 -top-6 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded-lg mt-2 ${
+                    className={`flex gap-2  bg-zinc-800 absolute right-2 -top-6 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded-lg mt-2 transition-all ${
                       field_edit_id === c.id + "all/edit" ?
-                        "bg-zinc-900 border-t-2 border-dashed border-t-zinc-700"
+                        "bg-zinc-900"
                       : "bg-zinc-900"
                     }`}
                   >
@@ -512,7 +512,7 @@ export default function Notepad() {
                     <textarea
                       id={`${c.id}-edit-field`}
                       defaultValue={edited_clip}
-                      className="text-xs bg-transparent border-0 m-0 p-0"
+                      className="text-[10px] bg-transparent border-0 m-0 p-0 font-mono"
                       style={{ opacity: 1 }}
                       onChange={(e) => {
                         // setDirtyClip(true)
