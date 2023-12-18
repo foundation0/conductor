@@ -1,7 +1,7 @@
 {
   "name": "conductor",
   "private": true,
-  "version": "0.17.16",
+  "version": "0.17.17",
   "type": "module",
   "license": "SSPL-1.0",
   "scripts": {
