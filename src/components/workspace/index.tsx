@@ -36,6 +36,7 @@ import eventEmitter, { emit } from "@/libraries/events"
 import useMemory from "@/components/hooks/useMemory"
 import { mAppT } from "@/data/schemas/memory"
 import { useEvent } from "../hooks/useEvent"
+import { Input, InputActions } from "../experiences/input_introduction/v1"
 
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
@@ -154,7 +155,7 @@ export default function Workspace() {
       content: <Tabs />,
       placement: "bottom",
     },
-    /* {
+    {
       target: "#Input",
       content: <Input />,
       placement: "top",
@@ -163,7 +164,7 @@ export default function Workspace() {
       target: ".InputActions",
       content: <InputActions />,
       placement: "top",
-    }, */
+    },
     {
       target: ".NotepadButton",
       content: <Notepad />,
