@@ -697,15 +697,15 @@ export default function Chat({
   // if (session_id !== (useParams().session_id as string)) return null
   if (!session || !module) return null
   return (
-    <Switch
-      fallback={
+    <Switch>
+      <Match when={stores_mem[sid]?.status === "error"}>
         <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 font-semibold">
-          Loading session...
+          Error loading session :/
         </div>
-      }
-    >
+      </Match>
       <Match
         when={
+          stores_mem[sid]?.status === "initializing" ||
           stores_mem[sid]?.status === "ready" ||
           stores_mem[sid]?.status === "syncing"
         }
