@@ -64,6 +64,7 @@ export default function Conductor() {
     state: {
       workspace_id,
       session_id,
+      state: app_state
     },
   })
 

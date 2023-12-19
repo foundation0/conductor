@@ -40,8 +40,8 @@ type GroupT = z.infer<typeof GroupS>
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
 export default function GroupsTree({ groups }: { groups: GroupT[] }) {
-  const { app_state, user_state } = useLoaderData() as LoaderT
-
+  const { user_state } = useLoaderData() as LoaderT
+  
   const mem: { groups: GroupT[] } = useMemory({
     id: "session-organizer",
     state: { groups },
@@ -51,10 +51,8 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   const fetcher = useFetcher()
 
   const mem_app: mAppT = useMemory({ id: "app" })
-  const { workspace_id, session_id } = mem_app
+  const { workspace_id, session_id, state: app_state } = mem_app
 
-  // const workspace_id = useParams().workspace_id
-  // const session_id = useParams().session_id
   const navigate = useNavigate()
 
   const updateGroups = async () => {
@@ -92,8 +90,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
         ],
       })
     }
-
-    navigate(`/c/${workspace_id}/${session_id}`)
+    // navigate(`/c/${workspace_id}/${session_id}`)
   }
 
   const updateGroup = async ({
@@ -196,6 +193,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       "sessions.updateSessions.done",
       "app.changeActiveSession.done",
       "app.removeOpenSession.done",
+      "app.updateAppState.done",
       "user.addGroup.done",
       "user.addFolder.done",
       "user.deleteGroup.done",
@@ -310,16 +308,6 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         <DropdownMenu.Item
                           className="text-xs pl-4 pr-6 py-2 outline-none cursor-pointer hover:text-zinc-200"
                           onClick={() => {
-                            /* fetcher.submit(
-                              {
-                                workspace_id: workspace_id || "",
-                                group_id: group.id,
-                              },
-                              {
-                                method: "DELETE",
-                                action: "/c/workspace/group",
-                              }
-                            ) */
                             emit({
                               type: "user.deleteGroup",
                               data: {
@@ -364,16 +352,6 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                               name: "New group",
                             },
                           })
-                          /* fetcher.submit(
-                            {
-                              workspace_id: workspace_id || "",
-                              name: "New group",
-                            },
-                            {
-                              method: "PUT",
-                              action: `/c/workspace/group`,
-                            }
-                          ) */
                         }}
                       >
                         Add new group...

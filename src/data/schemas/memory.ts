@@ -2,8 +2,9 @@ import { z } from "zod"
 import { LLMVariantS, ModuleT } from "./modules"
 import { SessionsT, TextMessageT, MessageRowT, ChatSessionT } from "./sessions"
 import { DataRefT } from "./workspace"
+import { AppStateT } from "../loaders/app"
 
-export type mAppT = { workspace_id: string; session_id: string }
+export type mAppT = { workspace_id: string; session_id: string, state: AppStateT }
 export type mBalancesT = {
   credits: number
   bytes: number

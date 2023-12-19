@@ -10,13 +10,17 @@ import UserActions from "@/data/actions/user"
 import { LogItemS } from "@/data/schemas/app"
 import { error } from "@/libraries/logging"
 import { emit, listen } from "@/libraries/events"
+import { getMemoryState } from "@/libraries/memory"
+import { mAppT } from "../schemas/memory"
 
 async function getActiveWorkspace() {
   const { AppState, UserState } = await initLoaders()
   const app_state: AppStateT = AppState.get()
   const user_state: UserT = UserState.get()
-  return app_state.active_workspace_id
-    ? user_state.workspaces.find((workspace) => workspace.id === app_state.active_workspace_id)
+  return app_state.active_workspace_id ?
+      user_state.workspaces.find(
+        (workspace) => workspace.id === app_state.active_workspace_id,
+      )
     : undefined
 }
 
@@ -25,11 +29,22 @@ const API: { [key: string]: Function } = {
     const { AppState } = await initLoaders()
     const state: AppStateT = AppState.get()
     const updated_state = { ...state, ...new_state }
-    if (!AppStateS.safeParse(updated_state).success) throw new Error("Invalid state")
-    await AppState.set(updated_state)
+    if (!AppStateS.safeParse(updated_state).success)
+      throw new Error("Invalid state")
+    await AppState.set(updated_state, false, true)
+    const mem_app = getMemoryState<mAppT>({ id: "app" })
+    if(mem_app) mem_app.state = updated_state
+    emit({
+      type: "app.updateAppState.done",
+      data: updated_state,
+    })
     return true
   },
-  addWorkspaceToAppState: async function ({ workspace }: { workspace: z.infer<typeof WorkspaceS> }) {
+  addWorkspaceToAppState: async function ({
+    workspace,
+  }: {
+    workspace: z.infer<typeof WorkspaceS>
+  }) {
     const { AppState } = await initLoaders()
 
     // get first group, folder, and session
@@ -78,12 +93,13 @@ const API: { [key: string]: Function } = {
     const app_state: AppStateT = AppState.get()
     const active_workspace = await getActiveWorkspace()
     const open_sessions_for_workspace = app_state.open_sessions.filter(
-      (open_session) => open_session.workspace_id === active_workspace?.id
+      (open_session) => open_session.workspace_id === active_workspace?.id,
     )
 
     // remove session from app state
     const new_open_sessions = app_state.open_sessions.filter(
-      (open_session: z.infer<typeof OpenSessionS>) => open_session.session_id !== session_id
+      (open_session: z.infer<typeof OpenSessionS>) =>
+        open_session.session_id !== session_id,
     )
 
     // select the previous tab
@@ -105,7 +121,8 @@ const API: { [key: string]: Function } = {
       console.warn("active workspace not found")
       return
     }
-    app_state.active_sessions[active_workspace.id] = open_sessions_for_workspace[new_active_tab]
+    app_state.active_sessions[active_workspace.id] =
+      open_sessions_for_workspace[new_active_tab]
 
     await AppState.set(app_state)
 
@@ -132,15 +149,20 @@ const API: { [key: string]: Function } = {
 
     // get group_id and folder_id for the session_id
 
-    const group: z.infer<typeof GroupS> | undefined = active_workspace.groups.find((group) =>
-      group.folders?.find((folder) => folder.sessions?.find((session) => session.id === session_id))
-    )
+    const group: z.infer<typeof GroupS> | undefined =
+      active_workspace.groups.find(
+        (group) =>
+          group.folders?.find(
+            (folder) =>
+              folder.sessions?.find((session) => session.id === session_id),
+          ),
+      )
     if (!group) {
       console.warn("group not found")
       return
     }
-    const folder: z.infer<typeof FolderS> | undefined = group.folders.find((folder) =>
-      folder.sessions?.find((session) => session.id === session_id)
+    const folder: z.infer<typeof FolderS> | undefined = group.folders.find(
+      (folder) => folder.sessions?.find((session) => session.id === session_id),
     )
     if (!folder) {
       console.warn("folder not found")
@@ -161,7 +183,11 @@ const API: { [key: string]: Function } = {
 
     // if active_session is not in open_sessions, add it
     let new_open_sessions = app_state.open_sessions
-    if (!app_state.open_sessions.find((open_session) => open_session.session_id === session_id)) {
+    if (
+      !app_state.open_sessions.find(
+        (open_session) => open_session.session_id === session_id,
+      )
+    ) {
       new_open_sessions.push(active_session)
     }
 
@@ -201,7 +227,11 @@ const API: { [key: string]: Function } = {
     })
     return true
   },
-  addLogItem: async function ({ message, type, data }: Partial<z.infer<typeof LogItemS>>) {
+  addLogItem: async function ({
+    message,
+    type,
+    data,
+  }: Partial<z.infer<typeof LogItemS>>) {
     const li = LogItemS.safeParse({
       _v: 1,
       message,
@@ -222,7 +252,7 @@ const API: { [key: string]: Function } = {
     const { AppState } = await initLoaders()
     const app_state: AppStateT = AppState.get()
     return app_state.active_workspace_id
-  }
+  },
 }
 
 listen({
