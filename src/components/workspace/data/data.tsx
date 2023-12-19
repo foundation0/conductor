@@ -75,7 +75,7 @@ export default function Data({
     name: 'data/toggle_edit',
     target: id,
     action: () => {
-      mem_data.field_edit = !mem_data.field_edit
+      mem_data.field_edit = true //!mem_data.field_edit
     }
   })
   return (
@@ -125,7 +125,7 @@ export default function Data({
           onBlur={() => mem_data.field_edit = false}
           cancelOnBlur={true}
           saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
-          cancelButtonLabel={<MdClose className="w-3 h-3  text-zinc-200" />}
+          cancelButtonLabel={<MdClose className="w-3 h-3 text-zinc-200" />}
           onHoverCssClass={``}
           value={name}
           allowEdit={false}
