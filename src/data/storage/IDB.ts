@@ -439,6 +439,20 @@ export const store = async <TData>({
   // If the store exists, validate it against the schema and save it to the local storage if it doesn't exist
   if (store) {
     await setStore({ store })
+
+    if(['user', 'appstate', 'ais'].includes(name)) {
+      setInterval(
+        () => {
+          console.log(`syncing ${name}`)
+          API.sync()
+        },
+        _.get(
+          config,
+          "defaults.user.data.cloud_storage.data_backup.auto_sync_interval" ||
+            1000 * 60 * 5,
+        ),
+      )
+    }
     // }
 
     /* if (!cf_store && key_pair && remote_key && name !== "users" && !skip_sync) {
