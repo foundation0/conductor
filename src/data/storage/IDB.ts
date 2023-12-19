@@ -392,7 +392,11 @@ export const store = async <TData>({
           data: { target: name, session: cf_store },
         })
         mem[name] = { status: "ready", updated_at: new Date().getTime() }
-      } else mem[name] = { status: "ready", updated_at: new Date().getTime() }
+        return true
+      } else {
+        mem[name] = { status: "ready", updated_at: new Date().getTime() }
+        return false
+      }
     },
   }
 
@@ -440,11 +444,11 @@ export const store = async <TData>({
   if (store) {
     await setStore({ store })
 
-    if(['user', 'appstate', 'ais'].includes(name)) {
+    if (["user", "appstate", "ais"].includes(name)) {
       setInterval(
-        () => {
-          console.log(`syncing ${name}`)
-          API.sync()
+        async () => {
+          const synced = await API.sync()
+          // console.log(`synced ${name}, ${synced ? "new data" : "no new data"}`)
         },
         _.get(
           config,

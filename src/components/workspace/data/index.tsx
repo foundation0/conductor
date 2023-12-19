@@ -283,6 +283,12 @@ export default function DataOrganizer() {
     action: updateDataState,
   })
 
+  useEvent({
+    name: "store/update",
+    target: "user",
+    action: updateDataState,
+  })
+
   return (
     <div className={`DataOrganizer h-full w-full flex flex-col gap-3`}>
       <div

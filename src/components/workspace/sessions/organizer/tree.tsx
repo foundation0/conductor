@@ -209,6 +209,22 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   })
 
   useEvent({
+    name: "store/update",
+    target: "appstate",
+    action: () => {
+      setTimeout(updateGroups, 100)
+    },
+  })
+  
+  useEvent({
+    name: "store/update",
+    target: "user",
+    action: () => {
+      setTimeout(updateGroups, 100)
+    },
+  })
+
+  useEvent({
     name: "user.addGroup.done",
     action: (data: any) => {
       const { group } = data

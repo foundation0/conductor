@@ -63,7 +63,7 @@ export default function Tabs() {
           ;(child as HTMLElement).style.width = `${_relativeWidth}px`
         },
       )
-      if(_relativeWidth !== relative_width) {
+      if (_relativeWidth !== relative_width) {
         setRelativeWidth(_relativeWidth)
         setTimeout(resizeHandler, 1)
       }
@@ -339,6 +339,18 @@ export default function Tabs() {
     action: generateVisibleTabs,
   })
 
+  useEvent({
+    name: "store/update",
+    target: "appstate",
+    action: generateVisibleTabs,
+  })
+  
+  useEvent({
+    name: "store/update",
+    target: "user",
+    action: generateVisibleTabs,
+  })
+
   return (
     <>
       <div
@@ -357,7 +369,10 @@ export default function Tabs() {
       </div>
       <div id="TabsActions" className="flex flex-row justify-end">
         <div className=" flex flex-row flex-1 gap-3 pr-3 justify-end items-center ">
-          <div className="NotepadButton tooltip tooltip-left" data-tip="Show/hide notepad">
+          <div
+            className="NotepadButton tooltip tooltip-left"
+            data-tip="Show/hide notepad"
+          >
             <BiNotepad
               className={` hover:text-zinc-200 cursor-pointer transition-all ${
                 item_added_to_notepad ?
