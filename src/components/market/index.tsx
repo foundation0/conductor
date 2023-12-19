@@ -217,7 +217,7 @@ export default function Market() {
   }
 
   return (
-    <div className="Settings content flex flex-col flex-grow items-center m-10">
+    <div className="Settings content overflow-x-hidden px-4 flex flex-col flex-grow items-center m-10">
       <div className="flex flex-col w-full justify-start items-start">
         <div className="text-2xl text-zinc-400 shadow font-semibold">
           Modules
