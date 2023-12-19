@@ -695,11 +695,11 @@ export default function Chat({
   if (!session || !module) return null
   return (
     <Switch>
-      <Match when={stores_mem[sid]?.status === "error"}>
+      {/* <Match when={stores_mem[sid]?.status === "error"}>
         <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 font-semibold">
           Error loading session :/
         </div>
-      </Match>
+      </Match> */}
       <Match
         when={
           stores_mem[sid]?.status === "initializing" ||
