@@ -183,6 +183,22 @@ export default function Conductor() {
         return ai
       })
     })
+
+    // TEMPORARY HACK TO MINIMIZE THE CHANGE OF SYNC FAILING
+    let timeout: any = null
+    function resetTimeout() {
+      clearTimeout(timeout)
+      timeout = setTimeout(
+        () => {
+          window?.location?.reload()
+          console.log("ref")
+        },
+        15 * 60 * 1000,
+      ) // 15 minutes
+    }
+    document.addEventListener("click", resetTimeout)
+    document.addEventListener("mousemove", resetTimeout)
+    document.addEventListener("keypress", resetTimeout)
   }, [])
 
   useEffect(() => {
