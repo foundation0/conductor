@@ -16,7 +16,8 @@ import useMemory from "../hooks/useMemory"
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { user_state } = useLoaderData() as { user_state: UserT }
+  // const { user_state } = useLoaderData() as { user_state: UserT }
+  const user_state = useMemory<UserT>({ id: "user" })
   const [field_edit_id, setFieldEditId] = useState("")
   // const workspace_id = useParams().workspace_id as string
   const mem_app: mAppT = useMemory({ id: "app" })

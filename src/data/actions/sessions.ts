@@ -19,6 +19,7 @@ import config from "@/config"
 import { emit, listen } from "@/libraries/events"
 import { DataRefT, SessionS, SessionT } from "../schemas/workspace"
 import { mergeState } from "../storage/IDB"
+import { getMemoryState } from "@/libraries/memory"
 
 const API: { [key: string]: Function } = {
   updateSessions: async function (state: Partial<SessionsT>) {
@@ -500,6 +501,17 @@ listen({
       if (typeof callback === "function") callback(response)
     } else {
       callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
+
+listen({
+  type: "store/update",
+  action: async (data: any) => {
+    const name = "sessions"
+    if (data?.target === name) {
+      const mem = getMemoryState<SessionsT>({ id: name })
+      if (mem && mem) _.assign(mem, data?.state)
     }
   },
 })

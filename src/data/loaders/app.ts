@@ -6,13 +6,14 @@ import { nanoid } from "nanoid"
 import { getActiveUser } from "@/libraries/active_user"
 import _ from "lodash"
 import { error } from "@/libraries/logging"
+import { createMemoryState } from "@/libraries/memory"
 
-let cache: AppStateT | null = null
+let cache: any = null
 
 export type AppStateT = z.infer<typeof AppStateS>
 export const state = async () => {
   if (!cache) {
-    return (cache = (await store<AppStateT>({
+    cache = await store<AppStateT>({
       name: "appstate",
       initial: async (): Promise<AppStateT | null> => {
         const active_user = getActiveUser()
@@ -21,8 +22,12 @@ export const state = async () => {
 
         const initial_workspace_id = active_user.workspaces[0].id
         const initial_group_id = active_user.workspaces[0].groups[0].id
-        const initial_folder_id = active_user.workspaces[0].groups[0].folders[0].id
-        const initial_session_id = _.get(active_user, "workspaces[0].groups[0].folders[0].sessions[0]")?.id
+        const initial_folder_id =
+          active_user.workspaces[0].groups[0].folders[0].id
+        const initial_session_id = _.get(
+          active_user,
+          "workspaces[0].groups[0].folders[0].sessions[0]",
+        )?.id
         if (!initial_session_id) {
           error({ message: "No initial session id" })
           return null
@@ -60,7 +65,8 @@ export const state = async () => {
         }
       },
       ztype: AppStateS,
-    })) as AppStateT | null)
+    })
+    createMemoryState({ id: "appstate", state: await cache?.get() })
   }
   return cache
 }

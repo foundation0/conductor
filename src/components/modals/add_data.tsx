@@ -29,7 +29,7 @@ export function AddData() {
   }
 
   const mem_add_data = useMemory<{
-    data: AddDataClipT,
+    data: AddDataClipT
     form: {
       name: string
     }
@@ -38,8 +38,8 @@ export function AddData() {
     state: {
       data: initial,
       form: {
-        name: ""
-      }
+        name: "",
+      },
     },
   })
 
@@ -53,7 +53,7 @@ export function AddData() {
         return error({ message: "Invalid notepad clip" })
       }
       mem_add_data.data = data
-      
+
       // open modal
       const dialog = document.getElementById("AddData") as HTMLDialogElement
       dialog?.showModal()
@@ -76,7 +76,7 @@ export function AddData() {
     })
     mem_add_data.data = initial
     mem_add_data.form = {
-      name: ""
+      name: "",
     }
     emit({
       type: "workspace/changeSidebarTab",
@@ -133,7 +133,7 @@ export function AddData() {
                   placeholder="Name"
                   className="flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent input"
                   autoComplete="off"
-                  defaultValue={mem_add_data.form.name}
+                  // defaultValue={mem_add_data.form.name}
                   value={mem_add_data.form.name}
                   onChange={(e) => {
                     mem_add_data.form.name = e.target.value

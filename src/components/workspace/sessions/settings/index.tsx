@@ -1,30 +1,25 @@
-import { useLoaderData } from "react-router-dom"
-import _, { update } from "lodash"
-import { NotepadsT } from "@/data/loaders/notepad"
+import _ from "lodash"
 // @ts-ignore
 import { UserT } from "@/data/loaders/user"
 import { useEvent } from "@/components/hooks/useEvent"
-import { mAISelectorT, mAppT, mChatSessionT } from "@/data/schemas/memory"
+import { mAISelectorT, mChatSessionT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 import Select from "react-select"
 import { AIsT } from "@/data/schemas/ai"
 import { handleAIChange, handleModuleChange } from "@/libraries/session_module"
 import { MdInfoOutline } from "react-icons/md"
 import { emit, query } from "@/libraries/events"
-import { getModuleDetails } from "@/libraries/ai"
 import { useEffect } from "react"
 import { error } from "@/libraries/logging"
-import { SessionT } from "@/data/schemas/workspace"
 import { ChatSessionT } from "@/data/schemas/sessions"
 
 export default function Settings({ session_id }: { session_id: string }) {
-  const { user_state, ai_state } = useLoaderData() as {
-    ai_state: AIsT
-    user_state: UserT
-  }
-
-  const mem_app = useMemory<mAppT>({ id: "app" })
-  // const { session_id } = mem_app
+  // const { user_state, ai_state } = useLoaderData() as {
+  //   ai_state: AIsT
+  //   user_state: UserT
+  // }
+  const user_state = useMemory<UserT>({ id: "user" })
+  const ai_state = useMemory<AIsT>({ id: "ais" })
 
   const mem_session = useMemory<mChatSessionT>({
     id: `session-${session_id}`,

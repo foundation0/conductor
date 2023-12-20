@@ -38,14 +38,15 @@ import { mAppT } from "@/data/schemas/memory"
 import { useEvent } from "../hooks/useEvent"
 import { Input, InputActions } from "../experiences/input_introduction/v1"
 
-
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
 export default function Workspace() {
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
 
-  const { app_state, user_state } = useLoaderData() as LoaderT
+  // const { app_state, user_state } = useLoaderData() as LoaderT
+  const app_state = useMemory<AppStateT>({ id: "appstate" })
+  const user_state = useMemory<UserT>({ id: "user" })
   const [run_onboarding, setRunOnboarding] = useState(false)
   const { setPreference, getPreference } = AppstateActions
   const [organizer_width, setOrganizerWidth] = useState(250)
@@ -199,7 +200,6 @@ export default function Workspace() {
       setActiveSidebarTab(sidebar_tab)
     },
   })
-  
 
   return (
     <div className="flex flex-1">

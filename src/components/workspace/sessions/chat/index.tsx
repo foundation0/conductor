@@ -60,6 +60,7 @@ import {
   tokenizeMessages,
 } from "@/libraries/ai"
 import { mChatSessionT } from "@/data/schemas/memory"
+import { AppStateT } from "@/data/loaders/app"
 
 const padding = 50
 
@@ -70,13 +71,14 @@ export default function Chat({
   workspace_id: string
   session_id: string
 }) {
-  const { sessions_state, user_state, MessagesState, ai_state } =
-    useLoaderData() as {
-      sessions_state: SessionsT
-      user_state: UserT
-      ai_state: AIsT
-      MessagesState: Function
-    }
+  const { MessagesState } = useLoaderData() as {
+    MessagesState: Function
+  }
+
+  const user_state = useMemory<UserT>({ id: "user" })
+  const ai_state = useMemory<AIsT>({ id: "ais" })
+  const app_state = useMemory<AppStateT>({ id: "appstate" })
+
   const stores_mem = useMemory<{
     [key: string]: Partial<{
       status: "ready" | "initializing" | "error" | "syncing"
@@ -340,9 +342,7 @@ export default function Chat({
 
   // Update local session state when sessions[sid] changes
   const updateSession = async () => {
-    const { AppState, SessionState, UserState, AIState } = await initLoaders()
-    const user_state = await UserState.get()
-    const ai_state = await AIState.get()
+    const { SessionState } = await initLoaders()
     const sessions_state = await SessionState.get()
     const session = sessions_state.active[sid]
     if (!session) return
@@ -370,7 +370,6 @@ export default function Chat({
       data: { session_id: sid },
     })
     updateData()
-    const app_state = await AppState.get()
     let session_name = ""
     for (const group of workspace.groups) {
       for (const folder of group.folders) {
@@ -410,7 +409,7 @@ export default function Chat({
           session_id: sid,
         })
 
-        navigate(`/c/${workspace_id}/${sid}`)
+        // navigate(`/c/${workspace_id}/${sid}`)
       }
     }
   }
@@ -487,12 +486,12 @@ export default function Chat({
   }
 
   // refresh chat if session or workspace id changes
-  useEffect(() => {
+  /* useEffect(() => {
     if (session_id !== sid) {
       // emit session change
       emit({ type: "sessions/change", data: { session_id } })
     }
-  }, [JSON.stringify([sid, workspace_id])])
+  }, [JSON.stringify([sid, workspace_id])]) */
 
   // keep track of input height
   useEffect(() => {

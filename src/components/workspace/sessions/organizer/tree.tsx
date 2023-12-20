@@ -40,29 +40,17 @@ type GroupT = z.infer<typeof GroupS>
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
 export default function GroupsTree({ groups }: { groups: GroupT[] }) {
-  const { user_state } = useLoaderData() as LoaderT
-  
-  const mem: { groups: GroupT[] } = useMemory({
-    id: "session-organizer",
-    state: { groups },
-  })
+  // const { user_state } = useLoaderData() as LoaderT
+  const user_state = useMemory<UserT>({ id: "user" })
+  const app_state = useMemory<AppStateT>({ id: "appstate" })
+  if(!user_state || !app_state) return null
 
   const [field_edit_id, setFieldEditId] = useState("")
   const fetcher = useFetcher()
 
   const mem_app: mAppT = useMemory({ id: "app" })
-  const { workspace_id, session_id, state: app_state } = mem_app
-
+  const { workspace_id, session_id } = mem_app
   const navigate = useNavigate()
-
-  const updateGroups = async () => {
-    const groups: GroupT[] = await query({
-      type: "user.getGroups",
-      data: { workspace_id },
-    })
-    if (!groups) return
-    mem.groups = groups
-  }
 
   const toggleFolder = ({
     folder_id,
@@ -105,7 +93,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       group_id,
     })
 
-    navigate(`/c/${workspace_id}/${session_id}`)
+    // navigate(`/c/${workspace_id}/${session_id}`)
   }
   const updateFolder = async ({
     name,
@@ -122,7 +110,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       folder_id,
     })
 
-    navigate(`/c/${workspace_id}/${session_id}`)
+    // navigate(`/c/${workspace_id}/${session_id}`)
   }
   const updateSession = async ({
     name,
@@ -142,7 +130,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       session_id,
     })
 
-    navigate(`/c/${workspace_id}/${session_id}`)
+    // navigate(`/c/${workspace_id}/${session_id}`)
   }
 
   const EditComponent = function (props: any) {
@@ -176,17 +164,13 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
     }
   }, [field_edit_id])
 
-  useEffect(() => {
-    updateGroups()
-  }, [workspace_id])
-
   // keyboard shortcut for renaming a session
   useHotkeys(getOS() === "macos" ? "ctrl+r" : "alt+r", () => {
     if (field_edit_id || !session_id) return
     setFieldEditId(session_id || "")
   })
 
-  useEvent({
+  /* useEvent({
     name: [
       "sessions.addSession.done",
       "sessions.updateSession.done",
@@ -202,7 +186,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       "user.updateUser.done",
     ],
     action: () => {
-      setTimeout(updateGroups, 100)
+      updateGroups()
     },
   })
 
@@ -210,17 +194,17 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
     name: "store/update",
     target: "appstate",
     action: () => {
-      setTimeout(updateGroups, 100)
+      updateGroups()
     },
   })
-  
+
   useEvent({
     name: "store/update",
     target: "user",
     action: () => {
-      setTimeout(updateGroups, 100)
+      updateGroups()
     },
-  })
+  }) */
 
   useEvent({
     name: "user.addGroup.done",
@@ -237,10 +221,11 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
       setFieldEditId(folder.id)
     },
   })
-
+  const workspace = _.find(user_state?.workspaces, { id: workspace_id })
+  if (!workspace) return null
   return (
     <div className="OrganizerTree flex w-full flex-col gap-8">
-      {mem.groups.map((group) => (
+      {workspace.groups.map((group) => (
         <div key={group.id} className="OrganizerGroup flex flex-col gap-2">
           <div className="flex flex-row items-center">
             <div
@@ -642,12 +627,12 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                                       session.id ===
                                       (mem_app && mem_app?.session_id)
                                     ) {
-                                      const { UserState, AppState } =
-                                        await initLoaders()
-                                      const user_state: UserT =
-                                        await UserState.get()
-                                      const app_state: AppStateT =
-                                        await AppState.get()
+                                      // const { UserState, AppState } =
+                                      //   await initLoaders()
+                                      // const user_state: UserT =
+                                      //   await UserState.get()
+                                      // const app_state: AppStateT =
+                                      //   await AppState.get()
                                       const active_workspace =
                                         user_state.workspaces.find(
                                           (ws) => ws.id === workspace_id,

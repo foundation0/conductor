@@ -9,8 +9,7 @@ import { UserT } from "@/data/loaders/user"
 import { AIsT } from "@/data/schemas/ai"
 // import { getBridgeAPI } from "@/libraries/bridge"
 import { DownloadFromHF } from "./download_hf"
-import eventEmitter from "@/libraries/events"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 // import ModelIcon from "@/assets/icons/model.svg"
 import { parseNumber } from "@/libraries/utilities"
 import UsersActions from "@/data/actions/users"
@@ -21,6 +20,7 @@ import { LuSettings2 } from "react-icons/lu"
 import { RiAddCircleFill } from "react-icons/ri"
 import { getAvatar } from "@/libraries/ai"
 import PersonaIcon from "@/assets/icons/persona.svg"
+import useMemory from "../hooks/useMemory"
 
 type ModelDownloadT = {
   req_id: string
@@ -33,10 +33,12 @@ type ModelDownloadT = {
 }
 
 export default function Market() {
-  const { user_state, ai_state } = useLoaderData() as {
+  /* const { user_state } = useLoaderData() as {
     user_state: UserT
-    ai_state: AIsT
-  }
+    //ai_state: AIsT
+  } */
+  const ai_state = useMemory<AIsT>({ id: 'ais' })
+  const user_state = useMemory<UserT>({ id: 'user' })
   const [model_downloads, setModelDownloads] = useState<ModelDownloadT[]>([])
   const [installed_models, setInstalledModels] = useState<any[]>([])
   const navigate = useNavigate()
@@ -74,7 +76,7 @@ export default function Market() {
   }
 
   // onload
-  useEffect(() => {
+/*   useEffect(() => {
     updateInstalledModels()
 
     const events = [
@@ -137,7 +139,7 @@ export default function Market() {
         }
       })
     })
-  }, [])
+  }, []) */
 
   const downloadModel = async ({ url }: { url: string }) => {
     const bridge = getBridgeAPI()
@@ -200,7 +202,7 @@ export default function Market() {
       const updated_public_user = _.set(public_user, f_name, field_value)
       await UsersActions.updateUser(updated_public_user)
     }
-    navigate("/c/modules")
+    // navigate("/c/modules")
   }
 
   const EditComponent = function (props: any) {
@@ -609,7 +611,7 @@ export default function Market() {
                                             (a) => a.id !== ai?.id,
                                           ),
                                         })
-                                        navigate("/c/settings")
+                                        // navigate("/c/modules")
                                       }
                                     }}
                                   >
@@ -679,13 +681,13 @@ export default function Market() {
                                           ],
                                         })
 
-                                      navigate("/c/settings")
+                                      // navigate("/c/modules")
                                     }
                                   }}
                                 >
                                   <RiAddCircleFill className="w-4 h-4 hover:text-zinc-200" />
                                 </button>
-                                <Link
+                               {/*  <Link
                                   to={`/c/ai/edit/${ai.id}`}
                                   className="flex items-center tooltip tooltip-top"
                                   data-tip="Modify AI"
@@ -693,7 +695,7 @@ export default function Market() {
                                   <button>
                                     <LuSettings2 className="w-4 h-4 hover:text-zinc-200" />
                                   </button>
-                                </Link>
+                                </Link> */}
 
                                 <button
                                   className="flex items-center tooltip tooltip-top"
@@ -702,7 +704,7 @@ export default function Market() {
                                     if (
                                       ai?.id &&
                                       confirm(
-                                        "Are you sure you want to delete this AI?",
+                                        "Are you sure you want to hide this AI?",
                                       )
                                     ) {
                                       if (ai?.id === "c1") {
@@ -724,7 +726,7 @@ export default function Market() {
                                             (a) => a.id !== ai?.id,
                                           ),
                                         })
-                                      navigate("/c/settings")
+                                      // navigate("/c/modules")
                                     }
                                   }}
                                 >

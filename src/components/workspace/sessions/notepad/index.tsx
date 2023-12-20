@@ -35,24 +35,11 @@ import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
 
 export default function Notepad() {
-  const { notepad_state, user_state } = useLoaderData() as {
-    notepad_state: NotepadsT
-    user_state: UserT
-  }
-  //const session_id = useParams().session_id as string
-  // const sid = useParams().session_id as string
+  const user_state = useMemory<UserT>({ id: "user" })
+  const notepad_state = useMemory<NotepadsT>({ id: "notepads" })
+
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
-
-  // const [session_id, setSessionId] = useState<string>(sid)
-  // const workspace_id = useParams().workspace_id as string
-  // const [field_edit_id, setFieldEditId] = useState("")
-  // const [used_icon_id, setUsedIcon] = useState("")
-  const navigate = useNavigate()
-
-  // const [notepad, setNotepad] = useState<z.infer<typeof NotepadS> | undefined>(notepad_state[session_id || ""])
-  // const [edited_clip, setEditedClip] = useState<string>("")
-  // const [dirty_clip, setDirtyClip] = useState<boolean>(false)
 
   const mem_notepad = useMemory<{
     notepad: NotepadT | undefined
@@ -81,8 +68,6 @@ export default function Notepad() {
       return (mem_notepad.notepad = notepad)
     if (notepad && notepad.session_id !== _sid) return
     if (!_sid) return
-    const { NotepadState } = await initLoaders()
-    const notepad_state = await NotepadState.get()
     // get current session id
     mem_notepad.notepad = notepad_state[_sid]
   }
@@ -98,9 +83,8 @@ export default function Notepad() {
 
   useEvent({
     name: "sessions/change",
-    // target: session_id,
     action: function ({ session_id }: { session_id: string }) {
-      console.log("notepad sessions/change", session_id)
+      // console.log("notepad sessions/change", session_id)
       updateNotepad()
     },
   })
@@ -140,9 +124,7 @@ export default function Notepad() {
       return
     }
     await NotepadActions.updateNotepad({ session_id, notepad: cb.data })
-    // mem_notepad.notepad = cb.data
-    // setFieldEditId("")
-    // setDirtyClip(false)
+
     await updateNotepad()
     mem_notepad.field_edit_id = ""
     mem_notepad.edited_clip = ""
@@ -151,16 +133,11 @@ export default function Notepad() {
 
   const onEdit = async (c: any) => {
     if (field_edit_id === c.id + "all/edit") {
-      // setEditedClip(c.data)
       mem_notepad.edited_clip = c.data
-      // setDirtyClip(false)
       mem_notepad.dirty_clip = false
-      // return setFieldEditId("")
       return (mem_notepad.field_edit_id = "")
     }
-    // setFieldEditId(c.id + "all/edit")
     mem_notepad.field_edit_id = c.id + "all/edit"
-    // setEditedClip(c.data)
     mem_notepad.edited_clip = c.data
     const e = document.getElementById(`${c.id}`)
     if (e) {
@@ -181,7 +158,6 @@ export default function Notepad() {
 
   useEffect(() => {
     setTimeout(() => {
-      // setUsedIcon("")
       mem_notepad.used_icon_id = ""
     }, 1000)
   }, [used_icon_id])
@@ -210,8 +186,6 @@ export default function Notepad() {
       return
     }
     await NotepadActions.updateNotepad({ session_id, notepad: cb.data })
-    // setNotepad(cb.data)
-    // mem_notepad.notepad = cb.data
     updateNotepad()
   }
 
@@ -337,9 +311,7 @@ export default function Notepad() {
               return (
                 <div
                   className={`flex flex-col w-auto rounded-xl px-4 py-3 text-xs relative cursor-text bg-zinc-800/50 border-2 border-zinc-900/80 text-sm rounded-lg ph-no-capture ${
-                    field_edit_id === c.id + "all/edit" ?
-                      "border-dashed"
-                    : ""
+                    field_edit_id === c.id + "all/edit" ? "border-dashed" : ""
                   }`}
                   key={c.id}
                   id={c.id}
@@ -515,16 +487,11 @@ export default function Notepad() {
                       className="text-[10px] bg-transparent border-0 m-0 p-0 font-mono"
                       style={{ opacity: 1 }}
                       onChange={(e) => {
-                        // setDirtyClip(true)
                         mem_notepad.dirty_clip = true
-                        // setEditedClip(e.target.value)
                         mem_notepad.edited_clip = e.target.value
                       }}
                       onBlur={() => {
-                        // if (!dirty_clip) return setFieldEditId("")
-
                         if (!dirty_clip) return (mem_notepad.field_edit_id = "")
-                        // else mem_notepad.edited_clip = e.target.value
                       }}
                     ></textarea>
                   : <div onClick={() => onEdit(c)}>
@@ -533,11 +500,7 @@ export default function Notepad() {
                           code({ node, className, children, ...props }) {
                             const match = /language-(\w+)/.exec(className || "")
                             return match ?
-                                <div
-                                  className="relative code flex fit-content"
-                                  /* onMouseEnter={handleMouseHoverCode}
-                  onMouseLeave={handleMouseHoverCode}  */
-                                >
+                                <div className="relative code flex fit-content">
                                   <div className="flex gap-2 absolute right-0 top-1 text-xs overflow-visible whitespace-nowrap p-1 px-3 rounded mt-2">
                                     <div
                                       className="tooltip-left tooltip"

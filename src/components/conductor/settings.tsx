@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react"
-import { useLoaderData, useNavigate, Link } from "react-router-dom"
+import { useEffect, useCallback } from "react"
+import { useNavigate } from "react-router-dom"
 import { UserT } from "@/data/loaders/user"
 import UserActions from "@/data/actions/user"
 import UsersActions from "@/data/actions/users"
@@ -8,33 +8,15 @@ import EasyEdit from "react-easy-edit"
 import {
   MdCheck,
   MdClose,
-  MdSettingsSuggest,
   MdOutlineAddAPhoto,
-  MdOutlineRemoveCircle,
 } from "react-icons/md"
 import { getAddress, hex2buf } from "@/security/common"
-import IntersectIcon from "@/assets/icons/intersect.svg"
-import PersonaIcon from "@/assets/icons/persona.svg"
 import { useDropzone } from "react-dropzone"
 import { error } from "@/libraries/logging"
 import { useAuth } from "@/components/hooks/useAuth"
-import { AIsT } from "@/data/schemas/ai"
-import AIActions from "@/data/actions/ai"
-import { getAvatar } from "@/libraries/ai"
-import { RiAddCircleFill } from "react-icons/ri"
-import { LuSettings2 } from "react-icons/lu"
-import { BiBlock } from "react-icons/bi"
 import { parseBoolean, parseNumber } from "@/libraries/utilities"
-import {
-  getBalance,
-  getBytesBalance,
-  getFreeBalance,
-  getWalletStatus,
-} from "@/components/user/wallet"
-import { ModuleSettings } from "../market/module_settings"
 import { buyCreditsWithStripe } from "@/libraries/payments"
 import { getModules } from "@/modules"
-import { get as getLS } from "@/data/storage/localStorage"
 import humanize from "humanize"
 import useMemory from "../hooks/useMemory"
 import CallHistory from "./call_history"
@@ -44,16 +26,8 @@ import { mBalancesT } from "@/data/schemas/memory"
 export default function Settings(props: any) {
   const navigate = useNavigate()
   let auth = useAuth()
-  const { user_state, ai_state } = useLoaderData() as {
-    user_state: UserT
-    ai_state: AIsT
-  }
-  /* const [field_edit_id, setFieldEditId] = useState("")
-  const [balance, setBalance] = useState<number | string>("loading...")
-  const [bytes_balance, setBytesBalance] = useState<number | string>("loading...")
-  const [wallet_status, setWalletStatus] = useState<string>("loading...")
 
-  const [module_list, setModuleList] = useState<any[]>([]) */
+  const user_state = useMemory<UserT>({ id: "user" })
 
   const mem: {
     field_edit_id: string
@@ -112,7 +86,7 @@ export default function Settings(props: any) {
       await UsersActions.updateUser(updated_public_user)
     }
     updateModules()
-    navigate("/c/settings")
+    // navigate("/c/settings")
   }
 
   const EditComponent = function (props: any) {

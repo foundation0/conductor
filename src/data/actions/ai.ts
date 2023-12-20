@@ -1,12 +1,12 @@
 import { initLoaders } from "@/data/loaders"
 import _ from "lodash"
-import eventEmitter, { listen } from "@/libraries/events"
+import eventEmitter, { emit, listen } from "@/libraries/events"
 import { error, ph } from "@/libraries/logging"
-import { AIS, AIT } from "../schemas/ai"
+import { AIS, AIT, AIsT } from "../schemas/ai"
 import { getId } from "@/security/common"
-import { getActiveUser } from "@/libraries/active_user"
 import UserActions from "@/data/actions/user"
 import { UserT } from "../loaders/user"
+import { getMemoryState } from "@/libraries/memory"
 
 const API: { [key: string]: Function } = {
   add: async ({ persona, default_llm_module }: Partial<AIT>) => {
@@ -77,6 +77,10 @@ const API: { [key: string]: Function } = {
     if (index === -1) return error({ message: "AI not found" })
     ais[index] = { ...ais[index], ...ai }
     await AIState.set(ais, null, true)
+    emit({
+      type: "ai.update.done",
+      data: ais[index],
+    })
   },
 
   fork: async ({ ai_id }: { ai_id: string }) => {
@@ -111,7 +115,7 @@ const API: { [key: string]: Function } = {
     const { AIState } = await initLoaders()
     const ais = _.cloneDeep(AIState.get())
     return ais
-  }
+  },
 }
 
 listen({
@@ -124,6 +128,17 @@ listen({
       callback(response)
     } else {
       callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
+
+listen({
+  type: "store/update",
+  action: async (data: any) => {
+    const name = "ais"
+    if (data?.target === name) {
+      const mem = getMemoryState<AIsT>({ id: name })
+      if (mem && mem) _.assign(mem, data?.state)
     }
   },
 })

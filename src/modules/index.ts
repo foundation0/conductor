@@ -42,8 +42,10 @@ export const Module = async (mod: string, factory_state: boolean = false) => {
     specs: _.cloneDeep(m.specs),
     main: m.main,
   }
-  const { UserState } = await initLoaders()
-  const user_state = (await UserState.get()) as UserT
+  // const { UserState } = await initLoaders()
+  // const user_state = (await UserState.get()) as UserT
+  const user_state = getMemoryState<UserT>({ id: "user" })
+  if(!user_state) return error({ message: "no user" })
 
   if (!factory_state) {
     // find the module in the user's installed modules

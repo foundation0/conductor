@@ -32,8 +32,8 @@ const API: { [key: string]: Function } = {
     if (!AppStateS.safeParse(updated_state).success)
       throw new Error("Invalid state")
     await AppState.set(updated_state, false, true)
-    const mem_app = getMemoryState<mAppT>({ id: "app" })
-    if(mem_app) mem_app.state = updated_state
+    // const mem_app = getMemoryState<mAppT>({ id: "app" })
+    // if (mem_app) mem_app.state = updated_state
     emit({
       type: "app.updateAppState.done",
       data: updated_state,
@@ -265,6 +265,17 @@ listen({
       callback(response)
     } else {
       callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
+
+listen({
+  type: "store/update",
+  action: async (data: any) => {
+    const name = "appstate"
+    if (data?.target === name) {
+      const mem = getMemoryState<AppStateT>({ id: name })
+      if (mem && mem) _.assign(mem, data?.state)
     }
   },
 })

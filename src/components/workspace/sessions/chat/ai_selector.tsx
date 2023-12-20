@@ -13,6 +13,7 @@ import { getAvatar } from "@/libraries/ai"
 import useMemory from "@/components/hooks/useMemory"
 import { mAISelectorT } from "@/data/schemas/memory"
 import { handleModuleChange, handleAIChange } from "@/libraries/session_module"
+import { AIsT } from "@/data/schemas/ai"
 
 export function AISelector({
   user_state,
@@ -190,17 +191,16 @@ export const AISelectorButton = function ({
 }: {
   session_id: string
 }) {
-  const [ai_state, setAIState] = useState<any>([])
+  const ai_state = useMemory<AIsT>({ id: "ais" })
   const [session, setSession] = useState<any>({})
 
   async function init() {
-    const { SessionState, AIState } = await initLoaders()
-    const ai_state = await AIState.get()
+    const { SessionState } = await initLoaders()
+    // const ai_state = await AIState.get()
     const sessions_state = await SessionState.get()
     const session = sessions_state.active[session_id]
     if (!session) return
     setSession(session)
-    setAIState(ai_state)
   }
   useEffect(() => {
     init()

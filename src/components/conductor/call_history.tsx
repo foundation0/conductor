@@ -11,7 +11,6 @@ import dayjs from "dayjs"
 const stores = ["ai", "app"]
 
 export default function CallHistory() {
-  const { user_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
   const mem: {
     calls: any[]
     receipts: any[]

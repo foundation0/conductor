@@ -22,6 +22,7 @@ import { mAppT, mChatSessionT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 import { useEvent } from "@/components/hooks/useEvent"
 import { getMemoryState } from "@/libraries/memory"
+import { UserT } from "@/data/schemas/user"
 
 export default function DataOrganizer() {
   const mem_app: mAppT = useMemory({ id: "app" })
@@ -63,6 +64,9 @@ export default function DataOrganizer() {
     active_preview_id,
     active_preview_data,
   } = mem_data
+
+  const user_state = useMemory<UserT>({ id: "user" })
+
   /* const [sid, setSid] = useState<string>(useParams().session_id as string)
   const [data_state, setDataState] = useState<DataRefT[]>([])
   const [data_list, setDataList] = useState<DataRefT[]>([])
@@ -97,9 +101,9 @@ export default function DataOrganizer() {
   const supported_file_formats: { [key: string]: string[] } = DATA_TYPES
 
   async function updateDataState() {
-    const { UserState } = await initLoaders()
-    const workspace_data: WorkspaceT = _.find(
-      (await UserState.get()).workspaces,
+    // const { UserState } = await initLoaders()
+    const workspace_data: WorkspaceT | undefined = _.find(
+      user_state.workspaces,
       { id: workspace_id },
     )
     const data = workspace_data?.data || []
@@ -414,7 +418,7 @@ export default function DataOrganizer() {
                           if (!sid) return error({ message: "no session id" })
                           emit({
                             type: "data/toggle_edit",
-                            data: { target: d.id }
+                            data: { target: d.id },
                           })
                         },
                       },

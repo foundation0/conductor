@@ -47,7 +47,10 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
     return null
   }
 
-  const { ai_state, user_state } = useLoaderData() as { ai_state: AIsT; user_state: UserT }
+  // const { ai_state, user_state } = useLoaderData() as { ai_state: AIsT; user_state: UserT }
+  const user_state = useMemory<UserT>({ id: "user" })
+  const ai_state = useMemory<AIsT>({ id: "ais" })
+  
   const [ago_refresh, setAgoRefresh] = useState(1)
   const mem_session = useMemory<mChatSessionT>({
     id: `session-${session_id}`,

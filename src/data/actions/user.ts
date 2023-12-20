@@ -19,6 +19,7 @@ import config from "@/config"
 import { emit, listen } from "@/libraries/events"
 import VectorsActions from "./vectors"
 import DataActions from "./data"
+import { getMemoryState } from "@/libraries/memory"
 
 const API: { [key: string]: Function } = {
   updateUser: async function (state: Partial<UserT>) {
@@ -874,6 +875,17 @@ listen({
     } else {
       if (typeof callback === "function")
         callback({ error: "method not found", data: { ...data, e } })
+    }
+  },
+})
+
+listen({
+  type: "store/update",
+  action: async (data: any) => {
+    const name = "user"
+    if (data?.target === name) {
+      const mem = getMemoryState<UserT>({ id: name })
+      if (mem && mem) _.assign(mem, data?.state)
     }
   },
 })

@@ -3,6 +3,7 @@ import { LLMVariantS, ModuleT } from "./modules"
 import { SessionsT, TextMessageT, MessageRowT, ChatSessionT } from "./sessions"
 import { DataRefT } from "./workspace"
 import { AppStateT } from "../loaders/app"
+import { AIsT } from "./ai"
 
 export type mAppT = { workspace_id: string; session_id: string, state: AppStateT }
 export type mBalancesT = {

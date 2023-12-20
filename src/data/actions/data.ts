@@ -5,6 +5,7 @@ import { emit, listen } from "@/libraries/events"
 import { error } from "@/libraries/logging"
 import { buf2hex, createHash } from "@/security/common"
 import b4a from "b4a"
+import { AIsT } from "../schemas/ai"
 
 const API: { [key: string]: Function } = {
   getStore: async ({ id }: { id: string }) => {

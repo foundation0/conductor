@@ -7,7 +7,6 @@ import React, {
 import { TextMessageT } from "@/data/loaders/sessions"
 import ReactMarkdown from "react-markdown"
 import { MdCheck, MdContentCopy, MdEdit } from "react-icons/md"
-import { useNavigate } from "react-router-dom"
 import NotepadActions from "@/data/actions/notepad"
 import * as Selection from "selection-popover"
 import * as Toolbar from "@radix-ui/react-toolbar"
@@ -24,7 +23,6 @@ import { useEvent } from "@/components/hooks/useEvent"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 import remarkGfm from "remark-gfm"
-import rehypeMermaid from "rehype-mermaid"
 import rehypeRaw from "rehype-raw"
 
 type MessageProps = {
@@ -44,11 +42,10 @@ const Message: React.FC<MessageProps> = ({
   className,
   avatar,
 }) => {
-  const navigate = useNavigate()
   // const workspace_id = useParams().workspace_id
   // const session_id = useParams().session_id
   const mem_app: mAppT = useMemory({ id: "app" })
-  const { workspace_id, session_id } = mem_app
+  const { session_id } = mem_app
   const [used_icon_id, setUsedIcon] = useState("")
 
   const [is_hovering, setIsHovering] = useState(false)

@@ -2,7 +2,12 @@ import { error } from "@/libraries/logging"
 import DataActions from "@/data/actions/data"
 import VectorsActions from "@/data/actions/vectors"
 import UserActions from "@/data/actions/user"
-import { DataT, EmbeddingModelsT, IndexersT, VectorT } from "@/data/schemas/data"
+import {
+  DataT,
+  EmbeddingModelsT,
+  IndexersT,
+  VectorT,
+} from "@/data/schemas/data"
 import { DataRefT } from "@/data/schemas/workspace"
 import { emit, listen } from "./events"
 import { lookup } from "mrmime"
@@ -19,6 +24,7 @@ import {
   DataTypesTextS,
 } from "@/data/schemas/data_types"
 import { get, set } from "@/data/actions/cache"
+import { getMemoryState } from "./memory"
 
 function getMimeTypeByFileFormat(file_format: string) {
   for (const mime in DATA_TYPES) {
@@ -52,7 +58,7 @@ export async function processData(
     content: any
     workspace_id: string
   },
-  callback?: Function
+  callback?: Function,
 ) {
   const text_file = _.keys(DATA_TYPES_TEXT).includes(mime)
   const binary_file = _.keys(DATA_TYPES_BINARY).includes(mime)
@@ -82,12 +88,19 @@ export async function processData(
   })
 
   // Vectorize based on file type
-  let chunks: { pageContent: string; metadata: { id: string; name: string; start: number; end: number } }[] = []
+  let chunks: {
+    pageContent: string
+    metadata: { id: string; name: string; start: number; end: number }
+  }[] = []
   let embeddings: number[][] = []
   let embeddings_model: EmbeddingModelsT
 
   // TEXT/PLAIN
-  if (text_file || mime === "application/epub+zip" || mime === "application/pdf") {
+  if (
+    text_file ||
+    mime === "application/epub+zip" ||
+    mime === "application/pdf"
+  ) {
     const { worker, terminate } = await getWorker({ file: "vector" })
 
     chunks = await worker.chunkText({
@@ -118,24 +131,26 @@ export async function processData(
     if (batch_size > 0 && chunked_chunks.length > 0) {
       const q = async.queue((data: any, callback: any) => {
         const { batch } = data
-        getWorker({ file: "vector" }).then(async ({ worker, terminate: _t }) => {
-          const vectors = await worker.vectorizeText({
-            model: embeddings_model,
-            chunks: batch.map((c: any) => c.pageContent),
-          })
-          _t()
-          processed_chunks += batch_size
-          const progress = (processed_chunks * 0.8) / (chunks.length * 0.8)
-          emit({
-            type: "data-import/progress",
-            data: {
-              name: file.name,
-              progress: progress <= 1 ? progress : 1, // 80% of the progress is for vectorization
-            },
-          })
-          embeddings = [...embeddings, ...vectors]
-          return callback()
-        })
+        getWorker({ file: "vector" }).then(
+          async ({ worker, terminate: _t }) => {
+            const vectors = await worker.vectorizeText({
+              model: embeddings_model,
+              chunks: batch.map((c: any) => c.pageContent),
+            })
+            _t()
+            processed_chunks += batch_size
+            const progress = (processed_chunks * 0.8) / (chunks.length * 0.8)
+            emit({
+              type: "data-import/progress",
+              data: {
+                name: file.name,
+                progress: progress <= 1 ? progress : 1, // 80% of the progress is for vectorization
+              },
+            })
+            embeddings = [...embeddings, ...vectors]
+            return callback()
+          },
+        )
       }, 4)
 
       chunked_chunks.forEach((batch: any) => {
@@ -211,7 +226,13 @@ listen({
   },
 })
 
-export async function processImportedFiles({ files, workspace_id }: { files: any; workspace_id: string }) {
+export async function processImportedFiles({
+  files,
+  workspace_id,
+}: {
+  files: any
+  workspace_id: string
+}) {
   const q = async.queue(async (data: any, callback: any) => {
     processData({ ...data, workspace_id }, callback)
   }, 2)
@@ -222,7 +243,9 @@ export async function processImportedFiles({ files, workspace_id }: { files: any
     // get the mime
     let mime = lookup(file.name) as string
     if (!mime) {
-      mime = getMimeTypeByFileFormat(_.last(file.name.split(".")) || "") as string
+      mime = getMimeTypeByFileFormat(
+        _.last(file.name.split(".")) || "",
+      ) as string
       if (!mime) return error({ message: "no mime type", data: { file } })
     }
 
@@ -263,8 +286,15 @@ export async function processImportedFiles({ files, workspace_id }: { files: any
     reader.onload = async () => {
       if (!reader?.result) return error({ message: "empty file" })
 
-      if (DataTypesTextS.safeParse(mime).success === false && DataTypesBinaryS.safeParse(mime).success === false) {
-        return error({ type: "unsupported_mime", message: "invalid file type", data: { file } })
+      if (
+        DataTypesTextS.safeParse(mime).success === false &&
+        DataTypesBinaryS.safeParse(mime).success === false
+      ) {
+        return error({
+          type: "unsupported_mime",
+          message: "invalid file type",
+          data: { file },
+        })
       }
 
       let content: string | ArrayBuffer = reader.result
@@ -297,9 +327,11 @@ export async function compileDataForIndex({
   folder_id?: string
   session_id?: string
 }) {
-  const { VectorsState, DataState, UserState, SessionState } = await initLoaders()
-  const user: UserT = await UserState.get()
-
+  const { VectorsState, DataState, SessionState } = await initLoaders()
+  // const user: UserT = await UserState.get()
+  const user = getMemoryState<UserT>({ id: "user" })
+  if(!user) return error({ message: "no user" })
+  
   let data_source: DataRefT[] = []
 
   if (source === "workspace") {
@@ -335,30 +367,37 @@ export async function compileDataForIndex({
       const vectors: VectorT[] = await (await VectorsState({ id: d.id })).get()
       const data: DataT[] = await (await DataState({ id: d.id })).get()
       return { vectors, data }
-    })
+    }),
   )
 
-  const chunks: any[] = await async.map(data_vectors, (chunk: any, chunk_done) => {
-    const binary_file = _.keys(DATA_TYPES_BINARY).includes(chunk.data?.data?.mime)
-    if (binary_file) {
-      if (chunk.data?.data?.mime === "application/pdf") {
-        getWorker({ file: "vector" }).then(({ worker, terminate }) => {
-          worker.extractPDFContent(chunk.data?.data?.content).then((text: any) => {
-            terminate()
-            chunk_done(null, {
-              ...chunk.data,
-              data: {
-                ...chunk.data.data,
-                content: text,
-              },
-            })
+  const chunks: any[] = await async.map(
+    data_vectors,
+    (chunk: any, chunk_done) => {
+      const binary_file = _.keys(DATA_TYPES_BINARY).includes(
+        chunk.data?.data?.mime,
+      )
+      if (binary_file) {
+        if (chunk.data?.data?.mime === "application/pdf") {
+          getWorker({ file: "vector" }).then(({ worker, terminate }) => {
+            worker
+              .extractPDFContent(chunk.data?.data?.content)
+              .then((text: any) => {
+                terminate()
+                chunk_done(null, {
+                  ...chunk.data,
+                  data: {
+                    ...chunk.data.data,
+                    content: text,
+                  },
+                })
+              })
           })
-        })
+        }
+      } else {
+        return chunk_done(null, chunk.data)
       }
-    } else {
-      return chunk_done(null, chunk.data)
-    }
-  })
+    },
+  )
 
   const content: {
     vectors: VectorT[]
@@ -396,7 +435,8 @@ export async function queryIndex({
     const cache_key = `${source}-${workspace_id}-${group_id}-${folder_id}-${session_id}`
     const cache = await get(cache_key)
     if (cache && !update) {
-      if (new Date().getTime() - cache.updated_at > 1000 * 60 * 60 * 24) data_vectors = cache?.data_vectors
+      if (new Date().getTime() - cache.updated_at > 1000 * 60 * 60 * 24)
+        data_vectors = cache?.data_vectors
     }
 
     if (!data_vectors) {
@@ -408,7 +448,10 @@ export async function queryIndex({
         session_id,
       })
 
-      await set({ key: cache_key, value: { data_vectors, updated_at: new Date().getTime() } })
+      await set({
+        key: cache_key,
+        value: { data_vectors, updated_at: new Date().getTime() },
+      })
     }
     if (data_vectors) {
       const q: {
@@ -436,7 +479,10 @@ export async function queryIndex({
         update,
         // cache: cache?.[cache_key] || null,
       }
-      const { worker, terminate } = await getWorker({ file: "vector", id: `${source}-index` })
+      const { worker, terminate } = await getWorker({
+        file: "vector",
+        id: `${source}-index`,
+      })
       const { results, cache_id } = await worker.queryIndex(q)
       await terminate()
       return results

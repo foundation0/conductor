@@ -14,9 +14,14 @@ import { AppStateT } from "@/data/loaders/app"
 import { OpenSessionS } from "@/data/schemas/app"
 import { z } from "zod"
 import { mAppT } from "@/data/schemas/memory"
+import { AIsT } from "@/data/schemas/ai"
+import { UserT } from "@/data/schemas/user"
 
 export default function Workspace() {
   const mem_app: mAppT = useMemory({ id: "app" })
+
+  const user_state = useMemory<UserT>({ id: "user" })
+  const app_state = useMemory<AppStateT>({ id: "appstate" })
 
   // const [open_sidebar, setOpenSidebar] = useMemory<string>({ id: 'session-index', state: "")
   const mem = useMemory<{
@@ -31,11 +36,12 @@ export default function Workspace() {
   const navigate = useNavigate()
 
   async function updateSessions() {
-    const { SessionState, UserState, AppState } = await initLoaders()
-    const app_state: AppStateT = await AppState.get()
-    const user_state = await UserState.get()
+    const { SessionState } = await initLoaders()
+    // const app_state: AppStateT = await AppState.get()
+    // const user_state = await UserState.get()
+
     // get all the sessions for this workspace
-    const workspace: WorkspaceT = _.find(user_state.workspaces, {
+    const workspace: WorkspaceT | undefined = _.find(user_state.workspaces, {
       id: mem_app.workspace_id,
     })
     if (!workspace) return

@@ -20,11 +20,12 @@ import { mAppT, mChatSessionT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 
 export default function Tabs() {
-  const { app_state, user_state } = useLoaderData() as {
-    app_state: AppStateT
-    user_state: UserT
-  }
-
+  // const { app_state, user_state } = useLoaderData() as {
+  //   app_state: AppStateT
+  //   user_state: UserT
+  // }
+  const app_state = useMemory<AppStateT>({ id: "appstate" })
+  const user_state = useMemory<UserT>({ id: "user" })
   // const [open_tabs, setOpenTabs] = useState<any>(null)
   const [item_added_to_notepad, setItemAddedToNotepad] = useState(false)
 
@@ -151,13 +152,12 @@ export default function Tabs() {
                   const new_tab = await AppStateActions.removeOpenSession({
                     session_id: s.id,
                   })
-                  setTimeout(() => {
-                    if (session_id === s.id)
-                      navigate(`/c/${workspace_id}/${new_tab?.session_id}`)
-                    else {
-                      navigate(`/c/${workspace_id}/${session_id}`)
-                    }
-                  }, 200)
+
+                  if (session_id === s.id)
+                    navigate(`/c/${workspace_id}/${new_tab?.session_id}`)
+                  else {
+                    navigate(`/c/${workspace_id}/${session_id}`)
+                  }
                 }}
               >
                 <RxPlus />
@@ -187,72 +187,68 @@ export default function Tabs() {
 
   // if there are no open sessions, add the first session from first group to open sessions
   useEffect(() => {
-    setTimeout(() => {
-      const active_workspace = user_state.workspaces.find(
-        (ws) => ws.id === workspace_id,
-      ) as z.infer<typeof WorkspaceS>
-      if (open_tabs?.length === 0) {
-        const first_group = _.first(active_workspace.groups)
-        if (!first_group) throw new Error("first group not found")
-        const first_folder = _.first(first_group.folders)
-        if (!first_folder) throw new Error("first folder not found")
-        const first_session = _.first(first_folder.sessions)
+    const active_workspace = user_state.workspaces.find(
+      (ws) => ws.id === workspace_id,
+    ) as z.infer<typeof WorkspaceS>
+    if (open_tabs?.length === 0) {
+      const first_group = _.first(active_workspace.groups)
+      if (!first_group) throw new Error("first group not found")
+      const first_folder = _.first(first_group.folders)
+      if (!first_folder) throw new Error("first folder not found")
+      const first_session = _.first(first_folder.sessions)
 
-        if (first_session) {
-          navigate(`/c/${workspace_id}/${first_session.id}`)
-        } else {
-          console.warn("first session not found")
-        }
+      if (first_session) {
+        navigate(`/c/${workspace_id}/${first_session.id}`)
+      } else {
+        console.warn("first session not found")
       }
-    }, 200)
+    }
   }, [open_tabs?.length === 0])
 
   // if the current session is not in tabs, add it
   useEffect(() => {
-    setTimeout(() => {
-      const active_workspace = user_state.workspaces.find(
-        (ws) => ws.id === workspace_id,
-      ) as z.infer<typeof WorkspaceS>
-      if (!workspace_id || active_workspace === null) return
-      const workspace_open_sessions =
-        app_state.open_sessions.filter(
-          (session: z.infer<typeof OpenSessionS>) =>
-            session.workspace_id === active_workspace.id,
-        ) || []
-
-      const session_in_open_session = workspace_open_sessions.find(
+    const active_workspace = user_state.workspaces.find(
+      (ws) => ws.id === workspace_id,
+    ) as z.infer<typeof WorkspaceS>
+    if (!workspace_id || active_workspace === null) return
+    const workspace_open_sessions =
+      app_state.open_sessions.filter(
         (session: z.infer<typeof OpenSessionS>) =>
-          session.session_id === session_id,
+          session.workspace_id === active_workspace.id,
+      ) || []
+
+    const session_in_open_session = workspace_open_sessions.find(
+      (session: z.infer<typeof OpenSessionS>) =>
+        session.session_id === session_id,
+    )
+
+    if (!session_in_open_session) {
+      // get session data based on session id
+      const s = _.find(
+        active_workspace.groups.flatMap((g) =>
+          g.folders.flatMap((f) => {
+            return _.map(f.sessions, (s) => {
+              return { ...s, group_id: g.id, folder_id: f.id }
+            })
+          }),
+        ),
+        { id: session_id },
       )
+      if (!s) return
 
-      if (!session_in_open_session) {
-        // get session data based on session id
-        const s = _.find(
-          active_workspace.groups.flatMap((g) =>
-            g.folders.flatMap((f) => {
-              return _.map(f.sessions, (s) => {
-                return { ...s, group_id: g.id, folder_id: f.id }
-              })
-            }),
-          ),
-          { id: session_id },
-        )
-        if (!s) return
-
-        const new_tab = {
-          _v: 1,
-          workspace_id: workspace_id,
-          session_id: session_id,
-          group_id: s.group_id,
-          folder_id: s.folder_id,
-        }
-        AppStateActions.updateAppState({
-          open_sessions: [...app_state.open_sessions, new_tab],
-        }).then(() => {
-          navigate(`/c/${workspace_id}/${session_id}`)
-        })
+      const new_tab = {
+        _v: 1,
+        workspace_id: workspace_id,
+        session_id: session_id,
+        group_id: s.group_id,
+        folder_id: s.folder_id,
       }
-    }, 200)
+      AppStateActions.updateAppState({
+        open_sessions: [...app_state.open_sessions, new_tab],
+      }).then(() => {
+        navigate(`/c/${workspace_id}/${session_id}`)
+      })
+    }
   }, [JSON.stringify([session_id, open_tabs])])
 
   // keyboard shortcut for closing tab
@@ -301,9 +297,7 @@ export default function Tabs() {
         folder_id: session?.folder_id || "",
       },
     })
-    setTimeout(() => {
-      navigate(`/c/${workspace_id}/${new_session?.session.id}`)
-    }, 200)
+    navigate(`/c/${workspace_id}/${new_session?.session.id}`)
   })
 
   useEffect(() => {
@@ -344,7 +338,7 @@ export default function Tabs() {
     target: "appstate",
     action: generateVisibleTabs,
   })
-  
+
   useEvent({
     name: "store/update",
     target: "user",

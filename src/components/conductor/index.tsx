@@ -2,7 +2,6 @@ import WorkspaceSelector from "@/components/workspace/selector"
 import {
   Outlet,
   useBeforeUnload,
-  useLoaderData,
   useNavigate,
   useParams,
 } from "react-router-dom"
@@ -34,56 +33,49 @@ import {
 } from "@/components/user/wallet"
 import { emit } from "@/libraries/events"
 import { PricingTable } from "../modals/pricing_table"
-import { pipeline } from "@xenova/transformers"
 import {
   Input as InputIntro,
   InputActions,
 } from "@/components/experiences/input_introduction/v1"
-import Joyride, { Step } from "react-joyride"
-import { useEvent } from "../hooks/useEvent"
+import { Step } from "react-joyride"
 import { AddData } from "../modals/add_data"
+import { createMemoryState } from "@/libraries/memory"
 
 export default function Conductor() {
-  const { app_state, user_state, ai_state } = useLoaderData() as {
-    app_state: AppStateT
-    user_state: UserT
-    ai_state: AIsT
-  }
+  const app_state = useMemory<AppStateT>({ id: "appstate" })
+  const user_state = useMemory<UserT>({ id: "user" })
+  const ai_state = useMemory<AIsT>({ id: "ais" })
+
   const [active_sessions_elements, setActiveSessionsElements] = useState<any>(
     [],
   )
   const location = useLocation()
   const auth = useAuth()
   const navigate = useNavigate()
-
   let workspace_id = useParams().workspace_id as string
   let session_id = useParams().session_id as string
 
-  const mem: mAppT = useMemory({
+  const mem: mAppT = createMemoryState({
     id: "app",
     state: {
-      workspace_id,
-      session_id,
-      state: app_state
+      workspace_id: useParams().workspace_id as string,
+      session_id: useParams().session_id as string,
     },
   })
+
+  if (mem.workspace_id === undefined || mem.workspace_id !== workspace_id) {
+    mem.workspace_id = workspace_id
+  }
+  if (mem.session_id === undefined || mem.session_id !== session_id) {
+    mem.session_id = session_id
+  }
 
   const mem_balances: mBalancesT = useMemory({
     id: "balances",
   })
 
-  async function setup() {
-    // const e = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", {
-    //   progress_callback: (p: any) => {
-    //     console.log(`Progress: ${p}%`, p)
-    //   },
-    // })
-    // console.log(e)
-  }
-
   // Fetch balances
   useEffect(() => {
-    setup()
     getBalance({
       public_key: user_state.public_key,
       master_key: user_state.master_key,
@@ -133,6 +125,8 @@ export default function Conductor() {
         return
       }
       session_id = session?.id
+      mem.workspace_id = workspace_id
+      mem.session_id = session_id
       if (window.location.pathname === "/c/")
         navigate(`/c/${workspace_id}/${session_id}`)
     }
@@ -241,19 +235,6 @@ export default function Conductor() {
       }),
     )
   }, [JSON.stringify([app_state.active_sessions])])
-
-  const steps_input: Step[] = [
-    {
-      target: "#input",
-      content: <InputIntro />,
-      disableBeacon: true,
-    },
-    {
-      target: ".InputActions",
-      content: <InputActions />,
-      disableBeacon: true,
-    },
-  ]
 
   return (
     <div

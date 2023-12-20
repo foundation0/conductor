@@ -3,12 +3,15 @@ import { ph } from "@/libraries/logging"
 import { useEffect } from "react"
 import { useNavigate, useParams, useLoaderData } from "react-router-dom"
 import { markExperienceAsComplete } from "../.."
+import useMemory from "@/components/hooks/useMemory"
 
 export default function Notepad() {
   const navigate = useNavigate()
   const workspace_id = useParams().workspace_id
   const session_id = useParams().session_id
-  const { user_state } = useLoaderData() as { user_state: UserT }
+  // const { user_state } = useLoaderData() as { user_state: UserT }
+  const user_state = useMemory<UserT>({ id: "user" })
+
   
   useEffect(() => {
     ph().capture("experiences/onboarding/v1/input_actions")

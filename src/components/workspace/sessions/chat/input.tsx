@@ -20,6 +20,7 @@ import {
   Input as InputIntro,
   InputActions,
 } from "@/components/experiences/input_introduction/v1"
+import { UserT } from "@/data/schemas/user"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
 
@@ -29,10 +30,8 @@ export default function Input({
   send,
   gen_in_progress,
   is_new_branch,
-  // genController,
   disabled,
   input_text,
-  // setMsgUpdateTs,
   session,
 }: {
   session_id: string
@@ -40,10 +39,8 @@ export default function Input({
   send: Function
   gen_in_progress: boolean
   is_new_branch: boolean | string
-  // genController: any
   disabled?: boolean
   input_text?: string
-  // setMsgUpdateTs: Function
   session: SessionsT["active"][0]
 }) {
   const mem_session = useMemory<mChatSessionT>({ id: `session-${session_id}` })
@@ -145,37 +142,6 @@ export default function Input({
     JSON.stringify([mem_session.context.tokens, mem_session.messages.tokens]),
   ])
 
-  const steps: Step[] = [
-    {
-      target: "#input",
-      content: <InputIntro />,
-      disableBeacon: true,
-    },
-    {
-      target: ".InputActions",
-      content: <InputActions />,
-      disableBeacon: true,
-    },
-  ]
-
-  const [run_introduction, setRunIntroduction] = useState<boolean>(false)
-
-  async function introduction() {
-    const { UserState } = await initLoaders()
-    const user_state = await UserState.get()
-    if (
-      !user_state?.experiences?.find(
-        (e: any) => e.id === "input_introduction/v1",
-      )
-    ) {
-      setRunIntroduction(true)
-    }
-  }
-
-/*   useEffect(() => {
-    introduction()
-  }, []) */
-
   function sendMessage() {
     if (gen_in_progress) return
     send({ message })
@@ -187,8 +153,6 @@ export default function Input({
 
   return (
     <div className="flex flex-1 justify-center items-center">
-      <Joyride steps={steps} run={run_introduction} continuous={true} />
-
       <form
         className={
           (
@@ -319,7 +283,6 @@ export default function Input({
               }
               onClick={() => {
                 // introduction()
-                
               }}
             />}
           <Switch>

@@ -326,6 +326,9 @@ export const store = async <TData>({
       // Set the validated data as the store
       store = vstate.data
 
+      const mem = getMemoryState({ id: name }) as any
+      if(mem) _.assign(mem, store)
+
       // If no_storage is true, don't save the data
       if (no_storage) return
 
@@ -350,11 +353,14 @@ export const store = async <TData>({
         await set(key, pack(encrypt({ data: vstate.data, key: enc_key })))
       else await set(key, vstate.data)
 
+      
+
       // Emit an event to notify the store has been updated
       emit({
         type: "store/update",
         data: {
           target: name,
+          state: vstate.data,
         },
       })
       return true

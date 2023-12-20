@@ -9,7 +9,13 @@ import SessionsActions from "@/data/actions/sessions"
 import { MessageRowT } from "@/data/schemas/sessions"
 
 // create new branch
-export const onNewBranchClick = async ({ session_id, parent_id }: { session_id: string; parent_id: string }) => {
+export const onNewBranchClick = async ({
+  session_id,
+  parent_id,
+}: {
+  session_id: string
+  parent_id: string
+}) => {
   // mark other messages with same parent_id as not active
   const { MessagesState } = await initLoaders()
   const ss = await MessagesState({ session_id })
@@ -51,16 +57,14 @@ export const onNewBranchClick = async ({ session_id, parent_id }: { session_id: 
     },
   })
   // hacky settimeout because react...
-  setTimeout(() => {
-    emit({
-      type: "chat/raw-messages",
-      data: {
-        target: session_id,
-        messages: updated_raw_messages,
-      },
-    })
-    fieldFocus({ selector: "#input" })
-  }, 200)
+  emit({
+    type: "chat/raw-messages",
+    data: {
+      target: session_id,
+      messages: updated_raw_messages,
+    },
+  })
+  fieldFocus({ selector: "#input" })
 }
 
 // switch active branch
@@ -81,11 +85,11 @@ export const onBranchClick = async ({
       type: "sessions.getMessages",
       data: {
         session_id,
-      }
+      },
     })
   }
   if (!messages) return error({ message: "Session messages not found" })
-  
+
   // follow activePath from active_path_branch_id to the end and mark all human messages as inactive
   function markBranchInactive(msg_id: string) {
     // find active sibling from the branch
@@ -100,7 +104,9 @@ export const onBranchClick = async ({
         if (messages && i) messages[i] = sibling
       })
       // find all children of the siblings
-      const children = _.filter(messages, (m) => _.includes(_.map(siblings, "id"), m.parent_id))
+      const children = _.filter(messages, (m) =>
+        _.includes(_.map(siblings, "id"), m.parent_id),
+      )
       // mark all children as inactive in messages
       children.forEach((child) => {
         markBranchInactive(child.id)
@@ -118,7 +124,10 @@ export const onBranchClick = async ({
 
   // mark other messages with same parent_id as not active and the clicked one as active
   const updated_messages = _.map(messages, (message) => {
-    if (message.parent_id === messages?.find((msg) => msg.id === msg_id)?.parent_id) {
+    if (
+      message.parent_id ===
+      messages?.find((msg) => msg.id === msg_id)?.parent_id
+    ) {
       message.active = false
     }
     if (message.id === msg_id) {
@@ -139,11 +148,16 @@ export const onBranchClick = async ({
       messages: updated_messages,
     },
   })
-  await SessionsActions.updateMessages({ session_id, messages: updated_messages })
+  await SessionsActions.updateMessages({
+    session_id,
+    messages: updated_messages,
+  })
 }
 
 // Build message tree
-export const computeActivePath = (messages: TextMessageT[]): Record<string, string> => {
+export const computeActivePath = (
+  messages: TextMessageT[],
+): Record<string, string> => {
   const activePath: Record<string, string> = {}
 
   // find message with parent_id = "first"
@@ -194,7 +208,10 @@ export const buildMessageTree = ({
   for (const parent in activePath) {
     if (Object.prototype.hasOwnProperty.call(activePath, parent)) {
       const next_msg_id = activePath[parent]
-      const r: MessageRowT | undefined = buildRows({ messages, row_parent_id: next_msg_id })
+      const r: MessageRowT | undefined = buildRows({
+        messages,
+        row_parent_id: next_msg_id,
+      })
       if (r && r?.length === 3 && r[1] !== undefined) {
         rows.push(r)
         parent_id = activePath[r[1].id]

@@ -1,11 +1,12 @@
 import { initLoaders } from "@/data/loaders"
-import { ClipS, NotepadS } from "@/data/schemas/notepad"
+import { ClipS, NotepadS, NotepadT } from "@/data/schemas/notepad"
 import _ from "lodash"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 import { emit, listen, query } from "@/libraries/events"
 import { ph } from "@/libraries/logging"
-import dayjs from "dayjs"
+import { NotepadsT } from "../loaders/notepad"
+import { getMemoryState } from "@/libraries/memory"
 
 const API: { [key: string]: Function } = {
   add: async ({ session_id, msg_id, type, data }: { session_id: string; msg_id: string; type: string; data: any }) => {
@@ -76,5 +77,17 @@ listen({
     }
   },
 })
+
+listen({
+  type: "store/update",
+  action: async (data: any) => {
+    const name = "notepads"
+    if (data?.target === name) {
+      const mem = getMemoryState<NotepadsT>({ id: name })
+      if (mem && mem) _.assign(mem, data?.state)
+    }
+  },
+})
+
 
 export default API
