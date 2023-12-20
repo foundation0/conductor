@@ -22,8 +22,8 @@ import useMemory from "../hooks/useMemory"
 export default function CreatePersona() {
   // const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
   const user_state = useMemory<UserT>({ id: "user" })
-  const ai_state = useMemory<AIsT>({ id: "user" })
-
+  const ai_state = useMemory<AIsT>({ id: "ais" })
+  if(!user_state || !ai_state) return null
   const [creation_in_process, setCreationInProgress] = useState<boolean>(false)
   const [selected_llm, setSelectedLLM] = useState<string | null>(
     `${config.defaults.llm_module.id}/${config.defaults.llm_module.variant_id}`,
@@ -58,7 +58,7 @@ export default function CreatePersona() {
           navigate(`/c/modules`)
         }
       }
-      const ai = _.find(ai_state, (ai) => ai.id === edit_ai_id)
+      const ai = _.find(ai_state, { id: edit_ai_id })
       if (ai) {
         setValues(ai.persona)
         setSelectedLLM(
@@ -282,7 +282,7 @@ export default function CreatePersona() {
             <div className={element_class}>
               <div className={headline_class + " mb-3"}>
                 Default reasoning engine{" "}
-                <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-green-700 text-gray-300">
+                <span className="max-h-5 ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-green-700 text-gray-300">
                   required
                 </span>
               </div>
