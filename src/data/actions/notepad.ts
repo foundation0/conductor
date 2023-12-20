@@ -35,6 +35,7 @@ const API: { [key: string]: Function } = {
         target: session_id,
       },
     })
+    return clip
   },
   updateNotepad: async ({ session_id, notepad }: { session_id: string; notepad: z.infer<typeof NotepadS> }) => {
     const { NotepadState } = await initLoaders()

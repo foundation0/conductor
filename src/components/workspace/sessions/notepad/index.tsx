@@ -1,8 +1,8 @@
 import { useLoaderData, useNavigate } from "react-router-dom"
 import _ from "lodash"
 import { NotepadsT } from "@/data/loaders/notepad"
-import { NotepadS, NotepadT } from "@/data/schemas/notepad"
-import { useEffect } from "react"
+import { Clip, NotepadS, NotepadT } from "@/data/schemas/notepad"
+import { useEffect, useState } from "react"
 // @ts-ignore
 import {
   MdCheck,
@@ -26,13 +26,16 @@ import { BiTrash } from "react-icons/bi"
 import { UserT } from "@/data/loaders/user"
 import { BiNotepad } from "react-icons/bi"
 import { useEvent } from "@/components/hooks/useEvent"
-import { emit } from "@/libraries/events"
+import { emit, query } from "@/libraries/events"
 import dayjs from "dayjs"
 import { initLoaders } from "@/data/loaders"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
+import { RxPlus } from "react-icons/rx"
+
+let mouse_over_timer: any = null
 
 export default function Notepad() {
   const user_state = useMemory<UserT>({ id: "user" })
@@ -245,11 +248,50 @@ export default function Notepad() {
     element.click()
   }
 
+  async function addEmptyClip() {
+    if (!session_id) return
+    const clip = await query({
+      type: "notepad.add",
+      data: { session_id, data: "New note", msg_id: "0", type: "text" },
+    })
+  }
+
+  const [is_hovering, setIsHovering] = useState("")
+
+  const handleMouseHover = (state: boolean, c: Clip) => {
+    if (state && !is_hovering) {
+      clearInterval(mouse_over_timer)
+      emit({ type: "chat/message-hover", data: { id: c.id } })
+      setIsHovering(c.id)
+      mouse_over_timer = setTimeout(() => setIsHovering(""), 10000)
+    } else if (!state && is_hovering) {
+      setIsHovering("")
+      clearInterval(mouse_over_timer)
+    }
+  }
+
+  useEvent({
+    name: "chat/message-hover",
+    //target: message.id,
+    action: ({ id }: { id: string }) => {
+      if (id !== is_hovering) setIsHovering("")
+    },
+  })
+
   return (
     <div className="Notepad flex flex-col px-3 pt-2 gap-6 w-full bg-zinc-900 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30 overflow-auto overflow-x-hidden">
       <div className="flex flex-row text-zinc-300 text-sm font-semibold pb-1">
         <div className="flex-grow">Notepad</div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
+          <button
+            className="outline-none tooltip tooltip-left"
+            data-tip="Create new note"
+            onClick={addEmptyClip}
+          >
+            <RxPlus
+              className={`w-3 h-3 flex flex-1 items-center cursor-pointer font-semibold text-sm `}
+            />
+          </button>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button className="outline-none">
@@ -315,171 +357,175 @@ export default function Notepad() {
                   }`}
                   key={c.id}
                   id={c.id}
+                  onMouseEnter={() => handleMouseHover(true, c)}
+                  onMouseLeave={() => handleMouseHover(false, c)}
                 >
-                  <div
-                    className={`flex gap-2  bg-zinc-800 absolute right-2 -top-6 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded-lg mt-2 transition-all ${
-                      field_edit_id === c.id + "all/edit" ?
-                        "bg-zinc-900"
-                      : "bg-zinc-900"
-                    }`}
-                  >
-                    {field_edit_id === c.id + "all/edit" ?
-                      <>
-                        <div
-                          className="tooltip-left tooltip"
-                          data-tip="Save your changes"
-                        >
-                          {used_icon_id === c.id + "all/copy" ?
-                            <MdCheck />
-                          : <MdSave
-                              className={`h-3 w-3 cursor-pointer  ${
-                                dirty_clip ?
-                                  "hover:text-zinc-200 text-zinc-400"
-                                : "text-zinc-600 cursor-default"
-                              }`}
-                              onClick={() => handleEdit(c)}
-                            />
-                          }
-                        </div>
-                        <div
-                          className="tooltip tooltip-top"
-                          data-tip="Discard edits"
-                        >
-                          {used_icon_id === c.id + "all/edit" ?
-                            <MdCheck />
-                          : <MdClose
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={() => {
-                                // setDirtyClip(false)
-                                mem_notepad.dirty_clip = false
-                                // return setFieldEditId("")
-                                mem_notepad.field_edit_id = ""
-                              }}
-                            />
-                          }
-                        </div>
-                      </>
-                    : <>
-                        <div
-                          className="tooltip tooltip-top"
-                          data-tip="Delete clip"
-                        >
-                          {used_icon_id === c.id + "all/delete" ?
-                            <MdCheck />
-                          : <BiTrash
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={() => {
-                                if (confirm("Delete this clip?")) {
-                                  onDelete(c)
-                                }
-                              }}
-                            />
-                          }
-                        </div>
-                        <div
-                          className="tooltip tooltip-top"
-                          data-tip="Move clip up"
-                        >
-                          {used_icon_id === c.id + "all/order-up" ?
-                            <MdCheck />
-                          : <MdArrowUpward
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={(e) => {
-                                moveClip({ dir: "up", clip: c })
-                              }}
-                            />
-                          }
-                        </div>
-                        <div
-                          className="tooltip tooltip-top"
-                          data-tip="Move clip down"
-                        >
-                          {used_icon_id === c.id + "all/order-down" ?
-                            <MdCheck />
-                          : <MdArrowDownward
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={(e) => {
-                                moveClip({ dir: "down", clip: c })
-                              }}
-                            />
-                          }
-                        </div>
-                        <div
-                          className="tooltip tooltip-top"
-                          data-tip="Copy clip"
-                        >
-                          {used_icon_id === c.id + "all/copy" ?
-                            <MdCheck />
-                          : <MdContentCopy
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                copyToClipboard(
-                                  c.data,
-                                  c.id + "all/copy",
-                                  (id: string) => {
-                                    // setUsedIcon(id)
-                                    mem_notepad.used_icon_id = id
-                                  },
-                                )
-                                return false
-                              }}
-                            />
-                          }
-                        </div>
-                        <div
-                          className="tooltip tooltip-top"
-                          data-tip="Edit clip"
-                        >
-                          {used_icon_id === c.id + "all/edit" ?
-                            <MdCheck />
-                          : <MdEdit
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                onEdit(c)
-                              }}
-                            />
-                          }
-                        </div>
-                        <div
-                          className="tooltip tooltip-top"
-                          data-tip="Add to data"
-                        >
-                          {used_icon_id === c.id + "data/add" ?
-                            <MdCheck />
-                          : <MdInbox
-                              className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                              onClick={async (e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                emit({
-                                  type: "AddData/show",
-                                  data: {
-                                    file: {
-                                      name:
-                                        c.data
-                                          .split("\n")[0]
-                                          ?.trim()
-                                          .replace(/^([#]+) /g, "") ||
-                                        `${dayjs().format(
-                                          "YYYY-MM-DD",
-                                        )} - untitled`,
+                  {is_hovering === c.id && (
+                    <div
+                      className={`flex gap-2  bg-zinc-800 absolute right-2 -top-6 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded-lg mt-2 transition-all ${
+                        field_edit_id === c.id + "all/edit" ?
+                          "bg-zinc-900"
+                        : "bg-zinc-900"
+                      }`}
+                    >
+                      {field_edit_id === c.id + "all/edit" ?
+                        <>
+                          <div
+                            className="tooltip-left tooltip"
+                            data-tip="Save your changes"
+                          >
+                            {used_icon_id === c.id + "all/copy" ?
+                              <MdCheck />
+                            : <MdSave
+                                className={`h-3 w-3 cursor-pointer  ${
+                                  dirty_clip ?
+                                    "hover:text-zinc-200 text-zinc-400"
+                                  : "text-zinc-600 cursor-default"
+                                }`}
+                                onClick={() => handleEdit(c)}
+                              />
+                            }
+                          </div>
+                          <div
+                            className="tooltip tooltip-top"
+                            data-tip="Discard edits"
+                          >
+                            {used_icon_id === c.id + "all/edit" ?
+                              <MdCheck />
+                            : <MdClose
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={() => {
+                                  // setDirtyClip(false)
+                                  mem_notepad.dirty_clip = false
+                                  // return setFieldEditId("")
+                                  mem_notepad.field_edit_id = ""
+                                }}
+                              />
+                            }
+                          </div>
+                        </>
+                      : <>
+                          <div
+                            className="tooltip tooltip-top"
+                            data-tip="Delete clip"
+                          >
+                            {used_icon_id === c.id + "all/delete" ?
+                              <MdCheck />
+                            : <BiTrash
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={() => {
+                                  if (confirm("Delete this clip?")) {
+                                    onDelete(c)
+                                  }
+                                }}
+                              />
+                            }
+                          </div>
+                          <div
+                            className="tooltip tooltip-top"
+                            data-tip="Move clip up"
+                          >
+                            {used_icon_id === c.id + "all/order-up" ?
+                              <MdCheck />
+                            : <MdArrowUpward
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={(e) => {
+                                  moveClip({ dir: "up", clip: c })
+                                }}
+                              />
+                            }
+                          </div>
+                          <div
+                            className="tooltip tooltip-top"
+                            data-tip="Move clip down"
+                          >
+                            {used_icon_id === c.id + "all/order-down" ?
+                              <MdCheck />
+                            : <MdArrowDownward
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={(e) => {
+                                  moveClip({ dir: "down", clip: c })
+                                }}
+                              />
+                            }
+                          </div>
+                          <div
+                            className="tooltip tooltip-top"
+                            data-tip="Copy clip"
+                          >
+                            {used_icon_id === c.id + "all/copy" ?
+                              <MdCheck />
+                            : <MdContentCopy
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  copyToClipboard(
+                                    c.data,
+                                    c.id + "all/copy",
+                                    (id: string) => {
+                                      // setUsedIcon(id)
+                                      mem_notepad.used_icon_id = id
                                     },
-                                    mime: "text/plain",
-                                    content: c.data,
-                                    workspace_id,
-                                  },
-                                })
-                              }}
-                            />
-                          }
-                        </div>
-                      </>
-                    }
-                  </div>
+                                  )
+                                  return false
+                                }}
+                              />
+                            }
+                          </div>
+                          <div
+                            className="tooltip tooltip-top"
+                            data-tip="Edit clip"
+                          >
+                            {used_icon_id === c.id + "all/edit" ?
+                              <MdCheck />
+                            : <MdEdit
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  onEdit(c)
+                                }}
+                              />
+                            }
+                          </div>
+                          <div
+                            className="tooltip tooltip-top"
+                            data-tip="Add to data"
+                          >
+                            {used_icon_id === c.id + "data/add" ?
+                              <MdCheck />
+                            : <MdInbox
+                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                onClick={async (e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  emit({
+                                    type: "AddData/show",
+                                    data: {
+                                      file: {
+                                        name:
+                                          c.data
+                                            .split("\n")[0]
+                                            ?.trim()
+                                            .replace(/^([#]+) /g, "") ||
+                                          `${dayjs().format(
+                                            "YYYY-MM-DD",
+                                          )} - untitled`,
+                                      },
+                                      mime: "text/plain",
+                                      content: c.data,
+                                      workspace_id,
+                                    },
+                                  })
+                                }}
+                              />
+                            }
+                          </div>
+                        </>
+                      }
+                    </div>
+                  )}
                   {field_edit_id === c.id + "all/edit" ?
                     <textarea
                       id={`${c.id}-edit-field`}

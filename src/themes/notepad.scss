@@ -20,6 +20,7 @@
   .code {
     @apply my-4;
     font-size: 10px !important;
+
     pre {
       @apply bg-zinc-900 border border-zinc-800 rounded;
     }
@@ -32,7 +33,26 @@
   }
 
   li,
-  p {
-    @apply mb-1 whitespace-pre-wrap list-inside list-decimal #{!important};
+  p, h1, h2, h3, h4, h5, h6 {
+    @apply text-zinc-200 mb-2 whitespace-pre-wrap list-inside list-decimal #{!important};
+
+    &:last-child {
+      @apply mb-0 #{!important};
+    }
+  }
+  h1 {
+    @apply text-xl font-semibold;
+  }
+  h2 {
+    @apply text-lg font-semibold;
+  }
+  h3 {
+    @apply text-base font-semibold;
+  }
+  h4 {
+    @apply text-sm font-semibold;
+  }
+  hr {
+    @apply my-4 border-b-[1px] border-zinc-700;
   }
 }
