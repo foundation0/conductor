@@ -14,10 +14,6 @@ import { error } from "@/libraries/logging"
 import { ChatSessionT } from "@/data/schemas/sessions"
 
 export default function Settings({ session_id }: { session_id: string }) {
-  // const { user_state, ai_state } = useLoaderData() as {
-  //   ai_state: AIsT
-  //   user_state: UserT
-  // }
   const user_state = useMemory<UserT>({ id: "user" })
   const ai_state = useMemory<AIsT>({ id: "ais" })
 

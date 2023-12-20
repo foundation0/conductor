@@ -71,7 +71,7 @@ export default function Settings(props: any) {
     }
     const new_user_state = {
       ...user_state,
-      ..._.set(user_state, field_name, field_value),
+      ..._.set(_.cloneDeep(user_state), field_name, field_value),
     }
     await UserActions.updateUser(new_user_state)
 

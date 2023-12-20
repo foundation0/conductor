@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
-import { useFetcher, useLoaderData, useNavigate } from "react-router-dom"
+import {
+  redirect,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+} from "react-router-dom"
 import { UserT } from "@/data/loaders/user"
 import UserActions from "@/data/actions/user"
 import _ from "lodash"
@@ -13,17 +18,21 @@ import { MdOutlineAddAPhoto } from "react-icons/md"
 import Select from "react-select"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "../hooks/useMemory"
+import { emit, query } from "@/libraries/events"
+import { WorkspaceT } from "@/data/schemas/workspace"
 
 export default function Settings() {
   const navigate = useNavigate()
-  // const { user_state } = useLoaderData() as { user_state: UserT }
   const user_state = useMemory<UserT>({ id: "user" })
   const [field_edit_id, setFieldEditId] = useState("")
-  // const workspace_id = useParams().workspace_id as string
   const mem_app: mAppT = useMemory({ id: "app" })
-  const { workspace_id, session_id } = mem_app
-  const [workspace, setWorkspace] = useState(user_state.workspaces.find((w) => w.id === workspace_id))
-  const [workspace_i, setWorkspace_i] = useState(user_state.workspaces.findIndex((w) => w.id === workspace_id))
+  const { workspace_id } = mem_app
+  const [workspace, setWorkspace] = useState(
+    user_state.workspaces.find((w) => w.id === workspace_id),
+  )
+  const [workspace_i, setWorkspace_i] = useState(
+    user_state.workspaces.findIndex((w) => w.id === workspace_id),
+  )
 
   const fetcher = useFetcher()
 
@@ -31,15 +40,28 @@ export default function Settings() {
   useEffect(() => {
     if (workspace_id) {
       setWorkspace(user_state.workspaces.find((w) => w.id === workspace_id))
-      setWorkspace_i(user_state.workspaces.findIndex((w) => w.id === workspace_id))
+      setWorkspace_i(
+        user_state.workspaces.findIndex((w) => w.id === workspace_id),
+      )
     }
   }, [JSON.stringify([workspace_id, user_state.workspaces])])
 
-  const handleEdit = async ({ value, name, is_json }: { value: string; name: string; is_json?: boolean }) => {
+  const handleEdit = async ({
+    value,
+    name,
+    is_json,
+  }: {
+    value: string
+    name: string
+    is_json?: boolean
+  }) => {
     // field name is concatenated with . to denote nested fields
     const field_name = name.split(".")
     const field_value = is_json ? JSON.parse(value) : value
-    const new_user_state = { ...user_state, ..._.set(user_state, field_name, field_value) }
+    const new_user_state = {
+      ...user_state,
+      ..._.set(_.cloneDeep(user_state), field_name, field_value),
+    }
     await UserActions.updateUser(new_user_state)
     navigate(`/c/${workspace_id}/settings`)
   }
@@ -60,7 +82,9 @@ export default function Settings() {
   useEffect(() => {
     if (field_edit_id) {
       setTimeout(() => {
-        const e: HTMLInputElement | null = document.querySelector(`div[data-id="${field_edit_id}"] input`)
+        const e: HTMLInputElement | null = document.querySelector(
+          `div[data-id="${field_edit_id}"] input`,
+        )
         if (e) {
           e.focus()
           e.select()
@@ -73,7 +97,9 @@ export default function Settings() {
     if (fileRejections.length > 0) {
       fileRejections.map(({ file, errors }: any) => {
         return error({
-          message: `File ${file.name} was rejected: ${errors.map((e: any) => e.message).join(", ")}`,
+          message: `File ${file.name} was rejected: ${errors
+            .map((e: any) => e.message)
+            .join(", ")}`,
           data: errors,
         })
       })
@@ -91,9 +117,9 @@ export default function Settings() {
       reader.readAsDataURL(acceptedFiles[0] as any)
     }
   }, [])
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    maxFiles: 2,
+    maxFiles: 1,
     maxSize: 1000000,
     accept: {
       "image/png": [".png", ".jpg", ".jpeg", ".gif"],
@@ -108,24 +134,38 @@ export default function Settings() {
   return (
     <div className="Settings content flex flex-col flex-grow items-center m-10">
       <div className="flex flex-col w-full justify-start items-start max-w-2xl">
-        <div className="text-xl text-zinc-400 shadow font-semibold">{workspace.name} settings</div>
+        <div className="text-xl text-zinc-400 shadow font-semibold">
+          {workspace.name} settings
+        </div>
         <hr className="w-full border-zinc-700 my-4" />
 
-        <div className=" text-zinc-400 shadow font-semibold text-lg mb-3">Details</div>
+        <div className=" text-zinc-400 shadow font-semibold text-lg mb-3">
+          Details
+        </div>
         <div className="flex flex-row w-full gap-4">
           <div className="flex">
             <div
               {...getRootProps()}
               className="relative flex w-20 h-20 rounded-xl bg-zinc-800/80 border-t border-t-zinc-700 justify-center items-center overflow-hidden text-2xl font-bold text-zinc-500 mb-2"
             >
-              {workspace?.icon && <img src={workspace?.icon || ""} className="object-cover h-full" />}
+              {workspace?.icon && (
+                <img
+                  src={workspace?.icon || ""}
+                  className="object-cover h-full"
+                />
+              )}
               <input {...getInputProps()} />
               <MdOutlineAddAPhoto className="absolute opacity-80 hover:opacity-100 text-zinc-200 w-5 h-5 cursor-pointer" />
             </div>
           </div>
           <div className="flex flex-col w-full gap-4">
-            <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-name`}>
-              <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">Name</div>
+            <div
+              className="flex flex-row w-full gap-4"
+              data-id={`${workspace.id}-name`}
+            >
+              <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
+                Name
+              </div>
               <div
                 className="flex flex-grow text-end text-sm "
                 onClick={() => {
@@ -137,7 +177,10 @@ export default function Settings() {
                   type="text"
                   onSave={(data: any) => {
                     setFieldEditId("")
-                    handleEdit({ value: data, name: `workspaces.${workspace_i}.name` })
+                    handleEdit({
+                      value: data,
+                      name: `workspaces.${workspace_i}.name`,
+                    })
                   }}
                   onCancel={() => setFieldEditId("")}
                   onBlur={() => setFieldEditId("")}
@@ -150,8 +193,13 @@ export default function Settings() {
                 />
               </div>
             </div>
-            <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-defaults-llm-module`}>
-              <div className="flex items-center text-sm font-semibold text-zinc-300">Default LLM module</div>
+            <div
+              className="flex flex-row w-full gap-4"
+              data-id={`${workspace.id}-defaults-llm-module`}
+            >
+              <div className="flex items-center text-sm font-semibold text-zinc-300">
+                Default LLM module
+              </div>
               <div
                 className="flex flex-grow text-end text-sm "
                 onClick={() => {
@@ -164,21 +212,21 @@ export default function Settings() {
                   classNamePrefix="react-select"
                   onChange={(e: any) => {
                     handleEdit({
-                      value: `{ "id": "${e.value.split("/")[0]}", "variant": "${e.value.split("/")[1]}"}`,
+                      value: `{ "id": "${e.value.split("/")[0]}", "variant": "${
+                        e.value.split("/")[1]
+                      }"}`,
                       name: `workspaces.${workspace_i}.defaults.llm_module`,
                       is_json: true,
                     })
                   }}
                   value={{
-                    label: `${
-                      _.find(user_state?.modules?.installed, {
-                        id: workspace.defaults?.llm_module?.id,
-                      })?.meta.name
-                    } / ${
-                      _.find(user_state?.modules?.installed, {
-                        id: workspace.defaults?.llm_module?.id,
-                      })?.meta?.variants?.find((v) => v.id === workspace.defaults?.llm_module?.variant)?.name
-                    }`,
+                    label: `${_.find(user_state?.modules?.installed, {
+                      id: workspace.defaults?.llm_module?.id,
+                    })?.meta.name} / ${_.find(user_state?.modules?.installed, {
+                      id: workspace.defaults?.llm_module?.id,
+                    })?.meta?.variants?.find(
+                      (v) => v.id === workspace.defaults?.llm_module?.variant,
+                    )?.name}`,
                     value: `${workspace.defaults?.llm_module?.id}/${workspace.defaults?.llm_module?.variant}`,
                   }}
                   placeholder="Choose LLM model..."
@@ -210,31 +258,56 @@ export default function Settings() {
             </div>
           </div>
         </div>
-        <div className=" text-zinc-400 shadow font-semibold text-lg mb-3 mt-8">Manage</div>
-        <div className="flex flex-row w-full gap-4" data-id={`${workspace.id}-delete-workspace`}>
+        <div className=" text-zinc-400 shadow font-semibold text-lg mb-3 mt-8">
+          Manage
+        </div>
+        <div
+          className="flex flex-row w-full gap-4"
+          data-id={`${workspace.id}-delete-workspace`}
+        >
           <div className="flex flex-grow items-center text-sm font-semibold text-zinc-300">
             Delete workspace (can't be undone)
           </div>
           <div className="flex flex-grow text-end text-sm justify-end">
             <button
               className={`bg-red-800 hover:bg-red-700 text-zinc-50 rounded-lg block px-3 py-2 text-xs font-semibold cursor-pointer ${
-                user_state.workspaces.length === 1 ? "disabled tooltip tooltip-top" : ""
+                user_state.workspaces.length === 1 ?
+                  "disabled tooltip tooltip-top"
+                : ""
               }`}
               data-tip="Can't delete only workspace"
               disabled={user_state.workspaces.length === 1}
               // title={user_state.workspaces.length === 1 ? "Can't delete only workspace" : ""}
-              onClick={() => {
+              onClick={async () => {
                 if (user_state.workspaces.length === 1) return null
-                if (!confirm(`Are you sure you want to delete ${workspace.name}? This can't be undone.`)) return null
-                fetcher.submit(
-                  {
-                    workspace_id,
-                  },
-                  {
-                    method: "DELETE",
-                    action: `/c/workspace`,
-                  }
+                if (
+                  !confirm(
+                    `Are you sure you want to delete ${workspace.name}? This can't be undone.`,
+                  )
                 )
+                  return null
+                emit({
+                  type: "user.deleteWorkspace",
+                  data: { workspace_id },
+                })
+
+                // find next workspace to redirect to
+                const next_workspace: WorkspaceT = user_state.workspaces[0]
+
+                if (next_workspace) {
+                  // find its first session
+                  const next_workspace_first_session =
+                    next_workspace.groups.flatMap((g) =>
+                      g.folders.flatMap((f) => f.sessions),
+                    )[0]
+                  navigate(
+                    `/c/${next_workspace.id}/${
+                      next_workspace_first_session?.id || ""
+                    }`,
+                  )
+                } else {
+                  navigate("/c/create")
+                }
               }}
             >
               Delete workspace
