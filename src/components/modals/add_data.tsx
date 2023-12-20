@@ -7,7 +7,7 @@ import { mPricesT } from "@/data/schemas/memory"
 import { BiRightArrowAlt } from "react-icons/bi"
 import { HiPlus } from "react-icons/hi"
 import { Form } from "react-router-dom"
-import { emit } from "@/libraries/events"
+import { emit, query } from "@/libraries/events"
 import { error } from "@/libraries/logging"
 import CabinetIcon from "@/assets/icons/cabinet.svg"
 
@@ -16,6 +16,8 @@ type AddDataClipT = {
     name: string
   }
   mime: string
+  session_id: string
+  id: string
   content: string
   workspace_id: string
 }
@@ -23,6 +25,8 @@ type AddDataClipT = {
 export function AddData() {
   const initial = {
     file: { name: "" },
+    id: "",
+    session_id: "",
     mime: "",
     content: "",
     workspace_id: "",
@@ -63,27 +67,46 @@ export function AddData() {
   async function onAddData() {
     if (
       !mem_add_data.data.workspace_id ||
+      !mem_add_data.data.session_id ||
       !mem_add_data.data.file.name ||
       !mem_add_data.data.mime ||
+      !mem_add_data.data.id ||
       !mem_add_data.data.content
     ) {
       return error({ message: "Invalid notepad clip" })
     }
     mem_add_data.data.file.name = mem_add_data.form.name
-    emit({
-      type: "data.import",
+    const res: any = await query({
+      type: "data/import",
       data: mem_add_data.data,
     })
-    mem_add_data.data = initial
-    mem_add_data.form = {
-      name: "",
+    const { data_id } = res
+    if (!data_id) {
+      return error({ message: "Failed to import data" })
     }
+    emit({
+      type: "notepad.updateClip",
+      data: {
+        session_id: mem_add_data.data.session_id,
+        clip: {
+          id: mem_add_data.data.id,
+          data_id: res?.data_id,
+        },
+      },
+    })
+    mem_add_data.data = initial
+    mem_add_data.form.name = ""
+
     emit({
       type: "workspace/changeSidebarTab",
       data: {
         sidebar_tab: "data",
       },
     })
+    const i = document.getElementById("add-data-input") as HTMLInputElement
+    // set input value to ""
+    i.value = ""
+
     const dialog = document.getElementById("AddData") as HTMLDialogElement
     dialog.close()
   }
@@ -128,13 +151,14 @@ export function AddData() {
             >
               <label className="flex flex-row w-full backdrop-blur bg-zinc-700/30 bg-opacity-80 border border-zinc-900 border-t-zinc-700 rounded-lg items-center">
                 <input
+                  id="add-data-input"
                   type="text"
                   name="name"
                   placeholder="Name"
                   className="flex flex-1 p-4 py-3 bg-transparent text-xs border-0 rounded  placeholder-zinc-400 text-zinc-300 outline-none focus:outline-none ring-0 shadow-transparent input"
                   autoComplete="off"
                   // defaultValue={mem_add_data.form.name}
-                  value={mem_add_data.form.name}
+                  defaultValue={mem_add_data.form.name}
                   onChange={(e) => {
                     mem_add_data.form.name = e.target.value
                   }}

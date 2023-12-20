@@ -4,12 +4,22 @@ import _ from "lodash"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 import { emit, listen, query } from "@/libraries/events"
-import { ph } from "@/libraries/logging"
+import { error, ph } from "@/libraries/logging"
 import { NotepadsT } from "../loaders/notepad"
 import { getMemoryState } from "@/libraries/memory"
 
 const API: { [key: string]: Function } = {
-  add: async ({ session_id, msg_id, type, data }: { session_id: string; msg_id: string; type: string; data: any }) => {
+  add: async ({
+    session_id,
+    msg_id,
+    type,
+    data,
+  }: {
+    session_id: string
+    msg_id: string
+    type: string
+    data: any
+  }) => {
     const { NotepadState } = await initLoaders()
     const notepads = _.cloneDeep(NotepadState.get())
     const clip: z.infer<typeof ClipS> = {
@@ -19,12 +29,15 @@ const API: { [key: string]: Function } = {
       data,
       msg_id,
     }
+    if (clip.msg_id === "0") clip.msg_id = `na/${clip.id}`
     if (ClipS.safeParse(clip).success !== true) throw new Error("Invalid clip")
     notepads[session_id] = notepads[session_id] || { session_id, clips: [] }
     notepads[session_id].clips.push(clip)
 
     // remove duplicates by msg_id
-    notepads[session_id].clips = _(notepads[session_id].clips).uniqBy("msg_id").uniqBy("id").value()
+    notepads[session_id].clips = _(notepads[session_id].clips)
+      .uniqBy("id")
+      .value()
     await NotepadState.set(notepads, false, true)
 
     ph().capture("notepad/add")
@@ -37,7 +50,13 @@ const API: { [key: string]: Function } = {
     })
     return clip
   },
-  updateNotepad: async ({ session_id, notepad }: { session_id: string; notepad: z.infer<typeof NotepadS> }) => {
+  updateNotepad: async ({
+    session_id,
+    notepad,
+  }: {
+    session_id: string
+    notepad: z.infer<typeof NotepadS>
+  }) => {
     const { NotepadState } = await initLoaders()
     const notepads = _.cloneDeep(NotepadState.get())
     notepads[session_id] = notepad
@@ -50,10 +69,49 @@ const API: { [key: string]: Function } = {
       },
     })
   },
-  deleteClip: async ({ session_id, clip_id }: { session_id: string; clip_id: string }) => {
+  updateClip: async ({
+    session_id,
+    clip,
+  }: {
+    session_id: string
+    clip: z.infer<typeof ClipS>
+  }) => {
     const { NotepadState } = await initLoaders()
     const notepads = _.cloneDeep(NotepadState.get())
-    notepads[session_id].clips = _(notepads[session_id].clips).uniqBy("msg_id").uniqBy("id").filter((clip: any) => clip.id !== clip_id).value()
+    const index = _.findIndex(notepads[session_id].clips, { id: clip.id })
+    if (index === -1) throw new Error("Clip not found")
+    notepads[session_id].clips[index] = _.merge(
+      notepads[session_id].clips[index],
+      clip,
+    )
+    // parse
+    if (ClipS.safeParse(notepads[session_id].clips[index]).success) {
+      await NotepadState.set(notepads)
+      emit({
+        type: "notepad.updateClip.done",
+        data: {
+          notepad: notepads[session_id],
+          target: session_id,
+        },
+      })
+    } else {
+      return error({ message: "invalid clip", data: { clip } })
+    }
+  },
+  deleteClip: async ({
+    session_id,
+    clip_id,
+  }: {
+    session_id: string
+    clip_id: string
+  }) => {
+    const { NotepadState } = await initLoaders()
+    const notepads = _.cloneDeep(NotepadState.get())
+    notepads[session_id].clips = _(notepads[session_id].clips)
+      .uniqBy("msg_id")
+      .uniqBy("id")
+      .filter((clip: any) => clip.id !== clip_id)
+      .value()
     await NotepadState.set(notepads, false, true)
     emit({
       type: "notepad.deleteClip.done",
@@ -89,6 +147,5 @@ listen({
     }
   },
 })
-
 
 export default API

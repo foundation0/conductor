@@ -210,10 +210,11 @@ export async function processData(
     },
   })
   callback && callback()
+  return data_id
 }
 
 listen({
-  type: "data.import",
+  type: "data/import",
   action: async (data: {
     file: {
       name: string
@@ -221,8 +222,10 @@ listen({
     mime: string
     content: any
     workspace_id: string
+    callback?: Function
   }) => {
-    await processData(data)
+    const data_id = await processData(data)
+    data?.callback && data.callback({ data_id })
   },
 })
 

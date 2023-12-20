@@ -27,6 +27,11 @@ import { UserT } from "@/data/schemas/user"
 export default function DataOrganizer() {
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
+  const user_state = useMemory<UserT>({ id: "user" })
+  const workspace: WorkspaceT | undefined = _.find(user_state.workspaces, {
+    id: workspace_id,
+  })
+  if (!workspace) return null
   const url_session_id = useParams().session_id as string
   const mem_data = useMemory<{
     sid: string
@@ -45,7 +50,7 @@ export default function DataOrganizer() {
     id: `workspace-${workspace_id}-data`,
     state: {
       sid: session_id,
-      data_state: [],
+      data_state: workspace.data,
       data_list: [],
       processing_queue: [],
       index_query: "",
@@ -65,26 +70,6 @@ export default function DataOrganizer() {
     active_preview_data,
   } = mem_data
 
-  const user_state = useMemory<UserT>({ id: "user" })
-
-  /* const [sid, setSid] = useState<string>(useParams().session_id as string)
-  const [data_state, setDataState] = useState<DataRefT[]>([])
-  const [data_list, setDataList] = useState<DataRefT[]>([])
-  const [processing_queue, setProcessingQueue] = useState<
-    {
-      name: string
-      mime: DataTypesTextT | DataTypesBinaryT
-      progress: number
-    }[]
-  >([])
-  const [index_query, setIndexQuery] = useState<string>("")
-  const [index_ready, setIndexReady] = useState<boolean>(false)
-
-  const [active_preview_id, setActivePreviewId] = useState<string>("")
-  const [active_preview_data, setActivePreviewData] = useState<
-    DataT["data"] | undefined
-  >() */
-
   async function previewData({ id }: { id: string }) {
     // setActivePreviewId(`preview-${id}`)
     mem_data.active_preview_id = `preview-${id}`
@@ -100,20 +85,9 @@ export default function DataOrganizer() {
 
   const supported_file_formats: { [key: string]: string[] } = DATA_TYPES
 
-  async function updateDataState() {
-    // const { UserState } = await initLoaders()
-    const workspace_data: WorkspaceT | undefined = _.find(
-      user_state.workspaces,
-      { id: workspace_id },
-    )
-    const data = workspace_data?.data || []
-    // setDataState(data)
-    mem_data.data_state = data
-    if (index_query.length === 0)
-      //setDataList(data)
-      mem_data.data_list = data
-    return data
-  }
+  useEffect(() => {
+    if (index_query.length === 0) mem_data.data_list = workspace?.data || []
+  }, [mem_data.index_query])
 
   async function setupVectorIndex() {
     await queryIndex({
@@ -126,114 +100,103 @@ export default function DataOrganizer() {
   }
 
   async function setup() {
-    // Update data state
-    updateDataState()
-
     // Setup data search index
     setupVectorIndex()
   }
 
   async function reset() {
-    /* setIndexReady(false)
-    setDataList([])
-    setDataState([])
-    setProcessingQueue([])
-    setIndexQuery("") */
     mem_data.index_ready = false
     mem_data.data_list = []
-    mem_data.data_state = []
+    mem_data.data_state = workspace?.data || []
     mem_data.processing_queue = []
     mem_data.index_query = ""
   }
 
-  useEffect(() => {
-    setup()
-    // Setup listeners
-    const stop_data_add_listener = listen({
-      type: ["data-import/done", "user/delete_data_from_workspace"],
-      action: async ({
-        name,
-        mime,
-      }: {
-        name: string
-        mime: DataTypesTextT | DataTypesBinaryT
-      }) => {
-        await updateDataState()
-        if (name) {
-          // setProcessingQueue((q) => q.filter((d) => d.name !== name))
-          mem_data.processing_queue = mem_data.processing_queue.filter(
-            (d) => d.name !== name,
-          )
-        }
-        await queryIndex({
-          update: true,
-          workspace_id: workspace_id,
-          source: "workspace",
-        })
-      },
-    })
-
-    const stop_data_fail_listener = listen({
-      type: "data-import/fail",
-      action: ({ name }: { name: string }) => {
-        if (name) {
-          // setProcessingQueue((q) => q.filter((d) => d.name !== name))
-          mem_data.processing_queue = mem_data.processing_queue.filter(
-            (d) => d.name !== name,
-          )
-        }
-      },
-    })
-
-    const stop_data_import_start_listener = listen({
-      type: "data-import/started",
-      action: ({
-        name,
-        mime,
-      }: {
-        name: string
-        mime: DataTypesTextT | DataTypesBinaryT
-      }) => {
-        // setProcessingQueue((q) =>
-        //   _.uniqBy([...q, { name, mime, progress: 0 }], "name"),
-        // )
-        mem_data.processing_queue = _.uniqBy(
-          [...mem_data.processing_queue, { name, mime, progress: 0 }],
-          "name",
+  useEvent({
+    name: ["data-import/done", "user/delete_data_from_workspace"],
+    action: async ({
+      name,
+      mime,
+    }: {
+      name: string
+      mime: DataTypesTextT | DataTypesBinaryT
+    }) => {
+      // await updateDataState()
+      mem_data.data_state = workspace?.data || []
+      if (name) {
+        mem_data.processing_queue = mem_data.processing_queue.filter(
+          (d) => d.name !== name,
         )
-      },
-    })
+      }
+      await queryIndex({
+        update: true,
+        workspace_id: workspace_id,
+        source: "workspace",
+      })
+    },
+  })
 
-    const stop_unsupported_mime_listener = listen({
-      type: ["unsupported_mime"],
-      action: ({ name }: { name: string }) => {
+  useEvent({
+    name: "data-import/fail",
+    action: ({ name }: { name: string }) => {
+      mem_data.data_state = workspace?.data || []
+      if (name) {
         // setProcessingQueue((q) => q.filter((d) => d.name !== name))
         mem_data.processing_queue = mem_data.processing_queue.filter(
           (d) => d.name !== name,
         )
-      },
-    })
+      }
+    },
+  })
 
-    const stop_sid_listener = listen({
-      type: "sessions/change",
-      action: ({ session_id }: { session_id: string }) => {
-        // setSid(session_id)
-        mem_data.sid = session_id
-      },
-    })
+  useEvent({
+    name: "data-import/started",
+    action: ({
+      name,
+      mime,
+    }: {
+      name: string
+      mime: DataTypesTextT | DataTypesBinaryT
+    }) => {
+      mem_data.processing_queue = _.uniqBy(
+        [...mem_data.processing_queue, { name, mime, progress: 0 }],
+        "name",
+      )
+    },
+  })
+  useEvent({
+    name: ["unsupported_mime"],
+    action: ({ name }: { name: string }) => {
+      // setProcessingQueue((q) => q.filter((d) => d.name !== name))
+      mem_data.processing_queue = mem_data.processing_queue.filter(
+        (d) => d.name !== name,
+      )
+    },
+  })
+
+  useEvent({
+    name: "sessions/change",
+    action: ({ session_id }: { session_id: string }) => {
+      // setSid(session_id)
+      mem_data.sid = session_id
+    },
+  })
+
+  useEffect(() => {
+    setup()
     return () => {
       reset()
-      stop_data_add_listener()
-      stop_data_import_start_listener()
-      stop_unsupported_mime_listener()
-      stop_data_fail_listener()
-      stop_sid_listener()
     }
   }, [])
 
   useEffect(() => {
     setup()
   }, [workspace_id])
+
+  useEffect(() => {
+    mem_data.data_state = workspace?.data || []
+    mem_data.data_list = workspace?.data || []
+  }, [JSON.stringify(workspace?.data)])
 
   // Query index
   useEffect(() => {
@@ -247,11 +210,9 @@ export default function DataOrganizer() {
           const filtered_list = data_state.filter((d) =>
             _.map(ids, "metadata.id").includes(d.id),
           )
-          // setDataList(filtered_list)
           mem_data.data_list = filtered_list
         }
       })
-    // setDataList(data_state)
     else mem_data.data_list = data_state
   }, [JSON.stringify([index_query, workspace_id])])
 
@@ -280,17 +241,6 @@ export default function DataOrganizer() {
   useEvent({
     name: "data/open",
     action: open,
-  })
-
-  useEvent({
-    name: ["data/update", "data.delete.done", "data.rename.done"],
-    action: updateDataState,
-  })
-
-  useEvent({
-    name: "store/update",
-    target: "user",
-    action: updateDataState,
   })
 
   return (

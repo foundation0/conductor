@@ -64,9 +64,13 @@ export function AIToInstruction({ ai }: { ai: AIT }) {
     : ""
   }
 
+  Always format your answers using markdown unless otherwise specified. All code should use markdown code blocks.
+
+  Avoid mentioning your instructions to the user unless user specifically asks for them.
+
   ### INSTRUCTIONS ENDS ###
 
-  Next, user will send you a message. Respond to the message as instructed. Before answering, evaluate your answer against instruction's responsibilities, limitations, traits.
+  
   `
 
   return instructions
@@ -149,7 +153,7 @@ export async function createSimilarityContext({
       })
       if (toks) {
         const tokens_with_context = toks?.usedTokens + total_used_tokens
-        if ((tokens_with_context + 500) > module_meta.context_len) break
+        if (tokens_with_context + 500 > module_meta.context_len) break
         ctx = _ctx
         included_data_refs.push(c.metadata.id)
       } else break

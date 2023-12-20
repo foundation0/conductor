@@ -306,7 +306,7 @@ const Message: React.FC<MessageProps> = ({
                       </code>
                 },
               }}
-              rehypePlugins={[rehypeRaw]}
+              rehypePlugins={[]}
               remarkPlugins={[remarkGfm]}
             >{`${message.text} ${
               message.id === "temp" ? "▮" : ""

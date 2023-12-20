@@ -26,7 +26,12 @@ const API: { [key: string]: Function } = {
     // if storage exists, abort and return the id
     const existing_store = await store.get()
     if (existing_store) {
-      if (!confirm("Data with this name already exists, do you want to overwrite?")) return id
+      if (
+        !confirm(
+          "Data with this name already exists, do you want to overwrite?",
+        )
+      )
+        return id
     }
 
     // validate data
@@ -81,7 +86,29 @@ const API: { [key: string]: Function } = {
     await store.set(validated?.data, false, true)
 
     emit({ type: "data.rename.done" })
-  }
+  },
+  update: async ({ id, data }: { id: string; data: Partial<DataT> }) => {
+    const { DataState } = await initLoaders()
+    const store = await DataState({ id })
+    // get existing data
+    const existing_data: DataT = await store.get()
+    // update data
+    _.merge(existing_data, data)
+    // validate data
+    const validated = DataS.safeParse(existing_data)
+    if (!validated.success) {
+      return error({
+        message: "invalid data",
+        data: {
+          data,
+        },
+      })
+    }
+    // save data
+    await store.set(validated?.data, false, true)
+
+    emit({ type: "data.update.done" })
+  },
 }
 
 listen({

@@ -10,6 +10,7 @@ export const ClipS = z.object({
     .catch(() => nanoid(10)),
   type: z.string(),
   msg_id: z.string(),
+  data_id: z.string().optional(),
   data: z.any().optional(),
   bin: z.custom((data) => validateBinary(data)).optional(),
 })

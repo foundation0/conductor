@@ -28,24 +28,27 @@ import { BiNotepad } from "react-icons/bi"
 import { useEvent } from "@/components/hooks/useEvent"
 import { emit, query } from "@/libraries/events"
 import dayjs from "dayjs"
-import { initLoaders } from "@/data/loaders"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
 import { RxPlus } from "react-icons/rx"
+import { RichTextarea } from "rich-textarea"
+import { nanoid } from "nanoid"
 
 let mouse_over_timer: any = null
 
 export default function Notepad() {
   const user_state = useMemory<UserT>({ id: "user" })
   const notepad_state = useMemory<NotepadsT>({ id: "notepads" })
+  if (!user_state || !notepad_state) return null
 
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
+  const notepad = notepad_state[session_id]
 
   const mem_notepad = useMemory<{
-    notepad: NotepadT | undefined
+    // notepad: NotepadT | undefined
     edited_clip: string
     dirty_clip: boolean
     field_edit_id: string
@@ -53,62 +56,14 @@ export default function Notepad() {
   }>({
     id: `session-${session_id}-notepad`,
     state: {
-      notepad: undefined,
+      // notepad,
       edited_clip: "",
       dirty_clip: false,
       field_edit_id: "",
       used_icon_id: "",
     },
   })
-
-  const { notepad, edited_clip, dirty_clip, field_edit_id, used_icon_id } =
-    mem_notepad
-
-  async function updateNotepad({ notepad }: { notepad?: NotepadT } = {}) {
-    const _sid = session_id
-    // console.log("update notepad", session_id)
-    if (notepad && notepad.session_id === _sid)
-      return (mem_notepad.notepad = notepad)
-    if (notepad && notepad.session_id !== _sid) return
-    if (!_sid) return
-    // get current session id
-    mem_notepad.notepad = notepad_state[_sid]
-  }
-
-  useEffect(() => {
-    updateNotepad()
-  }, [])
-
-  useEffect(() => {
-    // setSessionId(sid)
-    updateNotepad()
-  }, [JSON.stringify([notepad_state, session_id])])
-
-  useEvent({
-    name: "sessions/change",
-    action: function ({ session_id }: { session_id: string }) {
-      // console.log("notepad sessions/change", session_id)
-      updateNotepad()
-    },
-  })
-
-  useEvent({
-    name: [
-      "notepad.addClip.done",
-      "notepad.updateNotepad.done",
-      "notepad.deleteClip.done",
-    ],
-    // target: session_id,
-    action: function ({
-      notepad,
-      session_id: sid,
-    }: {
-      notepad: NotepadT
-      session_id: string
-    }) {
-      updateNotepad()
-    },
-  })
+  const { edited_clip, dirty_clip, field_edit_id, used_icon_id } = mem_notepad
 
   const handleEdit = async (c: any) => {
     if (!session_id || edited_clip === c.data) return
@@ -128,7 +83,22 @@ export default function Notepad() {
     }
     await NotepadActions.updateNotepad({ session_id, notepad: cb.data })
 
-    await updateNotepad()
+    // await updateNotepad()
+
+    if (c.data_id) {
+      // update data as well
+      emit({
+        type: "data.update",
+        data: {
+          id: c.data_id,
+          data: {
+            data: {
+              content: edited_clip,
+            },
+          },
+        },
+      })
+    }
     mem_notepad.field_edit_id = ""
     mem_notepad.edited_clip = ""
     mem_notepad.dirty_clip = false
@@ -189,13 +159,13 @@ export default function Notepad() {
       return
     }
     await NotepadActions.updateNotepad({ session_id, notepad: cb.data })
-    updateNotepad()
+    // updateNotepad()
   }
 
   const onDelete = async (c: any) => {
     if (!session_id) return
     await NotepadActions.deleteClip({ session_id, clip_id: c.id })
-    await updateNotepad()
+    // await updateNotepad()
   }
 
   function combineClips() {
@@ -226,12 +196,14 @@ export default function Notepad() {
     emit({
       type: "AddData/show",
       data: {
+        id: nanoid(10),
         file: {
           name: session_name ? session_name : "notepad",
         },
         mime: "text/plain",
         content: text,
         workspace_id,
+        session_id,
       },
     })
   }
@@ -277,7 +249,7 @@ export default function Notepad() {
       if (id !== is_hovering) setIsHovering("")
     },
   })
-
+  const workspace = _.find(user_state.workspaces, { id: workspace_id })
   return (
     <div className="Notepad flex flex-col px-3 pt-2 gap-6 w-full bg-zinc-900 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30 overflow-auto overflow-x-hidden">
       <div className="flex flex-row text-zinc-300 text-sm font-semibold pb-1">
@@ -345,9 +317,9 @@ export default function Notepad() {
           </DropdownMenu.Root>
         </div>
       </div>
-      {mem_notepad.notepad?.clips?.length || 0 > 0 ?
+      {notepad?.clips?.length || 0 > 0 ?
         <>
-          {_(mem_notepad.notepad?.clips)
+          {_(notepad?.clips)
             .uniqBy("id")
             ?.map((c) => {
               return (
@@ -360,6 +332,25 @@ export default function Notepad() {
                   onMouseEnter={() => handleMouseHover(true, c)}
                   onMouseLeave={() => handleMouseHover(false, c)}
                 >
+                  {c.data_id && (
+                    <div
+                      className={`flex gap-2 bg-zinc-700 text-zinc-300 absolute left-2 -top-6 text-[10px] overflow-visible whitespace-nowrap py-1 px-2 rounded-lg mt-2 transition-all ${
+                        field_edit_id === c.id + "all/edit" ?
+                          "bg-zinc-900"
+                        : "bg-zinc-900"
+                      }`}
+                    >
+                      {(
+                        (_.find(workspace?.data, { id: c.data_id })?.name || "")
+                          .length > 50
+                      ) ?
+                        _.find(workspace?.data, { id: c.data_id })?.name.slice(
+                          0,
+                          50,
+                        ) + "..."
+                      : _.find(workspace?.data, { id: c.data_id })?.name}
+                    </div>
+                  )}
                   {is_hovering === c.id && (
                     <div
                       className={`flex gap-2  bg-zinc-800 absolute right-2 -top-6 text-xs overflow-visible whitespace-nowrap py-2 px-3 rounded-lg mt-2 transition-all ${
@@ -489,57 +480,68 @@ export default function Notepad() {
                               />
                             }
                           </div>
-                          <div
-                            className="tooltip tooltip-top"
-                            data-tip="Add to data"
-                          >
-                            {used_icon_id === c.id + "data/add" ?
-                              <MdCheck />
-                            : <MdInbox
-                                className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
-                                onClick={async (e) => {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  emit({
-                                    type: "AddData/show",
-                                    data: {
-                                      file: {
-                                        name:
-                                          c.data
-                                            .split("\n")[0]
-                                            ?.trim()
-                                            .replace(/^([#]+) /g, "") ||
-                                          `${dayjs().format(
-                                            "YYYY-MM-DD",
-                                          )} - untitled`,
+                          {!c.data_id && (
+                            <div
+                              className="tooltip tooltip-top"
+                              data-tip="Add to data"
+                            >
+                              {used_icon_id === c.id + "data/add" ?
+                                <MdCheck />
+                              : <MdInbox
+                                  className="h-3 w-3 cursor-pointer hover:text-zinc-200 text-zinc-400"
+                                  onClick={async (e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    emit({
+                                      type: "AddData/show",
+                                      data: {
+                                        session_id,
+                                        id: c.id,
+                                        file: {
+                                          name:
+                                            c.data
+                                              .split("\n")[0]
+                                              ?.trim()
+                                              .replace(/^([#]+) /g, "") ||
+                                            `${dayjs().format(
+                                              "YYYY-MM-DD",
+                                            )} - untitled`,
+                                        },
+                                        mime: "text/plain",
+                                        content: c.data,
+                                        workspace_id,
                                       },
-                                      mime: "text/plain",
-                                      content: c.data,
-                                      workspace_id,
-                                    },
-                                  })
-                                }}
-                              />
-                            }
-                          </div>
+                                    })
+                                  }}
+                                />
+                              }
+                            </div>
+                          )}
                         </>
                       }
                     </div>
                   )}
                   {field_edit_id === c.id + "all/edit" ?
-                    <textarea
+                    <RichTextarea
                       id={`${c.id}-edit-field`}
                       defaultValue={edited_clip}
                       className="text-[10px] bg-transparent border-0 m-0 p-0 font-mono"
-                      style={{ opacity: 1 }}
+                      // style={{ opacity: 1 }}
+                      style={{ width: "100%", resize: "none" }}
+                      onFocus={(e) => {
+                        e.target.focus()
+                      }}
                       onChange={(e) => {
                         mem_notepad.dirty_clip = true
                         mem_notepad.edited_clip = e.target.value
                       }}
+                      autoComplete="off"
+                      rows={1}
+                      autoHeight
                       onBlur={() => {
                         if (!dirty_clip) return (mem_notepad.field_edit_id = "")
                       }}
-                    ></textarea>
+                    ></RichTextarea>
                   : <div onClick={() => onEdit(c)}>
                       <ReactMarkdown
                         components={{

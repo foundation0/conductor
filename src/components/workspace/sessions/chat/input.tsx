@@ -14,13 +14,6 @@ import { error } from "@/libraries/logging"
 import { useEvent } from "@/components/hooks/useEvent"
 import { RiRobot2Fill } from "react-icons/ri"
 import { MdAddCircle } from "react-icons/md"
-import { initLoaders } from "@/data/loaders"
-import Joyride, { Step } from "react-joyride"
-import {
-  Input as InputIntro,
-  InputActions,
-} from "@/components/experiences/input_introduction/v1"
-import { UserT } from "@/data/schemas/user"
 
 let PROMPT_CACHE: { [key: string]: string } = {}
 

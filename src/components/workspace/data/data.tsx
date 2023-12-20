@@ -1,7 +1,13 @@
 import { DataTypesBinaryT, DataTypesTextT } from "@/data/schemas/data_types"
 import { getIcon } from "material-file-icons"
 import { ReactElement, useEffect, useState } from "react"
-import { MdCheck, MdClose, MdDelete, MdDeleteForever, MdDeleteOutline } from "react-icons/md"
+import {
+  MdCheck,
+  MdClose,
+  MdDelete,
+  MdDeleteForever,
+  MdDeleteOutline,
+} from "react-icons/md"
 import { RxDotsHorizontal, RxPlus } from "react-icons/rx"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import _ from "lodash"
@@ -72,11 +78,11 @@ export default function Data({
   }, [mem_data.field_edit])
 
   useEvent({
-    name: 'data/toggle_edit',
+    name: "data/toggle_edit",
     target: id,
     action: () => {
       mem_data.field_edit = true //!mem_data.field_edit
-    }
+    },
   })
   return (
     <div
@@ -103,26 +109,26 @@ export default function Data({
           type="text"
           editMode={mem_data.field_edit}
           onSave={(value: any) => {
-            if(value === name) return
+            if (value === name) return
             emit({
-              type: 'data.rename',
+              type: "data.rename",
               data: {
                 id,
-                name: value
-              }
+                name: value,
+              },
             })
             emit({
-              type: 'user.renameDataInWorkspace',
+              type: "user.renameDataInWorkspace",
               data: {
                 workspace_id: mem_app.workspace_id,
                 data_id: id,
-                name: value
-              }
+                name: value,
+              },
             })
             mem_data.field_edit = false
           }}
-          onCancel={() => mem_data.field_edit = false}
-          onBlur={() => mem_data.field_edit = false}
+          onCancel={() => (mem_data.field_edit = false)}
+          onBlur={() => (mem_data.field_edit = false)}
           cancelOnBlur={true}
           saveButtonLabel={<MdCheck className="w-3 h-3 text-zinc-200" />}
           cancelButtonLabel={<MdClose className="w-3 h-3 text-zinc-200" />}
@@ -136,7 +142,7 @@ export default function Data({
                 props.setParentValue(e.target.value)
               }}
               className="w-full text-zinc-200 rounded border-0 bg-transparent italic"
-              value={props.value}
+              defaultValue={props.value}
             />
           )}
         />
