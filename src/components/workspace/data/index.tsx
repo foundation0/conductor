@@ -200,7 +200,7 @@ export default function DataOrganizer() {
 
   // Query index
   useEffect(() => {
-    if (index_query)
+    if (index_query && index_query.length > 1)
       queryIndex({
         workspace_id: workspace_id,
         source: "workspace",
@@ -213,8 +213,11 @@ export default function DataOrganizer() {
           mem_data.data_list = filtered_list
         }
       })
-    else mem_data.data_list = data_state
-  }, [JSON.stringify([index_query, workspace_id])])
+    else {
+      mem_data.data_state = workspace?.data || []
+      mem_data.data_list = workspace?.data || []
+    }
+  }, [index_query])
 
   const onDrop = useCallback((acceptedFiles: any, fileRejections: any) => {
     if (fileRejections.length > 0) {
