@@ -64,6 +64,8 @@ import { AppStateT } from "@/data/loaders/app"
 
 const padding = 50
 
+let send_msg_timer: any = null
+
 export default function Chat({
   workspace_id,
   session_id,
@@ -141,15 +143,6 @@ export default function Chat({
   }: {
     message: TextMessageT
   }) {
-    /* const ms = await MessagesState({ session_id: sid })
-    const raw_messages: TextMessageT[] = ms?.get()
-    const activePath = computeActivePath(raw_messages || [])
-
-    let processed_messages = buildMessageTree({
-      messages: raw_messages || [],
-      first_id: "first",
-      activePath,
-    }) */
     // find the message in processed_messages
     const msg_index = _.findIndex(
       mem_session.messages.active,
@@ -485,14 +478,6 @@ export default function Chat({
     )
   }
 
-  // refresh chat if session or workspace id changes
-  /* useEffect(() => {
-    if (session_id !== sid) {
-      // emit session change
-      emit({ type: "sessions/change", data: { session_id } })
-    }
-  }, [JSON.stringify([sid, workspace_id])]) */
-
   // keep track of input height
   useEffect(() => {
     const e_input = eInput.current
@@ -659,7 +644,9 @@ export default function Chat({
       meta: TextMessageT["meta"]
     }) => {
       if (session_id !== sid) return
-      send({ message, meta })
+      send_msg_timer = setTimeout(() => {
+        send({ message, meta })
+      }, 100)
     },
   })
 

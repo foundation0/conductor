@@ -1,4 +1,9 @@
-import React, { JSXElementConstructor, ReactElement, useEffect, useState } from "react"
+import React, {
+  JSXElementConstructor,
+  ReactElement,
+  useEffect,
+  useState,
+} from "react"
 import { TextMessageT } from "@/data/loaders/sessions"
 import Message from "./message"
 import _ from "lodash"
@@ -17,7 +22,10 @@ import { FaUser } from "react-icons/fa"
 import { Module } from "@/modules"
 import { ChatSessionT } from "@/data/schemas/sessions"
 import { error } from "@/libraries/logging"
-import { buildMessageTree, computeActivePath } from "../../../../libraries/branching"
+import {
+  buildMessageTree,
+  computeActivePath,
+} from "../../../../libraries/branching"
 import { RxCornerBottomLeft } from "react-icons/rx"
 import { LuGitBranchPlus } from "react-icons/lu"
 import useMemory from "@/components/hooks/useMemory"
@@ -50,26 +58,36 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   // const { ai_state, user_state } = useLoaderData() as { ai_state: AIsT; user_state: UserT }
   const user_state = useMemory<UserT>({ id: "user" })
   const ai_state = useMemory<AIsT>({ id: "ais" })
-  
+
   const [ago_refresh, setAgoRefresh] = useState(1)
   const mem_session = useMemory<mChatSessionT>({
     id: `session-${session_id}`,
   })
-  if(!mem_session) return error({message: "No session"})
+  if (!mem_session) return error({ message: "No session" })
   const { session } = mem_session
   // const [session, setSession] = useState<ChatSessionT | undefined>(undefined)
 
   // setup participants
-  const [participants, setParticipants] = useState<{ [key: string]: React.ReactElement }>({
+  const [participants, setParticipants] = useState<{
+    [key: string]: React.ReactElement
+  }>({
     user: <FaUser />,
     AI: <FaUser />,
   })
 
-  async function updateParticipants({ session, messages }: { session: ChatSessionT; messages: MessageRowT[] }) {
+  async function updateParticipants({
+    session,
+    messages,
+  }: {
+    session: ChatSessionT
+    messages: MessageRowT[]
+  }) {
     if (!session) return error({ message: "No session" })
     // const { UserState, SessionsState } = await initLoaders()
     // const user_state = await UserState()
-    const module: { specs: ModuleT; main: Function } | any = await Module(session.settings.module.id)
+    const module: { specs: ModuleT; main: Function } | any = await Module(
+      session.settings.module.id,
+    )
 
     // Update participants
     const p: { [key: string]: React.ReactElement } = {
@@ -87,7 +105,10 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
 
     messages.forEach((ms) => {
       const m = ms[1]
-      if (!m.source.match(/user/) && module.specs.id === m.source.replace("ai:", "").split("/")[0]) {
+      if (
+        !m.source.match(/user/) &&
+        module.specs.id === m.source.replace("ai:", "").split("/")[0]
+      ) {
         const user_variant_settings = _.find(user_state.modules.installed, {
           id: module.specs.id,
         })?.meta?.variants?.find((v: any) => v.id === m.source.split("/")[1])
@@ -96,35 +117,36 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
           <img
             className={`border-2 border-zinc-900 rounded-full w-3 h-3`}
             /* style={{ borderColor: user_variant_settings?.color || "#00000000" }} */
-            src={getAvatar({ seed: _.find(ai_state, { id: m.source.split("/")[2] })?.meta?.name || "" })}
+            src={getAvatar({
+              seed:
+                _.find(ai_state, { id: m.source.split("/")[2] })?.meta?.name ||
+                "",
+            })}
           />
         )
 
-        p[ai?.id || module.specs.id] = icon ? (
-          typeof icon === "string" ? (
-            <img
-              src={icon}
-              className={`border-2 rounded-full w-3 h-3 bg-zinc-200`}
-              style={{ borderColor: user_variant_settings?.color || "#00000000" }}
-            />
-          ) : (
-            icon
-          )
-        ) : (
-          <FaUser />
-        )
+        p[ai?.id || module.specs.id] =
+          icon ?
+            typeof icon === "string" ?
+              <img
+                src={icon}
+                className={`border-2 rounded-full w-3 h-3 bg-zinc-200`}
+                style={{
+                  borderColor: user_variant_settings?.color || "#00000000",
+                }}
+              />
+            : icon
+          : <FaUser />
       } else {
         p["user"] =
-          _.size(user_state.meta?.profile_photos) > 0 ? (
+          _.size(user_state.meta?.profile_photos) > 0 ?
             <img
               src={_.first(user_state.meta?.profile_photos) || ""}
               className="border-2 border-zinc-900/50 rounded-full w-3 h-3"
             />
-          ) : (
-            <div className="border-2 border-zinc-900/50 rounded-full w-3 h-3">
+          : <div className="border-2 border-zinc-900/50 rounded-full w-3 h-3">
               {user_state.meta?.username?.[0].toUpperCase()}
             </div>
-          )
       }
     })
     setParticipants(p)
@@ -148,13 +170,6 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   })
 
   async function init() {
-    /* const session = await query<ChatSessionT>({
-      type: "sessions.getById",
-      data: {
-        session_id,
-      },
-    })
-    setSession(session) */
     const raw_messages = await query<TextMessageT[]>({
       type: "sessions.getMessagesBySessionId",
       data: {
@@ -163,7 +178,11 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
     })
     const active_path = computeActivePath(raw_messages || [])
     if (!active_path) return
-    let rows = buildMessageTree({ messages: raw_messages || [], first_id: "first", activePath: active_path })
+    let rows = buildMessageTree({
+      messages: raw_messages || [],
+      first_id: "first",
+      activePath: active_path,
+    })
     if (!rows) return null
     updateParticipants({ session, messages: rows })
   }
@@ -185,12 +204,15 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
 
   if (paddingBottom < 80) paddingBottom = 80
   return (
-    <div className="flex flex-row justify-center px-6" style={{ paddingBottom: `${paddingBottom}px` }}>
+    <div
+      className="flex flex-row justify-center px-6"
+      style={{ paddingBottom: `${paddingBottom}px` }}
+    >
       <div className="flex flex-col gap-6 min-w-[500px] w-full max-w-screen-lg">
-        {rows
-          .filter((r) => {
+        {_(rows)
+          .reject((r) => {
             // filter out the "continue" messages
-            return r[1]?.meta?.role !== "continue"
+            return r[1]?.meta?.role === "continue" && r[1]?.type === "human"
           })
           .filter((r) => {
             // filter out deleted messages
@@ -198,25 +220,37 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
           })
           .map((row, index) => {
             let sender = ""
-            let ai_image: ReactElement<any, string | JSXElementConstructor<any>> = <></>
+            let ai_image: ReactElement<
+              any,
+              string | JSXElementConstructor<any>
+            > = <></>
             if (row[1].type === "human") sender = "You"
             else {
               const s = row[1].source.replace("ai:", "").split("/")
               const ai_name = _.find(ai_state, { id: s[2] })?.persona.name
-              const module_name = _.find(user_state.modules.installed, { id: s[0] })?.meta.name
-              const variant_name = _.find(user_state.modules.installed, { id: s[0] })?.meta?.variants?.find(
-                (v) => v.id === s[1]
-              )?.name
-              sender = ai_name ? (module_name && variant_name ? `${ai_name} using ${variant_name}` : ai_name) : ``
+              const module_name = _.find(user_state.modules.installed, {
+                id: s[0],
+              })?.meta.name
+              const variant_name = _.find(user_state.modules.installed, {
+                id: s[0],
+              })?.meta?.variants?.find((v) => v.id === s[1])?.name
+              sender =
+                ai_name ?
+                  module_name && variant_name ?
+                    `${ai_name} using ${variant_name}`
+                  : ai_name
+                : ``
               ai_image = participants[s[2] || s[0]]
             }
             return (
               <div key={index} className="flex flex-col flex-grow-1">
                 <div className="ml-12 text-xs font-semibold text-zinc-600">
                   {sender}
-                  {row[1].created_at && ago_refresh
-                    ? " - " + dayjs().from(dayjs(row[1].created_at), true) + " ago"
-                    : ""}
+                  {row[1].created_at && ago_refresh ?
+                    " - " +
+                    dayjs().from(dayjs(row[1].created_at), true) +
+                    " ago"
+                  : ""}
                 </div>
                 <div className="flex flex-row">
                   <div className="flex flex-shrink mr-2">
@@ -224,14 +258,18 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                       <div className="avatar placeholder">
                         <div className=" text-zinc-200 w-8 h-8 flex ">
                           <span className="text-sm w-full h-full flex justify-center items-center">
-                            {row[1].type === "human" ? participants["user"] : ai_image}
+                            {row[1].type === "human" ?
+                              participants["user"]
+                            : ai_image}
                           </span>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div
-                    className={`Message flex ${row[1].type === "human" ? "flex-col" : "flex-col"} gap-1 flex-grow-1  ${
+                    className={`Message flex ${
+                      row[1].type === "human" ? "flex-col" : "flex-col"
+                    } gap-1 flex-grow-1  ${
                       row[2].length > 0 ? "max-w-2/3" : ""
                     }`}
                   >
@@ -240,45 +278,67 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                       isActive={true}
                       onClick={() => {}}
                       className={
-                        row[1].hash !== "1337" && msgs_in_mem && msgs_in_mem?.length > 0
-                          ? _.includes(msgs_in_mem, row[1].id)
-                            ? ""
-                            : "" // for sliding window memory: "bg-zinc-800 opacity-70 hover:opacity-100"
-                          : "opacity-100"
+                        (
+                          row[1].hash !== "1337" &&
+                          msgs_in_mem &&
+                          msgs_in_mem?.length > 0
+                        ) ?
+                          _.includes(msgs_in_mem, row[1].id) ?
+                            ""
+                          : "" // for sliding window memory: "bg-zinc-800 opacity-70 hover:opacity-100"
+                        : "opacity-100"
                       }
                     />
 
-                    {_.last(rows)?.[1].type === "ai" && _.last(rows)?.[1].id === row[1].id && !gen_in_progress && (
-                      <div className="flex flex-1 justify-end text-xs text-zinc-500 hover:text-zinc-100 cursor-not-allowed transition-all mr-1">
-                        <div className="tooltip tooltip-top" data-tip="Coming soon">
+                    {_.last(rows)?.[1].type === "ai" &&
+                      _.last(rows)?.[1].id === row[1].id &&
+                      !gen_in_progress && (
+                        <div className="flex flex-1 justify-end text-xs text-zinc-500 hover:text-zinc-100 cursor-pointer transition-all mr-1">
                           <div
-                          /* onClick={() => {
-                            emit({
-                              type: "chat.send",
-                              data: {
-                                target: session_id,
-                                session_id,
-                                meta: {
-                                  role: "continue",
-                                },
-                                message: "continue",
-                              },
-                            })
-                          }} */
+                            className="tooltip tooltip-top"
+                            data-tip="Continue this message"
                           >
-                            continue...
+                            <div
+                              onClick={() => {
+                                emit({
+                                  type: "chat.send",
+                                  data: {
+                                    target: session_id,
+                                    session_id,
+                                    meta: {
+                                      role: "continue",
+                                    },
+                                    message: "continue your previous message. don't acknowledge or comment this request, just continue your previous message.",
+                                  },
+                                })
+                              }}
+                            >
+                              continue...
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                    {rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1]?.[2]?.length > 0 &&
+                      )}
+                    {rows[
+                      _.findIndex(rows, (r) => r[1].id === row[1].id) + 1
+                    ]?.[2]?.length > 0 &&
                       row[1].type === "ai" &&
-                      rows[_.findIndex(rows, (r) => r[1].id === row[1].id) + 1][2].map((m) => {
+                      rows[
+                        _.findIndex(rows, (r) => r[1].id === row[1].id) + 1
+                      ][2].map((m) => {
                         if (m.hash === "1337") return null
                         return (
-                          <div className="gap-1 p-0 ml-1 flex h-full justify-start align-start" key={`msg-${m.id}`}>
+                          <div
+                            className="gap-1 p-0 ml-1 flex h-full justify-start align-start"
+                            key={`msg-${m.id}`}
+                          >
                             <Message
-                              message={{ ...m, text: m.text.length > 80 ? `${m.text.slice(0, 80)}...` : m.text }}
+                              message={{
+                                ...m,
+                                text:
+                                  m.text.length > 80 ?
+                                    `${m.text.slice(0, 80)}...`
+                                  : m.text,
+                              }}
                               isActive={false}
                               avatar={participants["user"]}
                               onClick={() => {
@@ -295,7 +355,11 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                           </div>
                         )
                       })}
-                    {row[1].parent_id !== "first" && row[1].type === "ai" && _.last(rows)?.[1].id !== row[1].id ? (
+                    {(
+                      row[1].parent_id !== "first" &&
+                      row[1].type === "ai" &&
+                      _.last(rows)?.[1].id !== row[1].id
+                    ) ?
                       <div
                         className="gap-1 p-0 ml-1 cursor-pointer flex h-full justify-start align-start"
                         onClick={() => {
@@ -313,57 +377,65 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                           <div>Create new thread</div>
                         </div>
                       </div>
-                    ) : null}
+                    : null}
                   </div>
                   <div
-                    className={`flex flex-nowrap flex-col items-start gap-2 branch ${row[2].length > 0 ? "w-1/3" : ""}`}
+                    className={`flex flex-nowrap flex-col items-start gap-2 branch ${
+                      row[2].length > 0 ? "w-1/3" : ""
+                    }`}
                   ></div>
                 </div>
               </div>
             )
-          })}
-        {_.last(rows)?.[1].type === "human" && _.last(rows)?.[1].text && gen_in_progress && (
-          <div className={`flex flex-col flex-grow-1 transition-all ${!show_loader_msg && "opacity-0"}`}>
-            <div className="ml-12 text-xs font-semibold text-zinc-600">
-              {ai.persona.name}
-              {" - " + dayjs().from(dayjs(), true) + " ago"}
-            </div>
-            <div className="flex flex-row">
-              <div className="flex flex-shrink mr-2">
-                <div className="flex">
-                  <div className="avatar placeholder">
-                    <div className=" text-zinc-200 w-8 h-8 flex ">
-                      <span className="text-sm w-full h-full flex justify-center items-center">
-                        <img
-                          className={`border-2 border-zinc-900 rounded-full w-3 h-3`}
-                          src={getAvatar({ seed: ai?.meta?.name || "" })}
-                        />
-                      </span>
+          }).value()}
+        {_.last(rows)?.[1].type === "human" &&
+          _.last(rows)?.[1].text &&
+          gen_in_progress && (
+            <div
+              className={`flex flex-col flex-grow-1 transition-all ${
+                !show_loader_msg && "opacity-0"
+              }`}
+            >
+              <div className="ml-12 text-xs font-semibold text-zinc-600">
+                {ai.persona.name}
+                {" - " + dayjs().from(dayjs(), true) + " ago"}
+              </div>
+              <div className="flex flex-row">
+                <div className="flex flex-shrink mr-2">
+                  <div className="flex">
+                    <div className="avatar placeholder">
+                      <div className=" text-zinc-200 w-8 h-8 flex ">
+                        <span className="text-sm w-full h-full flex justify-center items-center">
+                          <img
+                            className={`border-2 border-zinc-900 rounded-full w-3 h-3`}
+                            src={getAvatar({ seed: ai?.meta?.name || "" })}
+                          />
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className={`Message flex flex-grow-1`}>
-                <Message
-                  message={{
-                    id: "loader",
-                    text: "thinking...",
-                    status: "ready",
-                    type: "ai" as const,
-                    source: "ai:",
-                    created_at: "",
-                    parent_id: "first",
-                    hash: "1337",
-                    _v: 1,
-                    version: "1.0",
-                  }}
-                  isActive={true}
-                  onClick={() => {}}
-                />
+                <div className={`Message flex flex-grow-1`}>
+                  <Message
+                    message={{
+                      id: "loader",
+                      text: "thinking...",
+                      status: "ready",
+                      type: "ai" as const,
+                      source: "ai:",
+                      created_at: "",
+                      parent_id: "first",
+                      hash: "1337",
+                      _v: 1,
+                      version: "1.0",
+                    }}
+                    isActive={true}
+                    onClick={() => {}}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   )
