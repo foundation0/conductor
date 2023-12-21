@@ -63,7 +63,7 @@ const API: { [key: string]: Function } = {
       data: {
         session: updated_session,
         target: session_id,
-      }
+      },
     })
     return updated_session
   },
@@ -335,8 +335,8 @@ const API: { [key: string]: Function } = {
             config.defaults.llm_module.variant_id,
         },
         memory: {
-          rag_mode: 'full'
-        }
+          rag_mode: "full",
+        },
       },
     } as ChatSessionT
     return API.updateSessions(sessions)

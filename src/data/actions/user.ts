@@ -471,12 +471,19 @@ const API: { [key: string]: Function } = {
     const updated_workspaces = user_state.workspaces.filter(
       (w) => w.id !== workspace_id,
     )
-    await UserState.set({
-      ...user_state,
-      workspaces: updated_workspaces,
-    }, false, true)
+    await UserState.set(
+      {
+        ...user_state,
+        workspaces: updated_workspaces,
+      },
+      false,
+      true,
+    )
 
-    emit({ type: "user.deleteWorkspace.done", data: { workspace_id, workspaces: updated_workspaces } })
+    emit({
+      type: "user.deleteWorkspace.done",
+      data: { workspace_id, workspaces: updated_workspaces },
+    })
   },
   renameItem: async function ({
     new_name,

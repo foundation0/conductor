@@ -32,11 +32,16 @@ import {
 import AppstateActions from "@/data/actions/app"
 import { Resizable } from "react-resizable"
 import "react-resizable/css/styles.css"
-import eventEmitter, { emit } from "@/libraries/events"
+import eventEmitter, { emit, listen, query } from "@/libraries/events"
 import useMemory from "@/components/hooks/useMemory"
 import { mAppT } from "@/data/schemas/memory"
 import { useEvent } from "../hooks/useEvent"
 import { Input, InputActions } from "../experiences/input_introduction/v1"
+import { AIsT } from "@/data/schemas/ai"
+import { getAvatar } from "@/libraries/ai"
+import PersonaIcon from "@/assets/icons/persona.svg"
+import { RxPlus } from "react-icons/rx"
+import { handleAIChange } from "@/libraries/session_module"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
@@ -47,6 +52,7 @@ export default function Workspace() {
   // const { app_state, user_state } = useLoaderData() as LoaderT
   const app_state = useMemory<AppStateT>({ id: "appstate" })
   const user_state = useMemory<UserT>({ id: "user" })
+  const ai_state = useMemory<AIsT>({ id: "ais" })
   const [run_onboarding, setRunOnboarding] = useState(false)
   const { setPreference, getPreference } = AppstateActions
   const [organizer_width, setOrganizerWidth] = useState(250)
@@ -279,13 +285,63 @@ export default function Workspace() {
             </div>
             <div
               id="WorkspaceSidebarContent"
-              className={`px-2 bg-zinc-800 flex flex-grow mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
+              className={`px-2 bg-zinc-800 flex flex-grow flex-col mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
             >
               <div
-                className={`overflow-x-hidden w-full ${
+                className={`flex flex-grow flex-col overflow-x-hidden w-full ${
                   active_sidebar_tab === "sessions" ? "" : "hidden"
                 }`}
               >
+                <div className="flex flex-row w-full justify-start gap-1 mb-3">
+                  <div className="flex flex-row flex-1 flex-grow items-center justify-start gap-1">
+                    {_(user_state.ais || [])
+                      .filter({ status: "active" })
+                      .take(5)
+                      .map((ai) => {
+                        const AI = _.find(ai_state, { id: ai.id })
+                        const avatar = AI?.meta.avatar || (
+                          <img
+                            className={`border-2 border-zinc-900 rounded-full`}
+                            src={getAvatar({
+                              seed: AI?.meta?.name || "",
+                            })}
+                          />
+                        )
+                        return (
+                          <div
+                            className="rounded-full w-8 h-8 flex justify-center items-center cursor-pointer tooltip tooltip-bottom"
+                            data-tip={AI?.meta?.name || "Unnamed"}
+                            onClick={async () => {
+                              const sess: any = await query({
+                                type: "sessions.addSession",
+                                data: {
+                                  workspace_id: workspace_id,
+                                },
+                              })
+                              navigate(`/c/${workspace_id}/${sess.session.id}`)
+                              setTimeout(
+                                () => handleAIChange({ value: AI?.id || "c1" }),
+                                1000,
+                              )
+                            }}
+                          >
+                            {avatar}
+                          </div>
+                        )
+                      })
+                      .value()}
+                    <div
+                      className="rounded-full border-inset border border-dashed border-zinc-600 text-zinc-600 w-7 h-7 flex justify-center items-center saturate-0 hover:saturate-100 hover:text-zinc-300 hover:border-zinc-300 transition-all tooltip tooltip-bottom cursor-pointer"
+                      data-tip="Create new AI"
+                      onClick={() => {
+                        navigate("/c/ai/create")
+                      }}
+                    >
+                      <img src={PersonaIcon} className="w-4 h-4" alt="" />
+                    </div>
+                  </div>
+                  <div className="flex flex-row flex-shrink items-center justify-start gap-1"></div>
+                </div>
                 <SessionOrganizer
                   app_state={app_state}
                   user_state={user_state}

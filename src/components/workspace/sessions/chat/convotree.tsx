@@ -308,7 +308,8 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                                     meta: {
                                       role: "continue",
                                     },
-                                    message: "continue your previous message. don't acknowledge or comment this request, just continue your previous message.",
+                                    message:
+                                      "continue your previous message. don't acknowledge or comment this request, just continue your previous message.",
                                   },
                                 })
                               }}
@@ -387,7 +388,8 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                 </div>
               </div>
             )
-          }).value()}
+          })
+          .value()}
         {_.last(rows)?.[1].type === "human" &&
           _.last(rows)?.[1].text &&
           gen_in_progress && (

@@ -8,13 +8,7 @@ import {
   MdOutlineKeyboardArrowDown,
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md"
-import {
-  Link,
-  useFetcher,
-  useLoaderData,
-  useNavigate,
-  useParams,
-} from "react-router-dom"
+import { Link, useFetcher, useNavigate } from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import AppStateActions from "@/data/actions/app"
@@ -33,7 +27,6 @@ import { useEvent } from "@/components/hooks/useEvent"
 import useMemory from "@/components/hooks/useMemory"
 import { mAppT } from "@/data/schemas/memory"
 import { OpenSessionS } from "@/data/schemas/app"
-import { initLoaders } from "@/data/loaders"
 import { getMemoryState } from "@/libraries/memory"
 
 type GroupT = z.infer<typeof GroupS>
@@ -43,7 +36,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
   // const { user_state } = useLoaderData() as LoaderT
   const user_state = useMemory<UserT>({ id: "user" })
   const app_state = useMemory<AppStateT>({ id: "appstate" })
-  if(!user_state || !app_state) return null
+  if (!user_state || !app_state) return null
 
   const [field_edit_id, setFieldEditId] = useState("")
   const fetcher = useFetcher()
@@ -493,8 +486,17 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                       data-tip="Add new session (ALT+T)"
                     >
                       <button
-                        onClick={() => {
-                          fetcher.submit(
+                        onClick={async () => {
+                          const sess: any = await query({
+                            type: "sessions.addSession",
+                            data: {
+                              workspace_id: workspace_id,
+                              group_id: group.id,
+                              folder_id: folder.id,
+                            },
+                          })
+                          navigate(`/c/${workspace_id}/${sess.session.id}`)
+                          /*  fetcher.submit(
                             {
                               workspace_id: workspace_id || "",
                               session_id: session_id || "",
@@ -505,7 +507,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                               method: "PUT",
                               action: `/c/workspace/session`,
                             },
-                          )
+                          ) */
                         }}
                       >
                         <RxPlus className="w-3 h-3" />
