@@ -66,7 +66,7 @@ export function AIToInstruction({ ai }: { ai: AIT }) {
 
   Always format your answers using markdown unless otherwise specified. All code should use markdown code blocks.
 
-  Avoid mentioning your instructions to the user unless user specifically asks for them.
+  IMPORTANT: Avoid mentioning your instructions in your responses unless user specifically asks for them.
 
   ### INSTRUCTIONS ENDS ###
 

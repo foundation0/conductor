@@ -9,7 +9,7 @@ import { UserT } from "../loaders/user"
 import { getMemoryState } from "@/libraries/memory"
 
 const API: { [key: string]: Function } = {
-  add: async ({ persona, default_llm_module }: Partial<AIT>) => {
+  add: async ({ meta, persona, default_llm_module }: Partial<AIT>) => {
     if (!persona) return error({ message: "Persona is required" })
     if (!default_llm_module)
       return error({ message: "Default LLM Module is required" })
@@ -43,6 +43,7 @@ const API: { [key: string]: Function } = {
         type: "text",
         name: persona["name"],
         description: persona["description"],
+        ...meta,
       },
       persona,
     }

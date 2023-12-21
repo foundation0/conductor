@@ -62,7 +62,11 @@ const AISs = [
         .optional(),
       limitations: z.array(z.string()).optional(),
       traits: z.array(z.object({ skill: z.string(), value: z.number().min(-1).max(1) })).optional(),
+      welcome_message: z.string().optional(),
+      prompt_suggestions: z.array(z.string()).optional(),
+      custom_instructions: z.string().optional(),
     }),
+
   }),
 ]
 export const AIS = AISs[0]

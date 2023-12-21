@@ -571,7 +571,7 @@ export default function Market() {
                             <div className="flex-shrink-0">
                               <img
                                 className="w-8 h-8 rounded-full"
-                                src={getAvatar({ seed: ai?.meta?.name || "" })}
+                                src={ai?.meta?.avatar || getAvatar({ seed: ai?.meta?.name || "" })}
                               />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -642,7 +642,7 @@ export default function Market() {
                             <div className="flex-shrink-0">
                               <img
                                 className="w-8 h-8 rounded-full"
-                                src={getAvatar({ seed: ai?.meta?.name || "" })}
+                                src={ai?.meta?.avatar || getAvatar({ seed: ai?.meta?.name || "" })}
                               />
                             </div>
                             <div className="flex-1 min-w-0">

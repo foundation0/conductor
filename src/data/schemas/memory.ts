@@ -3,7 +3,7 @@ import { LLMVariantS, ModuleT } from "./modules"
 import { SessionsT, TextMessageT, MessageRowT, ChatSessionT } from "./sessions"
 import { DataRefT } from "./workspace"
 import { AppStateT } from "../loaders/app"
-import { AIsT } from "./ai"
+import { AIT, AIsT } from "./ai"
 
 export type mAppT = { workspace_id: string; session_id: string, state: AppStateT }
 export type mBalancesT = {
@@ -15,6 +15,7 @@ export type mChatSessionT = {
   id: string
   module: { specs: ModuleT; main: Function } | undefined
   module_ctx_len: number
+  ai: AIT,
   session: ChatSessionT
   attached_data: DataRefT[]
   input: { change_timer: any; text: string; tokens: number }

@@ -221,11 +221,14 @@ export const AISelectorButton = function ({
       <div className="flex flex-row flex-grow flex-1 gap-2">
         <div className="flex flex-col  items-center justify-center">
           <img
-            src={getAvatar({
-              seed:
-                _.find(ai_state, { id: session?.settings?.ai })?.meta?.name ||
-                "",
-            })}
+            src={
+              _.find(ai_state, { id: session?.settings?.ai })?.meta?.avatar ||
+              getAvatar({
+                seed:
+                  _.find(ai_state, { id: session?.settings?.ai })?.meta?.name ||
+                  "",
+              })
+            }
             className={`border-0 rounded-full w-8 aspect-square `}
           />
         </div>

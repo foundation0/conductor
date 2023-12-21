@@ -6,8 +6,10 @@ import { RichTextarea } from "rich-textarea"
 import generate_llm_module_options from "@/libraries/generate_llm_module_options"
 import Select from "react-select"
 import AIIcon from "@/assets/icons/ai.svg"
+import CameraIcon from "@/assets/icons/camera.svg"
 import { RiAddCircleFill } from "react-icons/ri"
 import {
+  MdOutlineAddAPhoto,
   MdOutlineKeyboardArrowDown,
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md"
@@ -18,18 +20,71 @@ import { error } from "@/libraries/logging"
 import AIActions from "@/data/actions/ai"
 import config from "@/config"
 import useMemory from "../hooks/useMemory"
+import { getAvatar } from "@/libraries/ai"
+import { useDropzone } from "react-dropzone"
+import { emit } from "@/libraries/events"
 
-export default function CreatePersona() {
-  // const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
-  const user_state = useMemory<UserT>({ id: "user" })
-  const ai_state = useMemory<AIsT>({ id: "ais" })
-  if(!user_state || !ai_state) return null
-  const [creation_in_process, setCreationInProgress] = useState<boolean>(false)
-  const [selected_llm, setSelectedLLM] = useState<string | null>(
-    `${config.defaults.llm_module.id}/${config.defaults.llm_module.variant_id}`,
-  )
+const examples = {
+  "Mike The Marketer": {
+    name: "Marketer Mike",
+    description:
+      "A digital marketing specialist with a focus on SEO, content marketing, and social media strategies.",
+    audience:
+      "Business owners, marketing professionals, and anyone interested in improving their digital marketing strategies.",
+    background:
+      "Over 12 years of experience in the digital marketing field, working with diverse industries from tech startups to established e-commerce businesses.",
+    styles: ["Friendly, engaging, enthusiastic, passionate"],
+    traits: [
+      { skill: "SEO", value: 1 },
+      { skill: "Content Marketing", value: 1 },
+      { skill: "Social Media Strategies", value: 1 },
+    ],
+    responsibilities: [
+      "Providing advice on SEO strategies",
+      "Guiding content marketing efforts",
+      "Sharing insights on social media engagement",
+      "Analyzing marketing metrics",
+      "Staying updated on the latest digital marketing trends",
+    ],
+    limitations: [
+      "Cannot implement strategies directly on your website or social media platforms",
+      "Cannot access or analyze proprietary data without permission",
+    ],
+    welcome_message:
+      "Hi, I'm Mike the Marketer, I'm an expert on digital marketing. How can I help you today?",
+    prompt_suggestions: [
+      "How can I improve my SEO?",
+      "How can I improve my social media engagement?",
+      "How can I improve my content marketing?",
+    ],
+    response_examples: [
+      {
+        message: "How can I improve my SEO?",
+        response:
+          "To improve your SEO, focus on creating high-quality, relevant content that incorporates your target keywords. Also, ensure your website is mobile-friendly, has fast load times, and includes meta tags for better indexing.",
+      },
+    ],
+  },
+  Empty: {
+    name: "",
+    description: "",
+    audience: "",
+    background: "",
+    styles: [""],
+    traits: [{ skill: "", value: 0 }],
+    responsibilities: [""],
+    limitations: [""],
+    response_examples: [{ message: "", response: "" }],
+    welcome_message: "",
+    prompt_suggestions: [""],
+    custom_instructions: "",
+  },
+}
 
-  const [values_show, setValuesShow] = useState({
+const initial = {
+  avatar: "",
+  values: examples["Empty"],
+  values_show: {
     description: true,
     audience: false,
     background: false,
@@ -38,7 +93,61 @@ export default function CreatePersona() {
     responsibilities: false,
     limitations: false,
     response_examples: false,
+    welcome_message: false,
+    prompt_suggestions: false,
+    custom_instructions: false,
+  },
+  creation_in_process: false,
+  selected_llm: `${config.defaults.llm_module.id}/${config.defaults.llm_module.variant_id}`,
+}
+
+export default function CreatePersona() {
+  // const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
+  const user_state = useMemory<UserT>({ id: "user" })
+  const ai_state = useMemory<AIsT>({ id: "ais" })
+  if (!user_state || !ai_state) return null
+  /* const [creation_in_process, setCreationInProgress] = useState<boolean>(false)
+  const [selected_llm, mem_ai.values_show = ] = useState<string | null>(
+    `${config.defaults.llm_module.id}/${config.defaults.llm_module.variant_id}`,
+  )
+
+  const [values_show, mem_ai.values_show = ] = useState({
+    description: true,
+    audience: false,
+    background: false,
+    styles: false,
+    traits: false,
+    responsibilities: false,
+    limitations: false,
+    response_examples: false,
+  }) */
+
+  // const [values, setValues] = useState<AIT["persona"]>(examples["Empty"])
+
+  const mem_ai = useMemory<{
+    values: AIT["persona"]
+    avatar: string
+    values_show: {
+      description: boolean
+      audience: boolean
+      background: boolean
+      styles: boolean
+      traits: boolean
+      responsibilities: boolean
+      limitations: boolean
+      response_examples: boolean
+      welcome_message: boolean
+      prompt_suggestions: boolean
+      custom_instructions: boolean
+    }
+    creation_in_process: boolean
+    selected_llm: string
+  }>({
+    id: "ai-creation",
+    state: initial,
   })
+
+  const { values_show, creation_in_process, selected_llm, values } = mem_ai
 
   const edit_ai_id = useParams().edit_ai_id
   const navigate = useNavigate()
@@ -46,8 +155,10 @@ export default function CreatePersona() {
   // if edit_ai_id is found, load the AI
   useEffect(() => {
     if (edit_ai_id) {
+      _.assign(mem_ai, initial)
+
       // set all values true
-      setValuesShow(_.mapValues(values_show, () => true))
+      mem_ai.values_show = _.mapValues(values_show, () => true)
 
       if (edit_ai_id === "c1") {
         if (
@@ -60,67 +171,18 @@ export default function CreatePersona() {
       }
       const ai = _.find(ai_state, { id: edit_ai_id })
       if (ai) {
-        setValues(ai.persona)
-        setSelectedLLM(
-          `${ai.default_llm_module.id}/${ai.default_llm_module.variant_id}`,
-        )
+        mem_ai.avatar = ai.meta.avatar || ""
+        mem_ai.values = ai.persona
+        mem_ai.selected_llm = `${ai.default_llm_module.id}/${ai.default_llm_module.variant_id}`
+
         navigate(`/c/ai/edit/${ai.id}`)
       }
     }
   }, [edit_ai_id])
 
-  const examples = {
-    "Mike The Marketer": {
-      name: "Marketer Mike",
-      description:
-        "A digital marketing specialist with a focus on SEO, content marketing, and social media strategies.",
-      audience:
-        "Business owners, marketing professionals, and anyone interested in improving their digital marketing strategies.",
-      background:
-        "Over 12 years of experience in the digital marketing field, working with diverse industries from tech startups to established e-commerce businesses.",
-      styles: ["Friendly, engaging, enthusiastic, passionate"],
-      traits: [
-        { skill: "SEO", value: 1 },
-        { skill: "Content Marketing", value: 1 },
-        { skill: "Social Media Strategies", value: 1 },
-      ],
-      responsibilities: [
-        "Providing advice on SEO strategies",
-        "Guiding content marketing efforts",
-        "Sharing insights on social media engagement",
-        "Analyzing marketing metrics",
-        "Staying updated on the latest digital marketing trends",
-      ],
-      limitations: [
-        "Cannot implement strategies directly on your website or social media platforms",
-        "Cannot access or analyze proprietary data without permission",
-      ],
-      response_examples: [
-        {
-          message: "How can I improve my SEO?",
-          response:
-            "To improve your SEO, focus on creating high-quality, relevant content that incorporates your target keywords. Also, ensure your website is mobile-friendly, has fast load times, and includes meta tags for better indexing.",
-        },
-      ],
-    },
-    Empty: {
-      name: "",
-      description: "",
-      audience: "",
-      background: "",
-      styles: [""],
-      traits: [{ skill: "", value: 0 }],
-      responsibilities: [""],
-      limitations: [""],
-      response_examples: [{ message: "", response: "" }],
-    },
-  }
-
-  const [values, setValues] = useState<AIT["persona"]>(examples["Empty"])
-
   const setExample = useCallback((example: any) => {
     const e = _.get(examples, example.value)
-    if (e) setValues({ ...e })
+    if (e) mem_ai.values = { ...e }
   }, [])
 
   const element_class =
@@ -181,35 +243,81 @@ export default function CreatePersona() {
   }, [JSON.stringify([values, selected_llm])])
 
   const createPersona = async () => {
-    setCreationInProgress(true)
+    mem_ai.creation_in_process = true
     const dat = processValues()
-    if (!dat) return setCreationInProgress(false)
+    if (!dat) return (mem_ai.creation_in_process = false)
     const ai = await AIActions.add({
+      meta: {
+        avatar: mem_ai.avatar,
+      },
       persona: dat.persona,
       default_llm_module: dat.default_llm_module,
     })
-    if (!ai) return setCreationInProgress(false)
-    setCreationInProgress(false)
+    if (!ai) return (mem_ai.creation_in_process = false)
+    mem_ai.creation_in_process = false
     navigate(`/c/modules`)
   }
 
   const editPersona = async () => {
-    setCreationInProgress(true)
+    mem_ai.creation_in_process = true
     const dat = processValues()
-    if (!dat) return setCreationInProgress(false)
+    if (!dat) return (mem_ai.creation_in_process = false)
     const ai = _.find(ai_state, (ai) => ai.id === edit_ai_id)
-    if (!ai) return setCreationInProgress(false)
+    if (!ai) return (mem_ai.creation_in_process = false)
     const updated = _.cloneDeep(ai)
     updated.default_llm_module = dat.default_llm_module
     updated.persona = dat.persona
     await AIActions.update({ ai: updated })
-    setCreationInProgress(false)
+    mem_ai.creation_in_process = false
     navigate(`/c/modules`)
   }
 
   useEffect(() => {
     fieldFocus({ selector: "#name" })
   }, [])
+
+  const onDrop = useCallback((acceptedFiles: any, fileRejections: any) => {
+    if (fileRejections.length > 0) {
+      fileRejections.map(({ file, errors }: any) => {
+        return error({
+          message: `File ${file.name} was rejected: ${errors
+            .map((e: any) => e.message)
+            .join(", ")}`,
+          data: errors,
+        })
+      })
+    } else {
+      const reader = new FileReader()
+
+      reader.onabort = () => console.log("file reading was aborted")
+      reader.onerror = () => console.log("file reading has failed")
+      reader.onload = () => {
+        // Do whatever you want with the file contents
+        const data_url = reader.result as string
+        if (!data_url) return
+        if (edit_ai_id) {
+          let ai = _.find(ai_state, (ai) => ai.id === edit_ai_id)
+          if (ai) ai = _.set(ai, "meta.avatar", data_url)
+          emit({
+            type: "ais.update",
+            data: {
+              ai,
+            },
+          })
+        }
+        mem_ai.avatar = data_url
+      }
+      reader.readAsDataURL(acceptedFiles[0] as any)
+    }
+  }, [])
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    maxFiles: 1,
+    maxSize: 1000000,
+    accept: {
+      "image/png": [".png", ".jpg", ".jpeg", ".gif"],
+    },
+  })
 
   return (
     <div className="flex flex-1 flex-col items-center bg-[#111]/60 px-[10%] min-h-screen overflow-x-hidden">
@@ -237,9 +345,12 @@ export default function CreatePersona() {
         <div className="grid grid-cols-3 gap-3 w-full ">
           <div className="col-span-1">
             <div className={element_class}>
-              {/*   <div className="relative flex flex-shrink-0 gap-3 items-end mb-3 p-3 justify-end w-full h-full aspect-square rounded-3xl overflow-hidden border-zinc-700/80 border-0 border-dashed text-zinc-600 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30">
+              <div
+                {...getRootProps()}
+                className="relative cursor-pointer flex flex-shrink-0 gap-3 items-end mb-3 p-3 justify-end w-full h-full aspect-square rounded-3xl overflow-hidden border-zinc-700/80 border-0 border-dashed text-zinc-600 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30"
+              >
                 <img
-                  src={getAvatar({ seed: values.name })}
+                  src={mem_ai.avatar || getAvatar({ seed: values.name })}
                   style={{
                     position: "absolute",
                     top: 0,
@@ -250,13 +361,14 @@ export default function CreatePersona() {
                     height: "100%",
                   }}
                 />
-                {/* <div className="flex absolute z-100 w-10 h-10 bg-zinc-900/80 border border-zinc-900/20 justify-center items-center rounded-xl">
-                  <img src={CameraIcon} className="w-8 h-8  cursor-pointer" />
+                <input {...getInputProps()} />
+                <div className="flex absolute z-100 w-10 h-10 bg-zinc-900/80 border border-zinc-900/10 justify-center items-center rounded-xl">
+                  <MdOutlineAddAPhoto className="absolute opacity-80 hover:opacity-100 text-zinc-200 w-5 h-5 cursor-pointer" />
                 </div>
-                <div className="flex aspect-square w-10 bg-zinc-700/30 border border-zinc-600/20 justify-center items-center rounded-xl">
+                {/* <div className="flex aspect-square w-10 bg-zinc-700/30 border border-zinc-600/20 justify-center items-center rounded-xl">
                   <img src={AIIcon} className="w-8 h-8 saturate-0 hover:saturate-100 cursor-pointer" />
                 </div> */}
-              {/* </div>*/}
+              </div>
               <div className="flex flex-1 flex-grow w-full flex-shrink-0 text-lg font-semibold text-zinc-200 items-center">
                 Name{" "}
                 <span className="flex items-center ml-2 text-[10px] font-medium mr-2 px-2.5 py-0 max-h-5 rounded-full bg-green-700 text-gray-300">
@@ -273,7 +385,7 @@ export default function CreatePersona() {
                   style={{ width: "100%", resize: "none" }}
                   value={values["name"]}
                   onChange={(e) =>
-                    setValues({ ...values, name: e.target.value })
+                    (mem_ai.values = { ...values, name: e.target.value })
                   }
                   className={textarea}
                 />
@@ -307,7 +419,7 @@ export default function CreatePersona() {
                     )?.name}` || "Unified LLM Engine / GPT-4",
                 }}
                 onChange={(e: any) => {
-                  setSelectedLLM(e.value)
+                  mem_ai.values_show = e.value
                 }}
                 options={generate_llm_module_options({
                   user_state,
@@ -339,7 +451,7 @@ export default function CreatePersona() {
                   style={{ width: "100%", resize: "none" }}
                   value={values["description"]}
                   onChange={(e) =>
-                    setValues({ ...values, description: e.target.value })
+                    (mem_ai.values = { ...values, description: e.target.value })
                   }
                   className={textarea}
                 />
@@ -350,7 +462,7 @@ export default function CreatePersona() {
                 <div
                   className={headline_class + " cursor-pointer"}
                   onClick={() =>
-                    setValuesShow({
+                    (mem_ai.values_show = {
                       ...values_show,
                       audience: !values_show["audience"],
                     })
@@ -363,7 +475,7 @@ export default function CreatePersona() {
                   </div>
                   Audience{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    optional but improves results
+                    optional | use to guide AI's writing level
                   </span>
                   {/* <AI value_name="Audience" /> */}
                 </div>
@@ -379,19 +491,19 @@ export default function CreatePersona() {
                     style={{ width: "100%", resize: "none" }}
                     value={values["audience"] || ""}
                     onChange={(e) =>
-                      setValues({ ...values, audience: e.target.value })
+                      (mem_ai.values = { ...values, audience: e.target.value })
                     }
                     className={textarea}
                   />
                 </div>
               </div>
             </div>
-            <div className={element_class}>
+            {/* <div className={element_class}>
               <div className={headline_class}>
                 <div
                   className={headline_class + " cursor-pointer"}
                   onClick={() =>
-                    setValuesShow({
+                    (mem_ai.values_show = {
                       ...values_show,
                       background: !values_show["background"],
                     })
@@ -423,19 +535,22 @@ export default function CreatePersona() {
                     style={{ width: "100%", resize: "none" }}
                     value={values["background"] || ""}
                     onChange={(e) =>
-                      setValues({ ...values, background: e.target.value })
+                      (mem_ai.values = {
+                        ...values,
+                        background: e.target.value,
+                      })
                     }
                     className={textarea}
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
             <div className={element_class}>
               <div className={headline_class}>
                 <div
                   className={headline_class + " cursor-pointer"}
                   onClick={() =>
-                    setValuesShow({
+                    (mem_ai.values_show = {
                       ...values_show,
                       styles: !values_show["styles"],
                     })
@@ -448,7 +563,7 @@ export default function CreatePersona() {
                   </div>
                   Communication style{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    optional but improves results
+                    optional | use to guide AI's writing style
                   </span>
                   <AI value_name="Communication style" />
                 </div>
@@ -469,7 +584,7 @@ export default function CreatePersona() {
                         style={{ width: "100%", resize: "none" }}
                         value={values["styles"]?.[index] || ""}
                         onChange={(e) =>
-                          setValues({
+                          (mem_ai.values = {
                             ...values,
                             styles: values["styles"]?.map((t, i) =>
                               i === index ? e.target.value : t,
@@ -483,11 +598,12 @@ export default function CreatePersona() {
                 })}
               </div>
             </div>
+
             <div className={element_class}>
               <div
                 className={headline_class + " cursor-pointer"}
                 onClick={() =>
-                  setValuesShow({
+                  (mem_ai.values_show = {
                     ...values_show,
                     traits: !values_show["traits"],
                   })
@@ -500,7 +616,7 @@ export default function CreatePersona() {
                 </div>
                 Traits and skills{" "}
                 <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                  optional but improves results
+                  optional | use to guide AI's behavior
                 </span>{" "}
                 <AI value_name="Traits and skills" />
               </div>
@@ -519,7 +635,7 @@ export default function CreatePersona() {
                           style={{ width: "100%", resize: "none" }}
                           value={values["traits"]?.[index]?.skill || ""}
                           onChange={(e) =>
-                            setValues({
+                            (mem_ai.values = {
                               ...values,
                               traits: values["traits"]?.map((t, i) => {
                                 if (i === index && t) {
@@ -540,12 +656,12 @@ export default function CreatePersona() {
                         data-tip="Delete trait or skill"
                         onClick={() => {
                           // delete traits
-                          setValues({
+                          mem_ai.values = {
                             ...values,
                             traits: values["traits"]?.filter(
                               (_, i) => i !== index,
                             ),
-                          })
+                          }
                         }}
                       >
                         <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
@@ -559,13 +675,13 @@ export default function CreatePersona() {
                     className="flex mx-1 text-zinc-400 hover:text-zinc-200 tooltip tooltip-top cursor-pointer"
                     data-tip="Add another trait or skill"
                     onClick={() => {
-                      setValues({
+                      mem_ai.values = {
                         ...values,
                         traits: [
                           ...(values["traits"] || []),
                           { skill: "", value: 0 },
                         ],
-                      })
+                      }
                     }}
                   >
                     <RiAddCircleFill />
@@ -579,7 +695,7 @@ export default function CreatePersona() {
                 <div
                   className={headline_class + " cursor-pointer"}
                   onClick={() =>
-                    setValuesShow({
+                    (mem_ai.values_show = {
                       ...values_show,
                       responsibilities: !values_show["responsibilities"],
                     })
@@ -592,7 +708,8 @@ export default function CreatePersona() {
                   </div>
                   Tasks{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    optional but improves results
+                    optional | use to narrow down what tasks the AI should focus
+                    on
                   </span>
                   <AI value_name="Responsibilities" />
                 </div>
@@ -618,12 +735,12 @@ export default function CreatePersona() {
                           style={{ width: "100%", resize: "none" }}
                           value={values["responsibilities"]?.[index] || ""}
                           onChange={(e) => {
-                            setValues({
+                            mem_ai.values = {
                               ...values,
                               responsibilities: values["responsibilities"]?.map(
                                 (t, i) => (i === index ? e.target.value : t),
                               ),
-                            })
+                            }
                           }}
                           className={textarea}
                         />
@@ -633,12 +750,12 @@ export default function CreatePersona() {
                         data-tip="Delete responsibility"
                         onClick={() => {
                           // delete responsibility
-                          setValues({
+                          mem_ai.values = {
                             ...values,
                             responsibilities: values[
                               "responsibilities"
                             ]?.filter((_, i) => i !== index),
-                          })
+                          }
                         }}
                       >
                         <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
@@ -654,13 +771,13 @@ export default function CreatePersona() {
                     data-tip="Add another responsibility"
                     onClick={() => {
                       // add responsibility
-                      setValues({
+                      mem_ai.values = {
                         ...values,
                         responsibilities: [
                           ...(values["responsibilities"] || []),
                           "",
                         ],
-                      })
+                      }
                     }}
                   >
                     <RiAddCircleFill />
@@ -674,7 +791,145 @@ export default function CreatePersona() {
                 <div
                   className={headline_class + " cursor-pointer"}
                   onClick={() =>
-                    setValuesShow({
+                    (mem_ai.values_show = {
+                      ...values_show,
+                      welcome_message: !values_show["welcome_message"],
+                    })
+                  }
+                >
+                  <div className="flex flex-col mr-1 justify-center items-center">
+                    {values_show["welcome_message"] ?
+                      <MdOutlineKeyboardArrowDown />
+                    : <MdOutlineKeyboardArrowRight />}
+                  </div>
+                  Introduction message{" "}
+                  <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
+                    optional | use to introduce the AI and to start the
+                    conversation
+                  </span>
+                  <AI value_name="Introduction message" />
+                </div>
+              </div>
+              <div className={`${!values_show["welcome_message"] && "hidden"}`}>
+                <div className={input}>
+                  <RichTextarea
+                    rows={2}
+                    autoHeight
+                    placeholder={`Write AI's first message to the user. This should help to start the conversation. (e.g. 'Hey, I'm ${
+                      (values["name"] && values["name"]) || "Researcher Raymond"
+                    }! I can help you research any topic or material you might have!')`}
+                    style={{ width: "100%", resize: "none" }}
+                    value={values["welcome_message"] || ""}
+                    onChange={(e) =>
+                      (mem_ai.values = {
+                        ...values,
+                        welcome_message: e.target.value,
+                      })
+                    }
+                    className={textarea}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className={element_class}>
+              <div className={headline_class}>
+                <div
+                  className={headline_class + " cursor-pointer"}
+                  onClick={() =>
+                    (mem_ai.values_show = {
+                      ...values_show,
+                      prompt_suggestions: !values_show["prompt_suggestions"],
+                    })
+                  }
+                >
+                  <div className="flex flex-col mr-1 justify-center items-center">
+                    {values_show["prompt_suggestions"] ?
+                      <MdOutlineKeyboardArrowDown />
+                    : <MdOutlineKeyboardArrowRight />}
+                  </div>
+                  Prompt suggestions{" "}
+                  <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
+                    optional | help user to understand what this AI can do
+                  </span>
+                  <AI value_name="prompt_suggestions" />
+                </div>
+              </div>
+              <div
+                className={`${!values_show["prompt_suggestions"] && "hidden"}`}
+              >
+                {values["prompt_suggestions"]?.map((trait, index) => {
+                  return (
+                    <div
+                      className="flex mb-3"
+                      key={`prompt_suggestions-${index}`}
+                    >
+                      <div className={input}>
+                        <RichTextarea
+                          rows={1}
+                          autoHeight
+                          placeholder={`What are the key learnings in the document?`}
+                          style={{ width: "100%", resize: "none" }}
+                          value={values["prompt_suggestions"]?.[index] || ""}
+                          onChange={(e) => {
+                            mem_ai.values = {
+                              ...values,
+                              prompt_suggestions: values[
+                                "prompt_suggestions"
+                              ]?.map((t, i) =>
+                                i === index ? e.target.value : t,
+                              ),
+                            }
+                          }}
+                          className={textarea}
+                        />
+                      </div>
+                      <div
+                        className="flex flex-col justify-center ml-4 mt-2.5 items-center tooltip tooltip-left cursor-pointer"
+                        data-tip="Delete responsibility"
+                        onClick={() => {
+                          // delete
+                          mem_ai.values = {
+                            ...values,
+                            prompt_suggestions: values[
+                              "prompt_suggestions"
+                            ]?.filter((_, i) => i !== index),
+                          }
+                        }}
+                      >
+                        <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
+                      </div>
+                    </div>
+                  )
+                })}
+
+                <div className="flex flex-row flex-1 justify-center items-center mt-2">
+                  <div className="flex flex-1 h-[1px] bg-zinc-700/40"></div>
+                  <div
+                    className="flex mx-1 text-zinc-400 hover:text-zinc-200 tooltip tooltip-top cursor-pointer"
+                    data-tip="Add another suggestion"
+                    onClick={() => {
+                      // add
+                      mem_ai.values = {
+                        ...values,
+                        prompt_suggestions: [
+                          ...(values["prompt_suggestions"] || []),
+                          "",
+                        ],
+                      }
+                    }}
+                  >
+                    <RiAddCircleFill />
+                  </div>
+                  <div className="flex flex-1 h-[1px] bg-zinc-700/40"></div>
+                </div>
+              </div>
+            </div>
+            <div className={element_class}>
+              <div className={headline_class}>
+                <div
+                  className={headline_class + " cursor-pointer"}
+                  onClick={() =>
+                    (mem_ai.values_show = {
                       ...values_show,
                       limitations: !values_show["limitations"],
                     })
@@ -687,7 +942,7 @@ export default function CreatePersona() {
                   </div>
                   Limitations{" "}
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    optional but improves results
+                    optional | use to limit AI's behavior
                   </span>
                   <AI value_name="Limitations" />
                 </div>
@@ -708,7 +963,7 @@ export default function CreatePersona() {
                           style={{ width: "100%", resize: "none" }}
                           value={values["limitations"]?.[index] || ""}
                           onChange={(e) =>
-                            setValues({
+                            (mem_ai.values = {
                               ...values,
                               limitations: values["limitations"]?.map((t, i) =>
                                 i === index ? e.target.value : t,
@@ -723,12 +978,12 @@ export default function CreatePersona() {
                         data-tip="Delete limitation"
                         onClick={() => {
                           // delete limitations
-                          setValues({
+                          mem_ai.values = {
                             ...values,
                             limitations: values["limitations"]?.filter(
                               (_, i) => i !== index,
                             ),
-                          })
+                          }
                         }}
                       >
                         <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
@@ -742,10 +997,10 @@ export default function CreatePersona() {
                     className="flex mx-1 text-zinc-400 hover:text-zinc-200 tooltip tooltip-top cursor-pointer"
                     data-tip="Add another limitation"
                     onClick={() => {
-                      setValues({
+                      mem_ai.values = {
                         ...values,
                         limitations: [...(values["limitations"] || []), ""],
-                      })
+                      }
                     }}
                   >
                     <RiAddCircleFill />
@@ -759,7 +1014,7 @@ export default function CreatePersona() {
                 <div
                   className={headline_class + " cursor-pointer"}
                   onClick={() =>
-                    setValuesShow({
+                    (mem_ai.values_show = {
                       ...values_show,
                       response_examples: !values_show["response_examples"],
                     })
@@ -772,7 +1027,7 @@ export default function CreatePersona() {
                   </div>
                   Response examples
                   <span className="ml-2 text-[10px] font-medium mr-2 px-2.5 rounded-full bg-gray-700 text-gray-300">
-                    optional but improves results
+                    optional | use to show AI how it should response
                   </span>
                   <AI value_name="response examples" />
                 </div>
@@ -801,7 +1056,7 @@ export default function CreatePersona() {
                               ] || ""
                             }
                             onChange={(e) =>
-                              setValues({
+                              (mem_ai.values = {
                                 ...values,
                                 response_examples: values[
                                   "response_examples"
@@ -836,7 +1091,7 @@ export default function CreatePersona() {
                               ] || ""
                             }
                             onChange={(e) =>
-                              setValues({
+                              (mem_ai.values = {
                                 ...values,
                                 response_examples: values[
                                   "response_examples"
@@ -860,12 +1115,12 @@ export default function CreatePersona() {
                         data-tip="Delete example"
                         onClick={() => {
                           // delete response example
-                          setValues({
+                          mem_ai.values = {
                             ...values,
                             response_examples: values[
                               "response_examples"
                             ]?.filter((_, i) => i !== index),
-                          })
+                          }
                         }}
                       >
                         <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
@@ -880,13 +1135,13 @@ export default function CreatePersona() {
                     className="flex mx-1 text-zinc-400 hover:text-zinc-200 tooltip tooltip-top cursor-pointer"
                     data-tip="Add another example"
                     onClick={() => {
-                      setValues({
+                      mem_ai.values = {
                         ...values,
                         response_examples: [
                           ...(values["response_examples"] || []),
                           { message: "", response: "" },
                         ],
-                      })
+                      }
                     }}
                   >
                     <RiAddCircleFill />

@@ -299,12 +299,15 @@ export default function Workspace() {
                       .take(5)
                       .map((ai) => {
                         const AI = _.find(ai_state, { id: ai.id })
-                        const avatar = AI?.meta.avatar || (
+                        const avatar = (
                           <img
                             className={`border-2 border-zinc-900 rounded-full`}
-                            src={getAvatar({
-                              seed: AI?.meta?.name || "",
-                            })}
+                            src={
+                              AI?.meta.avatar ||
+                              getAvatar({
+                                seed: AI?.meta?.name || "",
+                              })
+                            }
                           />
                         )
                         return (
