@@ -145,7 +145,7 @@ export const main = async (input: InputT, callbacks: z.infer<typeof StreamingS>)
     const messages: msgT[] = [
       {
         type: "system",
-        text: (prompt.instructions || "You are a helpful assistant") + "\n\n" + prompt.context + "\n\n",
+        text: (prompt.instructions || "You are a helpful assistant") + "\n\n### CONTEXT" + prompt.context + "### CONVERSATION STARTS\n\n",
       },
       ..._(history).map((message) => {
         if (message.type === "human" && message.text) {
