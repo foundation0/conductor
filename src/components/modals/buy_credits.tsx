@@ -56,8 +56,8 @@ export function BuyCredits() {
           </div>
           <div className="text-sm text-zinc-400 mb-4 flex flex-col gap-2">
             <p>
-              Pricing is based on what you use. Credits work with any supported
-              model. No monthly fees or commitments.
+              Conductor charges only for what you use. Credits work with any supported
+              model. <u>No monthly fees or commitments.</u>
             </p>
             <div
               className="underline cursor-pointer font-semibold transition-all hover:text-zinc-100"
@@ -67,7 +67,7 @@ export function BuyCredits() {
             </div>
           </div>
           <div className="">
-            <button className="btn btn-secondary border-0" onClick={buyCredits}>
+            <button className="btn btn-secondary border-0 text-zinc-100" onClick={buyCredits}>
               Purchase computing credits
             </button>
           </div>
