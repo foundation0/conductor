@@ -53,9 +53,24 @@ export default function Workspace() {
   const app_state = useMemory<AppStateT>({ id: "appstate" })
   const user_state = useMemory<UserT>({ id: "user" })
   const ai_state = useMemory<AIsT>({ id: "ais" })
-  const [run_onboarding, setRunOnboarding] = useState(false)
+  // const [run_onboarding, setRunOnboarding] = useState(false)
   const { setPreference, getPreference } = AppstateActions
-  const [organizer_width, setOrganizerWidth] = useState(250)
+  // const [organizer_width, setOrganizerWidth] = useState(250)
+
+  const mem = useMemory<{
+    run_onboarding: boolean
+    organizer_width: number
+    max_ais: number
+  }>({
+    id: "workspace",
+    state: {
+      run_onboarding: false,
+      organizer_width: 250,
+      max_ais: 4,
+    },
+  })
+
+  const { run_onboarding, organizer_width, max_ais } = mem
 
   // const workspace_id = useParams().workspace_id
   const navigate = useNavigate()
@@ -181,7 +196,7 @@ export default function Workspace() {
 
   useEffect(() => {
     if (!user_state?.experiences?.find((e) => e.id === "onboarding/v1")) {
-      setRunOnboarding(true)
+      mem.run_onboarding = true
     }
   }, [])
 
@@ -189,15 +204,24 @@ export default function Workspace() {
     getPreference({ key: "organizer-width" }).then((width: string) => {
       if (width) {
         const w = _.toNumber(width)
-        setOrganizerWidth(w)
+        mem.organizer_width = w
       }
     })
   }, [])
 
   const onResize = (event: any, { size }: any) => {
-    setOrganizerWidth(size.width)
-    eventEmitter.emit("layout_resize")
+    mem.organizer_width = size.width
+    emit({
+      type: "layout_resize"
+    })
     // setPreference({ key: 'organizer-width', value: size.width });
+    const ai_selector_width =
+      document.getElementById("WorkspaceSidebarContent")?.offsetWidth || 180
+    // @ts-ignore
+    const ai_avatar = document.querySelector(".ai")?.firstChild as HTMLElement
+    const ai_avatar_width = ai_avatar?.offsetWidth || 0
+    mem.max_ais = _.floor(ai_selector_width / (ai_avatar_width + 10), 0)
+    // console.log(max_ais, ai_selector_width)
   }
 
   useEvent({
@@ -223,13 +247,13 @@ export default function Workspace() {
           </div>
         </div>
         <Resizable
-          width={organizer_width}
+          width={mem.organizer_width}
           height={1000}
           onResize={onResize}
           resizeHandles={["e"]}
           handleSize={[1000, 1000]}
           onResizeStop={() => {
-            setPreference({ key: "organizer-width", value: organizer_width })
+            setPreference({ key: "organizer-width", value: mem.organizer_width })
           }}
         >
           <div
@@ -238,7 +262,7 @@ export default function Workspace() {
                 "w-60 min-w-[200px] max-w-lg flex flex-1 flex-col "
               )
             }`}
-            style={{ width: `${organizer_width}px` }}
+            style={{ width: `${mem.organizer_width}px` }}
           >
             <div id="WorkspaceSidebar" className="flex flex-col gap-1">
               <div
@@ -287,17 +311,20 @@ export default function Workspace() {
               id="WorkspaceSidebarContent"
               className={`px-2 bg-zinc-800 flex flex-grow flex-col mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
             >
-              <div className="flex flex-row w-full justify-start gap-1 mb-3">
-                <div className="flex flex-row flex-1 flex-grow items-center justify-start gap-1">
+              <div
+                id="AIQuickSelector"
+                className="flex flex-row w-full justify-start gap-1 mb-3 overflow-hidden"
+              >
+                <div className="ai flex flex-row flex-1 flex-grow items-center justify-start gap-1">
                   {_(user_state.ais || [])
                     .filter({ status: "active" })
                     .map((ai) => {
-                      const _ai = {...ai}
-                      if(!_ai.last_used) _ai.last_used = 0
+                      const _ai = { ...ai }
+                      if (!_ai.last_used) _ai.last_used = 0
                       return _ai
                     })
-                    .orderBy('last_used', 'desc')
-                    .take(5)
+                    .orderBy("last_used", "desc")
+                    .take(mem.max_ais || 4)
                     .map((ai) => {
                       const AI = _.find(ai_state, { id: ai.id })
                       const avatar = (

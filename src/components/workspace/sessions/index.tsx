@@ -189,7 +189,7 @@ export default function Workspace() {
     if (height !== mem_width.height) mem_width.height = height
     if (content_width !== mem_width.content_width)
       mem_width.content_width = content_width
-    console.log("resize", content_width, window.innerWidth)
+    // console.log("resize", content_width, window.innerWidth)
   }
 
   window.addEventListener("resize", computeContentWidth)
