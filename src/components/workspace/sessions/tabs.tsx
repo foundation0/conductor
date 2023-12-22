@@ -20,13 +20,8 @@ import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 
 export default function Tabs() {
-  // const { app_state, user_state } = useLoaderData() as {
-  //   app_state: AppStateT
-  //   user_state: UserT
-  // }
   const app_state = useMemory<AppStateT>({ id: "appstate" })
   const user_state = useMemory<UserT>({ id: "user" })
-  // const [open_tabs, setOpenTabs] = useState<any>(null)
   const [item_added_to_notepad, setItemAddedToNotepad] = useState(false)
 
   const navigate = useNavigate()
@@ -34,8 +29,6 @@ export default function Tabs() {
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
   if (!workspace_id || !session_id) return null
-  // const workspace_id = useParams().workspace_id as string
-  // const session_id = useParams().session_id as string
 
   const mem = useMemory<{
     open_tabs: any
@@ -50,38 +43,39 @@ export default function Tabs() {
 
   const [relative_width, setRelativeWidth] = useState(0)
 
-  const resizeHandler = () => {
-    const e = document.getElementById("Tabs")
-    if (e && containerRef.current) {
-      const parentWidth = e.offsetWidth
-      const tabs_actions_e = document.getElementById("TabsActions")
-      if (!tabs_actions_e) return
-      const tabs_width = parentWidth - tabs_actions_e?.offsetWidth
-      const tabs_count = document.querySelectorAll("#OpenTabs a").length + 1
-      const _relativeWidth = tabs_width / tabs_count
-      Array.from(document.querySelectorAll("#OpenTabs a")).forEach(
-        (child: Element) => {
-          ;(child as HTMLElement).style.width = `${_relativeWidth}px`
-        },
-      )
-      if (_relativeWidth !== relative_width) {
-        setRelativeWidth(_relativeWidth)
-        setTimeout(resizeHandler, 1)
-      }
-    }
-  }
+  // const resizeHandler = () => {
+  //   return true
+  //   const e = document.getElementById("Tabs")
+  //   if (e && containerRef.current) {
+  //     const parentWidth = e.offsetWidth
+  //     const tabs_actions_e = document.getElementById("TabsActions")
+  //     if (!tabs_actions_e) return
+  //     const tabs_width = parentWidth - tabs_actions_e?.offsetWidth
+  //     const tabs_count = document.querySelectorAll("#OpenTabs a").length + 1
+  //     const _relativeWidth = tabs_width / tabs_count
+  //     Array.from(document.querySelectorAll("#OpenTabs a")).forEach(
+  //       (child: Element) => {
+  //         ;(child as HTMLElement).style.width = `${_relativeWidth}px`
+  //       },
+  //     )
+  //     if (_relativeWidth !== relative_width) {
+  //       setRelativeWidth(_relativeWidth)
+  //       setTimeout(resizeHandler, 1)
+  //     }
+  //   }
+  // }
 
   async function createNewSession() {
     // get folder_id based on active session_id
-    const group = _.find(
+    const group = (_.find(
       user_state.workspaces.flatMap((ws) => ws.groups),
       (g) =>
         g.folders.find((f) => f?.sessions?.find((s) => s.id === session_id)),
-    ) as z.infer<typeof GroupS>
+    ) || _.first(user_state.workspaces[0].groups)) as z.infer<typeof GroupS>
 
-    const folder = group.folders.find(
+    const folder = (group.folders.find(
       (f) => f?.sessions?.find((s) => s.id === session_id),
-    ) as z.infer<typeof FolderS>
+    ) || _.first(group.folders)) as z.infer<typeof FolderS>
 
     const new_session: { session: SessionT } = await query({
       type: "sessions.addSession",
@@ -123,17 +117,17 @@ export default function Tabs() {
 
         if (!s) return false
         return (
-          <Link
+          <div
             className={`flex flex-row min-w-[50px] max-w-[200px] flex-nowrap flex-shrink border-transparent border-0 tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom transition-colors ph-no-capture ${
               session_id === s.id ?
                 "tab-active bg-zinc-900/50 text-zinc-200"
               : " bg-zinc-800 hover:bg-zinc-900/50 text-zinc-600 hover:text-zinc-300"
             }`}
-            style={{ width: `${relative_width}px` }}
+            // style={{ width: `${relative_width || 100}px` }}
             key={s.id}
-            to={`/c/${workspace_id}/${s.id}`}
             onClick={() => {
               emit({ type: "sessions/change", data: { session_id: s.id } })
+              navigate(`/c/${workspace_id}/${s.id}`)
             }}
             data-tip={s.name}
           >
@@ -163,14 +157,15 @@ export default function Tabs() {
                 <RxPlus />
               </div>
             </div>
-          </Link>
+          </div>
         )
       })
       .filter(Boolean)
 
     // setOpenTabs(o)
     mem.open_tabs = o
-    setTimeout(resizeHandler, 1000)
+    // resizeHandler()
+    // setTimeout(resizeHandler, 1000)
   }
 
   useEffect(() => {
@@ -203,10 +198,10 @@ export default function Tabs() {
         console.warn("first session not found")
       }
     }
-  }, [open_tabs?.length === 0])
+  }, [mem.open_tabs?.length === 0])
 
   // if the current session is not in tabs, add it
-  useEffect(() => {
+  async function matchTabsWithOpenSessions() {
     const active_workspace = user_state.workspaces.find(
       (ws) => ws.id === workspace_id,
     ) as z.infer<typeof WorkspaceS>
@@ -249,7 +244,7 @@ export default function Tabs() {
         navigate(`/c/${workspace_id}/${session_id}`)
       })
     }
-  }, [JSON.stringify([session_id, open_tabs])])
+  }
 
   // keyboard shortcut for closing tab
   useHotkeys(getOS() === "macos" ? "ctrl+w" : "alt+w", async () => {
@@ -268,10 +263,7 @@ export default function Tabs() {
     if (session && confirm("Are you sure you want to delete this session?")) {
       const session_index = _.findIndex(app_state.open_sessions, { session_id })
       // get the previous session from open sessions
-      const next_session =
-        app_state.open_sessions[
-          session_index === 0 ? session_index + 1 : session_index - 1
-        ]
+      const next_session = app_state.open_sessions[0]
       await query({
         type: "sessions.deleteSession",
         data: {
@@ -300,7 +292,7 @@ export default function Tabs() {
     navigate(`/c/${workspace_id}/${new_session?.session.id}`)
   })
 
-  useEffect(() => {
+  /* useEffect(() => {
     resizeHandler()
     window.addEventListener("resize", resizeHandler)
     return () => {
@@ -311,7 +303,7 @@ export default function Tabs() {
   useEvent({
     name: "layout_resize",
     action: resizeHandler,
-  })
+  }) */
 
   useEvent({
     name: "notepad.addClip.done",
@@ -345,6 +337,11 @@ export default function Tabs() {
     action: generateVisibleTabs,
   })
 
+  // useEvent({
+  //   name: "sessions/change",
+  //   action: matchTabsWithOpenSessions,
+  // })
+
   return (
     <>
       <div
@@ -361,7 +358,7 @@ export default function Tabs() {
       >
         {open_tabs}
       </div>
-      <div id="TabsActions" className="flex flex-row justify-end">
+      <div id="TabsActions" className="flex flex-row justify-end ml-3">
         <div className=" flex flex-row flex-1 gap-3 pr-3 justify-end items-center ">
           <div
             className="NotepadButton tooltip tooltip-left"

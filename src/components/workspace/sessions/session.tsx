@@ -150,7 +150,7 @@ export default function Session({
       }`}
     >
       <div
-        className={`flex flex-1 rounded-md mb-1 bg-zinc-900 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30 justify-center`}
+        className={`flex flex-1 rounded-md mb-0.5 bg-zinc-900 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30 justify-center`}
       >
         <Switch>
           <Match when={type === "chat"}>

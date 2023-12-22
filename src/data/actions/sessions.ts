@@ -307,6 +307,41 @@ const API: { [key: string]: Function } = {
     })
     return new_session
   },
+  async openSession({
+    session_id,
+    workspace_id,
+    group_id,
+    folder_id,
+  }: {
+    session_id: string
+    workspace_id: string
+    group_id: string
+    folder_id: string
+  }) {
+    const { AppState } = await initLoaders()
+    const as = _.cloneDeep(AppState.get())
+    as.open_sessions.push({
+      _v: 1,
+      session_id,
+      workspace_id,
+      group_id,
+      folder_id,
+    })
+    await AppStateActions.updateAppState(as)
+
+    // add to active sessions
+    const res = await API.addSessionToActive({
+      session_id,
+      workspace_id,
+    })
+
+    ph().capture("sessions/open")
+    emit({
+      type: "sessions.openSession.done",
+      data: { session_id },
+    })
+    return true
+  },
   async addSessionToActive({
     session_id,
     workspace_id,

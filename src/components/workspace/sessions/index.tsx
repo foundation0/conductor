@@ -4,7 +4,7 @@ import Tabs from "./tabs"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
 import "react-resizable/css/styles.css"
-import eventEmitter, { emit, query } from "@/libraries/events"
+import eventEmitter, { emit, listen, query } from "@/libraries/events"
 import { initLoaders } from "@/data/loaders"
 import { SessionT, WorkspaceT } from "@/data/schemas/workspace"
 import { SessionTypesT, SessionsT } from "@/data/schemas/sessions"
@@ -47,10 +47,22 @@ export default function Workspace() {
     if (!workspace) return
 
     const workspace_open_sessions =
-      app_state.open_sessions.filter(
-        (session: z.infer<typeof OpenSessionS>) =>
-          session.workspace_id === mem_app.workspace_id,
-      ) || []
+      app_state.open_sessions
+        .filter(
+          (session: z.infer<typeof OpenSessionS>) =>
+            session.workspace_id === mem_app.workspace_id,
+        )
+        .filter((open_session: z.infer<typeof OpenSessionS>) => {
+          // get session data from workspaces.groups.folders.sessions
+          const s = _.find(
+            workspace.groups.flatMap((g) =>
+              g.folders.flatMap((f) => f.sessions),
+            ),
+            { id: open_session.session_id },
+          )
+          if (!s) return false
+          return true
+        }) || []
 
     const sids: { [key: string]: boolean } = {}
     _.map(workspace_open_sessions, "session_id").forEach(
@@ -64,7 +76,7 @@ export default function Workspace() {
       },
     })
     if (!ws_sessions) return
-    const { sessions } = ws_sessions
+
     const sessions_state: SessionsT = await SessionState.get()
     if (!sessions_state?.active[mem_app.session_id]) {
       // add session_id to active_sessions
@@ -148,15 +160,49 @@ export default function Workspace() {
       handleMissingSession({ session_id: mem_app.session_id })
   }, [JSON.stringify(mem.sessions)])
 
+  async function computeContentWidth() {
+    const width = window.innerWidth || 1000
+    const height = window.innerHeight || 1000
+    const content_width =
+      window.innerWidth -
+      ((document.getElementById("WorkspaceSelector")?.offsetWidth || 0) +
+        (document.getElementById("Modes")?.offsetWidth || 0) + 12)
+    if (width !== mem_width.width) mem_width.width = width
+    if (height !== mem_width.height) mem_width.height = height
+    if (content_width !== mem_width.content_width)
+      mem_width.content_width = content_width
+    console.log("resize", content_width, window.innerWidth)
+  }
+
+  const mem_width = useMemory<{
+    width: number
+    height: number
+    content_width: number
+  }>({
+    id: "window",
+    state: computeContentWidth(),
+  })
+
+  window.addEventListener("resize", computeContentWidth)
+
+  useEffect(() => {
+    computeContentWidth()
+  }, [window.innerWidth])
+
   return (
-    <div className="flex flex-1">
+    <div
+      className="flex flex-1"
+      style={{ width: mem_width.content_width + "px" }}
+    >
       <div
         id="ContentTabs"
         className="flex flex-1 gap-1 grow flex-col overflow-hidden"
+        style={{ width: mem_width.content_width + "px" }}
       >
         <div
           id="Tabs"
           className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950 rounded-md"
+          style={{ width: mem_width.content_width + "px" }}
         >
           <Tabs />
         </div>

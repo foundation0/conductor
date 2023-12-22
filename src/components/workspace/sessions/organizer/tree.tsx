@@ -539,18 +539,22 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                           }`}
                         />
                       </div>
-                      <Link
+                      <div
                         className={`flex flex-1 h-5 relative items-center cursor-pointer text-xs font-semibold text-ellipsis overflow-hidden ph-no-capture transition-all ${
                           session.id === session_id ?
                             " text-zinc-100"
                           : "text-zinc-400  hover:text-zinc-100"
                         }`}
-                        to={`/c/${workspace_id}/${session.id}`}
-                        onClick={() => {
+                        onClick={async () => {
+                          await query({
+                            type: "sessions.openSession",
+                            data: { session_id: session.id, workspace_id, group_id: group.id, folder_id: folder.id },
+                          })
                           emit({
                             type: "sessions/change",
                             data: { session_id: session.id },
                           })
+                          navigate(`/c/${workspace_id}/${session.id}`)
                         }}
                       >
                         <EasyEdit
@@ -582,7 +586,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                           allowEdit={false}
                         />
                         {/* <div className="absolute inset-y-0 right-0 w-8 z-10 bg-gradient-to-l from-zinc-800 group-hover:from-zinc-700"></div> */}
-                      </Link>
+                      </div>
                       <div
                         className={`flex cursor-pointer flex-row gap-2 items-center justify-center mr-2 h-6 ${
                           field_edit_id === session.id ? "hidden" : ""

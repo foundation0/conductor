@@ -254,7 +254,7 @@ export default function Conductor() {
 
   return (
     <div
-      className={`flex flex-col flex-1 m-0 p-0 dark h-full h-[100dvh] bg-[#111]/60 mt-0.5`}
+      className={`flex flex-col flex-1 m-0 p-0 dark h-full h-[100dvh] bg-[#111]/60`}
     >
       {/* {guest_mode && (
         <div className="h-6 w-full flex justify-center items-center text-[11px] font-semibold text-zinc-300">
@@ -272,7 +272,7 @@ export default function Conductor() {
       )} */}
       <main
         id="Conductor"
-        className={`flex flex-row flex-1 m-0 p-0 h-full h-[100dvh] dark bg-[#111]/60 mt-0.5`}
+        className={`flex flex-row flex-1 m-0 p-0 h-full h-[100dvh] dark bg-[#111]/60`}
       >
         <WorkspaceSelector />
         <div id="WorkspaceView" className="flex flex-1 m-0.5 overflow-hidden">

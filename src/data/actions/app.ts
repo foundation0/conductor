@@ -92,9 +92,23 @@ const API: { [key: string]: Function } = {
 
     const app_state: AppStateT = AppState.get()
     const active_workspace = await getActiveWorkspace()
+    if (!active_workspace) {
+      console.warn("active workspace not found")
+      return
+    }
     const open_sessions_for_workspace = app_state.open_sessions.filter(
       (open_session) => open_session.workspace_id === active_workspace?.id,
-    )
+    ).filter((open_session: z.infer<typeof OpenSessionS>) => {
+      // get session data from workspaces.groups.folders.sessions
+      const s = _.find(
+        active_workspace.groups.flatMap((g) =>
+          g.folders.flatMap((f) => f.sessions),
+        ),
+        { id: open_session.session_id },
+      )
+      if (!s) return false
+      return true
+    })
 
     // remove session from app state
     const new_open_sessions = app_state.open_sessions.filter(
