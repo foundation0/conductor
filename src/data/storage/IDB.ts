@@ -195,6 +195,8 @@ export async function getRemote({
   }
 }
 
+const auto_sync_timers: any = {}
+
 // Function to create a store with encryption and decryption capabilities
 export const store = async <TData>({
   name,
@@ -327,7 +329,7 @@ export const store = async <TData>({
       store = vstate.data
 
       const mem = getMemoryState({ id: name }) as any
-      if(mem) _.assign(mem, store)
+      if (mem) _.assign(mem, store)
 
       // If no_storage is true, don't save the data
       if (no_storage) return
@@ -353,8 +355,6 @@ export const store = async <TData>({
         await set(key, pack(encrypt({ data: vstate.data, key: enc_key })))
       else await set(key, vstate.data)
 
-      
-
       // Emit an event to notify the store has been updated
       emit({
         type: "store/update",
@@ -363,6 +363,7 @@ export const store = async <TData>({
           state: vstate.data,
         },
       })
+      createAutoSyncTimer({ name, API })
       return true
     },
     destroy: async () => {
@@ -451,17 +452,7 @@ export const store = async <TData>({
     await setStore({ store })
 
     if (["user", "appstate", "ais", "sessions", "notepads"].includes(name)) {
-      setInterval(
-        async () => {
-          const synced = await API.sync()
-          // console.log(`synced ${name}, ${synced ? "new data" : "no new data"}`)
-        },
-        _.get(
-          config,
-          "defaults.user.data.cloud_storage.data_backup.auto_sync_interval" ||
-            1000 * 60 * 5,
-        ),
-      )
+      createAutoSyncTimer({ name, API })
     }
     // }
 
@@ -481,4 +472,36 @@ export const store = async <TData>({
   }
 
   return API
+}
+function createAutoSyncTimer({
+  name,
+  API,
+}: {
+  name: string
+  API: {
+    get: () => any
+    set: (
+      data: any,
+      no_storage?: boolean,
+      replace?: boolean,
+      skip_sync?: boolean,
+    ) => Promise<boolean | undefined>
+    destroy: () => Promise<boolean>
+    sync: () => Promise<boolean | undefined>
+  }
+}): any {
+  auto_sync_timers[name] = setTimeout(
+    async () => {
+      await API.sync()
+      createAutoSyncTimer({
+        name,
+        API,
+      })
+    },
+    _.get(
+      config,
+      "defaults.user.data.cloud_storage.data_backup.auto_sync_interval" ||
+        1000 * 60 * 5,
+    ),
+  )
 }
