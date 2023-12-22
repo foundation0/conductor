@@ -198,6 +198,14 @@ export default function Workspace() {
     computeContentWidth()
   }, [window.innerWidth])
 
+  listen({
+    type: 'layout_resize',
+    action: () => {
+      computeContentWidth()
+      setTimeout(computeContentWidth, 500)
+    }
+  })
+
   return (
     <div
       className="flex flex-1"
