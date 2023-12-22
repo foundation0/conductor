@@ -287,105 +287,101 @@ export default function Workspace() {
               id="WorkspaceSidebarContent"
               className={`px-2 bg-zinc-800 flex flex-grow flex-col mb-1 rounded-b-md border border-zinc-900/50 border-t-transparent`}
             >
-              <div
-                className={`flex flex-grow flex-col overflow-x-hidden w-full ${
-                  active_sidebar_tab === "sessions" ? "" : "hidden"
-                }`}
-              >
-                <div className="flex flex-row w-full justify-start gap-1 mb-3">
-                  <div className="flex flex-row flex-1 flex-grow items-center justify-start gap-1">
-                    {_(user_state.ais || [])
-                      .filter({ status: "active" })
-                      .take(5)
-                      .map((ai) => {
-                        const AI = _.find(ai_state, { id: ai.id })
-                        const avatar = (
-                          <img
-                            className={`border-2 border-zinc-900 rounded-full`}
-                            src={
-                              AI?.meta.avatar ||
-                              getAvatar({
-                                seed: AI?.meta?.name || "",
-                              })
-                            }
-                          />
-                        )
-                        return (
-                          <div
-                            className="rounded-full w-8 h-8 flex justify-center items-center cursor-pointer tooltip tooltip-bottom"
-                            data-tip={AI?.meta?.name || "Unnamed"}
-                            onClick={async () => {
-                              const sess: any = await query({
-                                type: "sessions.addSession",
-                                data: {
-                                  workspace_id: workspace_id,
-                                },
-                              })
-                              navigate(`/c/${workspace_id}/${sess.session.id}`)
-                              setTimeout(
-                                () => handleAIChange({ value: AI?.id || "c1" }),
-                                1000,
-                              )
-                            }}
-                          >
-                            {avatar}
-                          </div>
-                        )
-                      })
-                      .value()}
-                    <div
-                      className="rounded-full border-inset border border-dashed border-zinc-600 text-zinc-600 w-7 h-7 flex justify-center items-center saturate-0 hover:saturate-100 hover:text-zinc-300 hover:border-zinc-300 transition-all tooltip tooltip-bottom cursor-pointer"
-                      data-tip="Create new AI"
-                      onClick={() => {
-                        navigate("/c/ai/create")
-                      }}
-                    >
-                      <img src={PersonaIcon} className="w-4 h-4" alt="" />
-                    </div>
+              <div className="flex flex-row w-full justify-start gap-1 mb-3">
+                <div className="flex flex-row flex-1 flex-grow items-center justify-start gap-1">
+                  {_(user_state.ais || [])
+                    .filter({ status: "active" })
+                    .take(5)
+                    .map((ai) => {
+                      const AI = _.find(ai_state, { id: ai.id })
+                      const avatar = (
+                        <img
+                          className={`border-2 border-zinc-900 rounded-full`}
+                          src={
+                            AI?.meta.avatar ||
+                            getAvatar({
+                              seed: AI?.meta?.name || "",
+                            })
+                          }
+                        />
+                      )
+                      return (
+                        <div
+                          className="rounded-full w-8 h-8 flex justify-center items-center cursor-pointer tooltip tooltip-bottom"
+                          data-tip={AI?.meta?.name || "Unnamed"}
+                          onClick={async () => {
+                            const sess: any = await query({
+                              type: "sessions.addSession",
+                              data: {
+                                workspace_id: workspace_id,
+                              },
+                            })
+                            navigate(`/c/${workspace_id}/${sess.session.id}`)
+                            setTimeout(
+                              () => handleAIChange({ value: AI?.id || "c1" }),
+                              1000,
+                            )
+                          }}
+                        >
+                          {avatar}
+                        </div>
+                      )
+                    })
+                    .value()}
+                  <div
+                    className="rounded-full border-inset border border-dashed border-zinc-600 text-zinc-600 w-7 h-7 flex justify-center items-center saturate-0 hover:saturate-100 hover:text-zinc-300 hover:border-zinc-300 transition-all tooltip tooltip-bottom cursor-pointer"
+                    data-tip="Create new AI"
+                    onClick={() => {
+                      navigate("/c/ai/create")
+                    }}
+                  >
+                    <img src={PersonaIcon} className="w-4 h-4" alt="" />
                   </div>
-                  <div className="flex flex-row flex-shrink items-center justify-start gap-1"></div>
                 </div>
-                <SessionOrganizer
-                  app_state={app_state}
-                  user_state={user_state}
-                />
+                <div className="flex flex-row flex-shrink items-center justify-start gap-1"></div>
               </div>
-              <div
-                className={`overflow-x-hidden w-full ${
-                  active_sidebar_tab === "data" ? "" : "hidden"
-                }`}
-              >
-                <DataOrganizer />
-              </div>
-              <div
-                className={`overflow-x-hidden w-full ${
-                  active_sidebar_tab === "members" ? "" : "hidden"
-                }`}
-              >
-                <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
-                  <Lottie animationData={WorkingOnIt}></Lottie>
-                  <div className="text-md text-center">Coming soon&trade;</div>
-                </div>
-              </div>
-              <div
-                className={`overflow-x-hidden w-full ${
-                  active_sidebar_tab === "market" ? "" : "hidden"
-                }`}
-              >
-                <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
-                  <Lottie animationData={WorkingOnIt}></Lottie>
-                  <div className="text-md text-center">Coming soon&trade;</div>
-                </div>
-              </div>
-              {/* <Switch fallback={""}>
+
+              <Switch fallback={""}>
                 <Match when={active_sidebar_tab === "sessions"}>
+                  <div
+                    className={`flex flex-grow flex-col overflow-x-hidden w-full ${
+                      active_sidebar_tab === "sessions" ? "" : "hidden"
+                    }`}
+                  >
+                    <SessionOrganizer
+                      app_state={app_state}
+                      user_state={user_state}
+                    />
+                  </div>
                 </Match>
                 <Match when={active_sidebar_tab === "data"}>
+                  <div
+                    className={`overflow-x-hidden w-full ${
+                      active_sidebar_tab === "data" ? "" : "hidden"
+                    }`}
+                  >
+                    <DataOrganizer />
+                  </div>
                 </Match>
-                <Match when={["members", "market"].indexOf(active_sidebar_tab) !== -1}>
-                  
+                <Match
+                  when={
+                    ["members", "market"].indexOf(active_sidebar_tab) !== -1
+                  }
+                >
+                  <div
+                    className={`overflow-x-hidden w-full ${
+                      active_sidebar_tab === "members" ? "" : "hidden"
+                    }`}
+                  >
+                    <div className="flex flex-col w-full h-full align-center items-center justify-center flex-grow text-zinc-400 font-semibold">
+                      <Lottie animationData={WorkingOnIt}></Lottie>
+                      <div className="text-md text-center">
+                        Coming soon&trade;
+                      </div>
+                    </div>
+                  </div>
                 </Match>
-              </Switch> */}
+              </Switch>
             </div>
           </div>
         </Resizable>
