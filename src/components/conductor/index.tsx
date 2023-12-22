@@ -21,7 +21,6 @@ import { AIsT } from "@/data/schemas/ai"
 import AIActions from "@/data/actions/ai"
 import config from "@/config"
 import { del as delLS, get as getLS } from "@/data/storage/localStorage"
-import { ConvertGuest } from "@/components/user/convert_guest"
 import { BuyCredits } from "@/components/modals/buy_credits"
 import useMemory from "@/components/hooks/useMemory"
 import { mAppT, mBalancesT } from "@/data/schemas/memory"
@@ -33,11 +32,6 @@ import {
 } from "@/components/user/wallet"
 import { emit } from "@/libraries/events"
 import { PricingTable } from "../modals/pricing_table"
-import {
-  Input as InputIntro,
-  InputActions,
-} from "@/components/experiences/input_introduction/v1"
-import { Step } from "react-joyride"
 import { AddData } from "../modals/add_data"
 import { createMemoryState } from "@/libraries/memory"
 
@@ -302,7 +296,7 @@ export default function Conductor() {
             </div>
           }
         </div>
-        <ConvertGuest />
+        {/* <ConvertGuest /> */}
         <div className="modals">
           <BuyCredits />
           <PricingTable />

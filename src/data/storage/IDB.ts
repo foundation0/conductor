@@ -450,7 +450,7 @@ export const store = async <TData>({
   if (store) {
     await setStore({ store })
 
-    if (["user", "appstate", "ais"].includes(name)) {
+    if (["user", "appstate", "ais", "sessions"].includes(name)) {
       setInterval(
         async () => {
           const synced = await API.sync()

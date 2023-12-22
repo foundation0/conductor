@@ -313,7 +313,7 @@ export default function Workspace() {
             >
               <div
                 id="AIQuickSelector"
-                className="flex flex-row w-full justify-start gap-1 mb-3 overflow-hidden"
+                className="flex flex-row w-full justify-start gap-1 mb-3"
               >
                 <div className="ai flex flex-row flex-1 flex-grow items-center justify-start gap-1">
                   {_(user_state.ais || [])

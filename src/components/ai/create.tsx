@@ -313,9 +313,9 @@ export default function CreatePersona() {
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     maxFiles: 1,
-    maxSize: 1000000,
+    maxSize: 500000,
     accept: {
-      "image/png": [".png", ".jpg", ".jpeg", ".gif"],
+      "image/png": [".png", ".jpg", ".jpeg"],
     },
   })
 
