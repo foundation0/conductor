@@ -786,7 +786,7 @@ export default function CreatePersona() {
                 </div>
               </div>
             </div>
-            <div className={element_class}>
+            {/* <div className={element_class}>
               <div className={headline_class}>
                 <div
                   className={headline_class + " cursor-pointer"}
@@ -830,7 +830,7 @@ export default function CreatePersona() {
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
             <div className={element_class}>
               <div className={headline_class}>
                 <div
