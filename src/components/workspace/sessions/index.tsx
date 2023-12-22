@@ -199,7 +199,7 @@ export default function Workspace() {
   }, [window.innerWidth])
 
   listen({
-    type: 'layout_resize',
+    type: ['layout_resize', 'sessions/change'],
     action: () => {
       computeContentWidth()
       setTimeout(computeContentWidth, 500)
@@ -219,7 +219,7 @@ export default function Workspace() {
         <div
           id="Tabs"
           className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950 rounded-md"
-          style={{ width: mem_width.content_width + "px" }}
+          // style={{ width: mem_width.content_width + "px" }}
         >
           <Tabs />
         </div>

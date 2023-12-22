@@ -342,6 +342,7 @@ export default function Workspace() {
                         <div
                           className="rounded-full w-8 h-8 flex justify-center items-center cursor-pointer tooltip tooltip-bottom"
                           data-tip={AI?.meta?.name || "Unnamed"}
+                          key={AI?.id}
                           onClick={async () => {
                             const sess: any = await query({
                               type: "sessions.addSession",
@@ -350,6 +351,9 @@ export default function Workspace() {
                               },
                             })
                             navigate(`/c/${workspace_id}/${sess.session.id}`)
+                            emit({
+                              type: 'sessions/change'
+                            })
                             setTimeout(
                               () => handleAIChange({ value: AI?.id || "c1" }),
                               1000,
