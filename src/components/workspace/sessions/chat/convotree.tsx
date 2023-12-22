@@ -115,9 +115,9 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
         const ai = _.find(ai_state, { id: m.source.split("/")[2] })
         let icon = ai?.meta.avatar || (
           <img
-            className={`border-2 border-zinc-900 rounded-full w-3 h-3`}
+            className={`rounded-full w-3 h-3`}
             /* style={{ borderColor: user_variant_settings?.color || "#00000000" }} */
-            src={getAvatar({
+            src={ai?.meta?.avatar || getAvatar({
               seed:
                 _.find(ai_state, { id: m.source.split("/")[2] })?.meta?.name ||
                 "",
@@ -130,7 +130,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
             typeof icon === "string" ?
               <img
                 src={icon}
-                className={`border-2 rounded-full w-3 h-3 bg-zinc-200`}
+                className={`rounded-full w-3 h-3 bg-zinc-200`}
                 style={{
                   borderColor: user_variant_settings?.color || "#00000000",
                 }}
@@ -142,9 +142,9 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
           _.size(user_state.meta?.profile_photos) > 0 ?
             <img
               src={_.first(user_state.meta?.profile_photos) || ""}
-              className="border-2 border-zinc-900/50 rounded-full w-3 h-3"
+              className="rounded-full w-3 h-3"
             />
-          : <div className="border-2 border-zinc-900/50 rounded-full w-3 h-3">
+          : <div className="rounded-full w-3 h-3">
               {user_state.meta?.username?.[0].toUpperCase()}
             </div>
       }
@@ -409,8 +409,8 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                       <div className=" text-zinc-200 w-8 h-8 flex ">
                         <span className="text-sm w-full h-full flex justify-center items-center">
                           <img
-                            className={`border-2 border-zinc-900 rounded-full w-3 h-3`}
-                            src={getAvatar({ seed: ai?.meta?.name || "" })}
+                            className={`rounded-full w-3 h-3`}
+                            src={ai?.meta?.avatar || getAvatar({ seed: ai?.meta?.name || "" })}
                           />
                         </span>
                       </div>
