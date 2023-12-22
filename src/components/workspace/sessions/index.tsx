@@ -33,6 +33,23 @@ export default function Workspace() {
     state: { sessions: [], active_sessions: {}, open_sidebar: "" },
   })
 
+  const mem_width = useMemory<{
+    width: number
+    height: number
+    content_width: number
+  }>({
+    id: "window",
+    state: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      content_width:
+        window.innerWidth -
+        ((document.getElementById("WorkspaceSelector")?.offsetWidth || 0) +
+          (document.getElementById("Modes")?.offsetWidth || 0) +
+          12),
+    },
+  })
+
   const navigate = useNavigate()
 
   async function updateSessions() {
@@ -166,22 +183,14 @@ export default function Workspace() {
     const content_width =
       window.innerWidth -
       ((document.getElementById("WorkspaceSelector")?.offsetWidth || 0) +
-        (document.getElementById("Modes")?.offsetWidth || 0) + 12)
+        (document.getElementById("Modes")?.offsetWidth || 0) +
+        12)
     if (width !== mem_width.width) mem_width.width = width
     if (height !== mem_width.height) mem_width.height = height
     if (content_width !== mem_width.content_width)
       mem_width.content_width = content_width
     console.log("resize", content_width, window.innerWidth)
   }
-
-  const mem_width = useMemory<{
-    width: number
-    height: number
-    content_width: number
-  }>({
-    id: "window",
-    state: computeContentWidth(),
-  })
 
   window.addEventListener("resize", computeContentWidth)
 
