@@ -42,6 +42,7 @@ export const UserS = z.object({
   ais: z.array(z.object({
     id: z.string().min(1),
     status: z.enum(["active", "inactive"]),
+    last_used: z.number().optional(),
     data: z.array(AssociatedDatS).optional(),
   })).optional(),
 })

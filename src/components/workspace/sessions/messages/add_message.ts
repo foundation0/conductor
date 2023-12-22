@@ -100,6 +100,13 @@ export async function addMessage({
   if (!active_module) throw new Error("No module")
   const module = active_module
 
+  emit({
+    type: "user.updateAILastUsed",
+    data: {
+      ai_id: ai.id,
+    },
+  })
+
   // get the variant
   const variant = _.find(module?.specs.meta.variants, {
     id: session?.settings.module.variant,

@@ -929,6 +929,28 @@ const API: { [key: string]: Function } = {
     )
     return { sessions: _.flatten(sessions) }
   },
+  async updateAILastUsed({ ai_id }: { ai_id: string }) {
+    const { UserState } = await initLoaders()
+    const user_state = await UserState.get()
+    const updated_state: UserT = { ...user_state }
+    if (!updated_state || !updated_state.ais)
+      return error({ message: "No state found" })
+
+    const ai_index = _.findIndex(updated_state.ais, { id: ai_id })
+    if (ai_index === -1) return error({ message: "AI not found" })
+
+    updated_state.ais[ai_index].last_used = new Date().getTime()
+    // validate
+    const parsed = UserS.safeParse(updated_state)
+    if (!parsed.success) throw new Error("Invalid state")
+    await UserState.set(parsed.data)
+    emit({
+      type: "user.updateAILastUsed.done",
+      data: {
+        ai_id,
+      },
+    })
+  },
 }
 
 listen({

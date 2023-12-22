@@ -291,6 +291,12 @@ export default function Workspace() {
                 <div className="flex flex-row flex-1 flex-grow items-center justify-start gap-1">
                   {_(user_state.ais || [])
                     .filter({ status: "active" })
+                    .map((ai) => {
+                      const _ai = {...ai}
+                      if(!_ai.last_used) _ai.last_used = 0
+                      return _ai
+                    })
+                    .orderBy('last_used', 'desc')
                     .take(5)
                     .map((ai) => {
                       const AI = _.find(ai_state, { id: ai.id })
