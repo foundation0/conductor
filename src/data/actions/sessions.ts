@@ -529,7 +529,7 @@ const API: { [key: string]: Function } = {
 listen({
   type: "sessions.*",
   action: async (data: any, e: any) => {
-    const { callback } = data
+    const { callback } = data || {}
     const method: string = e?.event?.replace("sessions.", "")
     if (method in API) {
       const response = await API[method](data)

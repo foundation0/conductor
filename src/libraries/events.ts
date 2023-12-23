@@ -13,7 +13,7 @@ export async function emit({
   type: string | string[]
   data?: any
 }) {
-  info({ message: "emit", data: { type, data } })
+  info({ message: "emit", data: { type, data }, type: 'event' })
   if (Array.isArray(type)) {
     for (const t of type) {
       eventEmitter.emit(t, data)
@@ -32,7 +32,7 @@ export function listen({
   action: any
   once?: boolean
 }): () => void {
-  info({ message: "listen", data: { type, action } })
+  info({ message: "listen", data: { type, action }, type: 'event' })
   if (Array.isArray(type)) {
     const listeners: any = []
     for (const t of type) {
@@ -68,7 +68,7 @@ export async function query<T>({
     const stop_listener = listen({
       type: uid,
       action: (data: any) => {
-        info({ message: `query/${uid}/response`, data: { type: uid, data } })
+        info({ message: `query/${uid}/response`, data: { type: uid, data }, type: 'event' })
         resolve(data)
         return stop_listener()
       },
@@ -81,7 +81,7 @@ export async function query<T>({
         data: {
           ...data,
           callback: (data: any) => {
-            info({ message: `query/${uid}/emit`, data: { type, data } })
+            info({ message: `query/${uid}/emit`, data: { type, data }, type: 'event' })
             emit({
               type: uid,
               data,

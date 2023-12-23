@@ -92,6 +92,9 @@ export default function Workspace() {
     if (!_.find(user_state.workspaces, { id: workspace_id })) {
       navigate("/c/")
     }
+    emit({
+      type: "user.sync"
+    })
   }, [workspace_id])
 
   // if there is no session selected, select the first one from the first group's first folder

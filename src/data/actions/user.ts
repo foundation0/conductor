@@ -951,12 +951,16 @@ const API: { [key: string]: Function } = {
       },
     })
   },
+  async sync() {
+    const { UserState } = await initLoaders()
+    await UserState.sync()
+  }
 }
 
 listen({
   type: "user.*",
   action: async (data: any, e: any) => {
-    const { callback } = data
+    const { callback } = data || {}
     const method: string = e?.event?.replace("user.", "")
     if (method in API) {
       const response = await API[method](data)

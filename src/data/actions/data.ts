@@ -18,7 +18,7 @@ const API: { [key: string]: Function } = {
     // if content is ArrayBuffer, convert to Uint8Array
     if (content instanceof ArrayBuffer) content = new Uint8Array(content)
     if (!b4a.isBuffer(content)) content = JSON.stringify(content)
-    const id = buf2hex({ input: await createHash({ str: content }) })
+    const id = createHash({ str: content, format: 'hex' })
 
     const { DataState } = await initLoaders()
     const store = await DataState({ id })

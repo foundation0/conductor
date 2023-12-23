@@ -5,22 +5,26 @@ import { buf2hex, createHash } from "@/security/common"
 import pDebounce from "p-debounce"
 import { get as getLS, set as setLS } from "@/data/storage/localStorage"
 
-export function keyHash(str: string) {
-  return buf2hex({ input: createHash({ str }) })
+export function keyHash(str: string): string {
+  return createHash({ str, format: 'hex' }) as string
 }
 
 type SetT = { key: string; value: Uint8Array | Buffer }
 
+const setter_timers: any = {}
+
 const setters = new Map()
 export function set({ key, value }: SetT) {
-  const last_size = getLS({ key: `${key}-last_size` }) || 0
-  const current_size = value.byteLength
-  if (last_size === current_size) {
-    info({ message: `skipping CF setter for ${key}` })
+  const last_hash = getLS({ key: `${key}-last_hash` }) || 0
+  const hash = createHash({ str: value, format: 'hex' })
+  console.log({ last_hash, hash })
+  if (last_hash === hash) {
+    info({ message: `skipping CF set because store hasn't changed` })
     return Promise.resolve(true)
   }
-  const guest_mode = false // getLS({ key: "guest-mode" })
-  if (!guest_mode && !setters.has(key)) {
+  // const guest_mode = false // getLS({ key: "guest-mode" })
+  // if (!guest_mode && !setters.has(key)) {
+  if (!setters.has(key)) {
     info({ message: `setting up CF setter for ${key}` })
     setters.set(
       key,
@@ -32,15 +36,17 @@ export function set({ key, value }: SetT) {
     return setCF({ key, value })
   } else {
     info({ message: `getting CF setter for ${key}` })
-    return guest_mode ? setLS({ key, value }) : setters.get(key)({ key, value })
+    // return guest_mode ? setLS({ key, value }) : setters.get(key)({ key, value })
+    return setters.get(key)({ key, value })
   }
 }
 
 const getters = new Map()
 export function get({ key }: { key: string }) {
   // const guest_mode = getLS({ key: "guest-mode" })
-  const guest_mode = false
-  if (!guest_mode && !getters.has(key)) {
+  // const guest_mode = false
+  // if (!guest_mode && !getters.has(key)) {
+  if (!getters.has(key)) {
     info({ message: `setting up CF getter for ${key}` })
     getters.set(
       key,
@@ -52,9 +58,9 @@ export function get({ key }: { key: string }) {
     return getCF({ key })
   } else {
     info({ message: `getting CF getter for ${key}` })
-    if (guest_mode) {
-      return getLS({ key }) || null
-    }
+    // if (guest_mode) {
+    //   return getLS({ key }) || null
+    // }
     return getters.get(key)({ key })
   }
 }
@@ -66,8 +72,10 @@ export async function setCF({ value, key }: SetT) {
       body: value,
     })
     if (res.ok) {
-      setLS({ key: `${key}-last_size`, value: value.byteLength})
+      const hash = createHash({ str: value, format: 'hex' })
+      setLS({ key: `${key}-last_hash`, value: hash})
       const data = await res.text()
+      info({ message: `setCF ${key}`, data })
       return data
     } else {
       return null

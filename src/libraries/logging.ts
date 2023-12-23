@@ -20,10 +20,14 @@ export function error({ message, data, type, notification = true }: { message: s
   return false
 }
 
-export async function info({ message, data }: { message: string; data?: any; type?: string }) {
+export async function info({ message, data, type }: { message: string; data?: any; type?: string }) {
   // emit({ type: "info", data: { type: "info", message, data } })
-  if (localStorage?.getItem("debug") === "true") {
-    console.log(message, data)
+  if (localStorage?.getItem("debug")) {
+    if(type === "event") {
+      if(localStorage?.getItem("debug") === "verbose") {
+        console.log(message, data)
+      }
+    } else console.log(message, data)
   }
 }
 

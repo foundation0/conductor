@@ -87,6 +87,17 @@ export async function processData(
     },
   })
 
+  // add the file to the workspace data
+  await UserActions.addDataToWorkspace({
+    workspace_id,
+    data: {
+      id: data_id,
+      name: file.name,
+      mime,
+      filename: file.name,
+    },
+  })
+
   // Vectorize based on file type
   let chunks: {
     pageContent: string
@@ -190,17 +201,6 @@ export async function processData(
 
   // update the workspace vector index
   // await VectorsActions.updateWorkspaceIndex({ workspace_id, indexer: "voy", vectors, data: chunks })
-
-  // add the file to the workspace data
-  await UserActions.addDataToWorkspace({
-    workspace_id,
-    data: {
-      id: data_id,
-      name: file.name,
-      mime,
-      filename: file.name,
-    },
-  })
 
   emit({
     type: "data-import/done",
@@ -333,8 +333,8 @@ export async function compileDataForIndex({
   const { VectorsState, DataState, SessionState } = await initLoaders()
   // const user: UserT = await UserState.get()
   const user = getMemoryState<UserT>({ id: "user" })
-  if(!user) return error({ message: "no user" })
-  
+  if (!user) return error({ message: "no user" })
+
   let data_source: DataRefT[] = []
 
   if (source === "workspace") {

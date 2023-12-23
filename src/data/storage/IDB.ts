@@ -10,7 +10,7 @@ import {
   signMessage,
 } from "@/security/common"
 import { pack, unpack } from "msgpackr"
-import { get, set, del } from "idb-keyval"
+import { get, set, del, update } from "idb-keyval"
 import { getActiveUser } from "@/libraries/active_user"
 import { set as setCF, get as getCF, keyHash } from "@/libraries/cloudflare"
 import { UserT } from "@/data/loaders/user"
@@ -76,6 +76,10 @@ export function getRemoteKey({
   } else {
     remote_key = keyHash(active_user?.master_key + active_user?.meta?.username)
   }
+  info({
+    message: `remote key for ${name} is ${remote_key}`,
+    data: { remote_key, name },
+  })
   return remote_key
 }
 
@@ -149,46 +153,59 @@ export async function getRemote({
 
         // If the store is valid, update the local store
         if (cf_vstate.success && cf_vstate?.data) {
-          if ((_.isArray(s) && _.size(s) === 0) || !s) s = cf_vstate?.data
-
-          // If the updated timestamp of the remote store is greater than the local store, update the local store
-          const remote_updated = _.get(cf_vstate, "data._updated") || 0
-          const local_updated = _.get(s, "_updated") || 0
-          if (
-            s &&
-            _.isObject(cf_vstate?.data) &&
-            remote_updated > local_updated
-          ) {
-            s = cf_vstate?.data
-            // await API.set(s, false, true, true);
-            // emit({ type: "store/update", data: { session_id: name } })
-          } else if (
-            s &&
-            _.isArray(cf_vstate?.data) &&
-            cf_vstate?.data.length > (_.size(s) || 0)
-          ) {
-            s = cf_vstate?.data
-            // await API.set(s, false, true, false);
-            // emit({ type: "store/update", data: { session_id: name } })
-          } else if (
-            s &&
-            _.isArray(cf_vstate?.data) &&
-            cf_vstate?.data.length < (_.size(s) || 0)
-          ) {
-            // this is a broken sync, so we need to overwrite the remote store
-            await API.set(s)
-          } else {
-            // If the remote store has fewer messages than the local store, handle the situation accordingly
+          // if store is an empty array, or no local store at all, return the remote store
+          if ((_.isArray(s) && _.size(s) === 0) || !s) {
+            return { store: cf_vstate?.data, result: "new" }
           }
-          mem[name] = { status: "ready", updated_at: new Date().getTime() }
-          return s
+
+          // if the store is an object, check the _updated timestamp
+          if (s && _.isObject(cf_vstate?.data)) {
+            // If the updated timestamp of the remote store is greater than the local store, update the local store
+            const remote_updated = _.get(cf_vstate, "data._updated") || 0
+            const local_updated = _.get(s, "_updated") || 0
+            if (remote_updated > local_updated) {
+              // if remote is newer than local, update local
+
+              // check that remote store is valid
+              const parsed_remote = ztype.safeParse(cf_vstate?.data)
+              if (parsed_remote.success) {
+                return { store: cf_vstate?.data, result: "new_found" }
+              } else {
+                return { store: s, result: "invalid_remote" }
+              }
+            } else if (remote_updated < local_updated) {
+              // if remote is older than local, return local
+              return { store: s, result: "older_found" }
+            } else if (remote_updated === local_updated) {
+              // if remote is same as local, return local
+              return { store: s, result: "equal" }
+            } else {
+              // this state should not happen
+              // return error({ message: "Invalid sync state, this is not good" })
+            }
+          } else if (_.isArray(cf_vstate?.data)) {
+            if (cf_vstate?.data.length > (_.size(s) || 0)) {
+              // if store is an array and it's longer than the local store, update the local store
+              const parsed_remote = ztype.safeParse(cf_vstate?.data)
+              if (!parsed_remote.success) {
+                return { store: s, result: "invalid_remote" }
+              }
+              return { store: s, result: "new_found" }
+            } else if (cf_vstate?.data.length < (_.size(s) || 0)) {
+              // if store is an array and it's shorter than the local store, update the remote store
+              return { store: cf_vstate?.data, result: "older_found" }
+            } else {
+              // this is probably an error, so set the store status to "error" and return local store
+              return { store: s, result: "error" }
+            }
+            //mem[name] = { status: "ready", updated_at: new Date().getTime() }
+          }
         }
       }
     } else {
-      // If the store doesn't exist or the public key doesn't match, handle the situation accordingly
-      mem[name] = { status: "error", updated_at: new Date().getTime() }
+      // if the store does not exist, it's 404
+      mem[name] = { status: "not_found", updated_at: new Date().getTime() }
     }
-    return false
   } catch (e) {
     // Handle any errors that occur during the process
     mem[name] = { status: "error", updated_at: new Date().getTime() }
@@ -351,9 +368,13 @@ export const store = async <TData>({
       }
 
       // Save the data to the local storage
-      if (config.features.local_encryption)
-        await set(key, pack(encrypt({ data: vstate.data, key: enc_key })))
-      else await set(key, vstate.data)
+      await setLocalStore({ store: vstate.data })
+      // if (config.features.local_encryption) {
+      //   if (!enc_key) return error({ message: "No encryption key" })
+      //   await update(key, (val: any) =>
+      //     pack(encrypt({ data: vstate.data, key: enc_key || "" })),
+      //   )
+      // } else await update(key, (val: any) => vstate.data)
 
       // Emit an event to notify the store has been updated
       emit({
@@ -379,21 +400,43 @@ export const store = async <TData>({
       }
       return true
     },
-    sync: async () => {
+    sync: async ({ cf_store }: { cf_store?: any } = {}) => {
       if (!active_user || !enc_key) return
       mem[name] = { status: "syncing", updated_at: new Date().getTime() }
-      const cf_store = await getRemote({
-        mem,
-        remote_key,
-        name,
-        active_user,
-        enc_key,
-        ztype,
-        s: store,
-        API,
-      })
-      if (cf_store) {
-        await API.set(cf_store, false, true, true)
+      if (!cf_store || cf_store?.store)
+        cf_store = await getRemote({
+          mem,
+          remote_key,
+          name,
+          active_user,
+          enc_key,
+          ztype,
+          s: store,
+          API,
+        })
+      if (cf_store && cf_store?.store) {
+        info({ message: `${name} / sync / ${cf_store.result}` })
+        if (cf_store.result === "new_found") {
+          await API.set(cf_store.store, false, true, true)
+        } else if (cf_store.result === "older_found") {
+          // if remote is older than local, update remote
+          await API.set(cf_store.store, false)
+        } else if (
+          cf_store.result === "invalid_remote" ||
+          cf_store.result === "not_found"
+        ) {
+          // if remote is invalid, update with local
+          await API.set(cf_store.store, false)
+          error({
+            message: `Invalid remote store for ${name}`,
+            data: { cf_store: cf_store.store },
+          })
+        } else if (cf_store.result === "error") {
+          mem[name] = { status: "error", updated_at: new Date().getTime() }
+          return error({ message: "Invalid sync state" })
+        } else {
+          // this is either new or equal, so do nothing
+        }
         emit({
           type: "store/update",
           data: { target: name, session: cf_store },
@@ -407,7 +450,7 @@ export const store = async <TData>({
     },
   }
 
-  async function setStore({ store }: { store: TData }) {
+  async function setLocalStore({ store }: { store: TData }) {
     const s_check = ztype.safeParse(store)
     if (!s_check.success) {
       console.error(s_check.error)
@@ -415,11 +458,13 @@ export const store = async <TData>({
       throw new Error("Store data does not match schema")
     }
     // if (!local_store) {
-    if (config.features.local_encryption && enc_key) {
-      await set(key, pack(encrypt({ data: store, key: enc_key })))
-    } else {
-      await set(key, store)
-    }
+    if (config.features.local_encryption) {
+      if (!enc_key) return error({ message: "No encryption key" })
+      await update(key, (val: any) =>
+        pack(encrypt({ data: store, key: enc_key || "" })),
+      )
+    } else await update(key, (val: any) => store)
+
     emit({ type: "store/update", data: { target: name, session: store } })
 
     // mem[name] = { status: "ready", updated_at: new Date().getTime() }
@@ -431,65 +476,22 @@ export const store = async <TData>({
       error({ message: "no active user" })
       return null
     }
-    getRemote({
-      mem,
-      remote_key,
-      name,
-      active_user,
-      enc_key,
-      ztype,
-      s: store,
-      API,
-    }).then((cf_store) => {
-      if (cf_store) {
-        setStore({ store: cf_store })
-      }
-    })
+    await API.sync()
   }
 
   // If the store exists, validate it against the schema and save it to the local storage if it doesn't exist
   if (store) {
-    await setStore({ store })
+    await setLocalStore({ store })
 
     if (["user", "appstate", "ais", "sessions", "notepads"].includes(name)) {
       createAutoSyncTimer({ name, API })
     }
-    // }
-
-    /* if (!cf_store && key_pair && remote_key && name !== "users" && !skip_sync) {
-      const enc_data = await processForRemote({
-        data: store,
-        key_pair,
-        enc_key,
-      })
-      mem[name] = { status: "syncing", updated_at: new Date().getTime() }
-      setCF({ key: remote_key, value: enc_data }).then(() => {
-        mem[name] = { status: "ready", updated_at: new Date().getTime() }
-      })
-    } else {
-      mem[name] = { status: "ready", updated_at: new Date().getTime() }
-    } */
   }
 
   return API
 }
-function createAutoSyncTimer({
-  name,
-  API,
-}: {
-  name: string
-  API: {
-    get: () => any
-    set: (
-      data: any,
-      no_storage?: boolean,
-      replace?: boolean,
-      skip_sync?: boolean,
-    ) => Promise<boolean | undefined>
-    destroy: () => Promise<boolean>
-    sync: () => Promise<boolean | undefined>
-  }
-}): any {
+function createAutoSyncTimer({ name, API }: { name: string; API: any }): any {
+  clearTimeout(auto_sync_timers[name])
   auto_sync_timers[name] = setTimeout(
     async () => {
       await API.sync()

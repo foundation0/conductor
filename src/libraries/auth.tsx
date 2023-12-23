@@ -81,17 +81,19 @@ export async function createUser({
   guest?: boolean
   custom_master_key?: string
 }) {
-  const buffer_key = buf2hex({ input: createHash({ str: username }) })
+  const buffer_key = buf2hex({
+    input: createHash({ str: username }) as Uint8Array,
+  })
   const user_exists = await get({ key: buffer_key })
   if (user_exists) return error({ message: "user already exists" })
   const master_key_buf =
     custom_master_key ? hex2buf({ input: custom_master_key }) : randomBytes(64)
   const master_key = buf2hex({ input: master_key_buf })
   const user_key = buf2hex({
-    input: createHash({ str: master_key + username }),
+    input: createHash({ str: master_key + username }) as Uint8Array,
   })
   const master_password = buf2hex({
-    input: createHash({ str: master_key + "master-password" }),
+    input: createHash({ str: master_key + "master-password" }) as Uint8Array,
   })
   const key_pair = keyPair({ seed: master_key_buf })
 
@@ -201,7 +203,9 @@ export async function createBuffer({
   master_password: string
   key_pair: ReturnType<typeof keyPair>
 }) {
-  const buffer_key = buf2hex({ input: createHash({ str: username }) })
+  const buffer_key = buf2hex({
+    input: createHash({ str: username }) as Uint8Array,
+  })
   const o = encrypt({ data: { user_key, master_password }, key: password })
   const buffer_obj = {
     _v: 1,
@@ -225,7 +229,9 @@ export async function authenticateUser({
   buffer?: { data: z.infer<typeof BufferObjectS> }
 }) {
   // get buffer
-  const buffer_key = buf2hex({ input: createHash({ str: username }) })
+  const buffer_key = buf2hex({
+    input: createHash({ str: username }) as Uint8Array,
+  })
   if (!buffer) buffer = await get({ key: buffer_key })
   if (!buffer) {
     buffer = await getKV(buffer_key)

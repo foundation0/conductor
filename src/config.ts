@@ -47,8 +47,8 @@ const config = {
       : override("DB_URI") || "http://localhost:6002/",
     CF: {
       sync_interval: 1000 * 60,
-      get_limit: 1000,
-      set_limit: 10000,
+      get_limit: 500,
+      set_limit: 1000,
     },
   },
   services: {
