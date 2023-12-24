@@ -10,16 +10,18 @@ import {
   signMessage,
 } from "@/security/common"
 import { pack, unpack } from "msgpackr"
-import { get, set, del, update } from "idb-keyval"
+import { get, del, update } from "idb-keyval"
 import { getActiveUser } from "@/libraries/active_user"
 import { set as setCF, get as getCF, keyHash } from "@/libraries/cloudflare"
 import { UserT } from "@/data/loaders/user"
 import { error, info } from "@/libraries/logging"
 import config from "@/config"
 import { verify } from "@noble/secp256k1"
-import { emit, listen } from "@/libraries/events"
+import { emit } from "@/libraries/events"
 import { createMemoryState, getMemoryState } from "@/libraries/memory"
 import { get as getLS, set as setLS } from "@/data/storage/localStorage"
+
+const AUTO_SYNC_STORES = ["user", "appstate", "ais", "sessions", "notepads"]
 
 // Function to merge the current state with the updated state
 export const mergeState = <T>(state: T, updated_state: T): T => {
@@ -123,9 +125,10 @@ export async function getRemote({
   // Set the store status to "syncing"
   mem[name] = { status: "syncing", updated_at: new Date().getTime() }
 
+  const last_checksum = getLS({ key: `${remote_key}-last_checksum` })
   // Get the store from the cloud storage
   try {
-    const cf_store = await getCF({ key: remote_key })
+    const cf_store = await getCF({ key: remote_key, checksum: last_checksum })
 
     // If the store exists and the public key matches the active user's public key, decrypt the store
     if (
@@ -364,17 +367,15 @@ export const store = async <TData>({
           key_pair,
           enc_key,
         })
+        setLS({
+          key: `${remote_key}-last_checksum`,
+          value: createHash({ str: enc_data, format: "hex" }),
+        })
         setCF({ key: remote_key, value: enc_data })
       }
 
       // Save the data to the local storage
       await setLocalStore({ store: vstate.data })
-      // if (config.features.local_encryption) {
-      //   if (!enc_key) return error({ message: "No encryption key" })
-      //   await update(key, (val: any) =>
-      //     pack(encrypt({ data: vstate.data, key: enc_key || "" })),
-      //   )
-      // } else await update(key, (val: any) => vstate.data)
 
       // Emit an event to notify the store has been updated
       emit({
@@ -384,7 +385,7 @@ export const store = async <TData>({
           state: vstate.data,
         },
       })
-      createAutoSyncTimer({ name, API })
+      if (AUTO_SYNC_STORES.includes(name)) createAutoSyncTimer({ name, API })
       return true
     },
     destroy: async () => {
@@ -439,7 +440,7 @@ export const store = async <TData>({
         }
         emit({
           type: "store/update",
-          data: { target: name, session: cf_store },
+          data: { target: name, session: cf_store.store },
         })
         mem[name] = { status: "ready", updated_at: new Date().getTime() }
         return true
@@ -483,7 +484,7 @@ export const store = async <TData>({
   if (store) {
     await setLocalStore({ store })
 
-    if (["user", "appstate", "ais", "sessions", "notepads"].includes(name)) {
+    if (AUTO_SYNC_STORES.includes(name)) {
       createAutoSyncTimer({ name, API })
     }
   }

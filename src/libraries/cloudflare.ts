@@ -15,9 +15,8 @@ const setter_timers: any = {}
 
 const setters = new Map()
 export function set({ key, value }: SetT) {
-  const last_hash = getLS({ key: `${key}-last_hash` }) || 0
+  const last_hash = getLS({ key: `${key}-checksum` }) || 0
   const hash = createHash({ str: value, format: 'hex' })
-  console.log({ last_hash, hash })
   if (last_hash === hash) {
     info({ message: `skipping CF set because store hasn't changed` })
     return Promise.resolve(true)
@@ -42,7 +41,7 @@ export function set({ key, value }: SetT) {
 }
 
 const getters = new Map()
-export function get({ key }: { key: string }) {
+export function get({ key, checksum }: { key: string, checksum?: string }) {
   // const guest_mode = getLS({ key: "guest-mode" })
   // const guest_mode = false
   // if (!guest_mode && !getters.has(key)) {
@@ -50,18 +49,20 @@ export function get({ key }: { key: string }) {
     info({ message: `setting up CF getter for ${key}` })
     getters.set(
       key,
-      pDebounce(async ({ key }: { key: string }) => {
-        const d = await getCF({ key })
+      pDebounce(async ({ key, checksum }: { key: string, checksum?: string }) => {
+        const d = await getCF({ key, checksum })
+        const hash = createHash({ str: d, format: 'hex' })
+        setLS({ key: `${key}-checksum`, value: hash})
         return d
       }, config.DB.CF.get_limit)
     )
-    return getCF({ key })
+    return getCF({ key, checksum })
   } else {
     info({ message: `getting CF getter for ${key}` })
     // if (guest_mode) {
     //   return getLS({ key }) || null
     // }
-    return getters.get(key)({ key })
+    return getters.get(key)({ key, checksum })
   }
 }
 
@@ -73,7 +74,7 @@ export async function setCF({ value, key }: SetT) {
     })
     if (res.ok) {
       const hash = createHash({ str: value, format: 'hex' })
-      setLS({ key: `${key}-last_hash`, value: hash})
+      setLS({ key: `${key}-checksum`, value: hash})
       const data = await res.text()
       info({ message: `setCF ${key}`, data })
       return data
@@ -85,9 +86,9 @@ export async function setCF({ value, key }: SetT) {
   }
 }
 
-export async function getCF({ key }: { key: string }) {
+export async function getCF({ key, checksum }: { key: string, checksum?: string }) {
   try {
-    const res = await fetch(`${config.DB.URI}${key}`)
+    const res = await fetch(`${config.DB.URI}${key}${checksum ? `/${checksum}` : ""}`)
     if (res.ok) {
       const data = await res.arrayBuffer()
       try {
