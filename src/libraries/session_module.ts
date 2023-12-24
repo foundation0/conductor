@@ -43,7 +43,7 @@ export async function handleModuleChange({ value }: { value: string }) {
 
 export async function handleAIChange({ value }: { value: string }) {
   const ai_state: AIsT = await query({
-    type: "ai.getAll"
+    type: "ai.getAll",
   })
   const mem_app = getMemoryState<mAppT>({ id: "app" })
   if (!mem_app) return error({ message: "App not found" })
@@ -81,7 +81,7 @@ export async function handleAIChange({ value }: { value: string }) {
     type: "sessions/module-change",
     data: {
       target: session.id,
-      ai: value
+      ai: value,
     },
   })
 }

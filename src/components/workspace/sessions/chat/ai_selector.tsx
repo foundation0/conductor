@@ -11,19 +11,33 @@ import { initLoaders } from "@/data/loaders"
 import { TbSelector } from "react-icons/tb"
 import { getAvatar } from "@/libraries/ai"
 import useMemory from "@/components/hooks/useMemory"
-import { mAISelectorT } from "@/data/schemas/memory"
+import { mAISelectorT, mChatSessionT } from "@/data/schemas/memory"
 import { handleModuleChange, handleAIChange } from "@/libraries/session_module"
 import { AIsT } from "@/data/schemas/ai"
+import { getMemoryState } from "@/libraries/memory"
+import { ChatSessionT, SessionsT } from "@/data/schemas/sessions"
 
 export function AISelector({
-  user_state,
+  // user_state,
   session_id,
-  installed_ais,
+  // installed_ais,
 }: {
-  user_state: UserT
+  // user_state: UserT
   session_id: string
-  installed_ais: any
+  // installed_ais: any
 }) {
+  const user_state = useMemory<UserT>({
+    id: "user",
+  })
+  const installed_ais = useMemory<AIsT>({
+    id: "ais",
+  })
+
+  const sessions = useMemory<SessionsT>({
+    id: `sessions`,
+  })
+
+  // if(!session) return null
   const mem = useMemory<mAISelectorT>({
     id: `${session_id}-ai-selector`,
     state: {
@@ -31,7 +45,7 @@ export function AISelector({
       active_llm_module_text: "",
       ai_options: [],
       llm_options: [],
-      session: {},
+      session: sessions?.active[session_id] || {},
       context_len: 0,
     },
   })
@@ -69,7 +83,7 @@ export function AISelector({
 
   useEffect(() => {
     update()
-  }, [JSON.stringify(mem.session)])
+  }, [JSON.stringify(sessions?.active[session_id])])
 
   useEvent({
     name: "modules/update",
@@ -79,18 +93,19 @@ export function AISelector({
   useEvent({
     name: "sessions.updateSessions.done",
     action: (session: any) => {
-      const s = session?.active[session_id]
+      const s = sessions?.active[session_id]
       if (!s) return
       mem.session = s
+      update()
     },
   })
 
   async function setup() {
-    const { SessionState } = await initLoaders()
-    const sessions_state = await SessionState.get()
-    const session = sessions_state.active[session_id]
-    if (!session) return
-    mem.session = session
+    // const { SessionState } = await initLoaders()
+    // const sessions_state = await SessionState.get()
+    // const session = sessions_state.active[session_id]
+    // if (!session) return
+    // mem.session = session
     update()
   }
 
@@ -102,7 +117,7 @@ export function AISelector({
 
   // change session's active module
 
-  if (_.isEqualWith(mem.session, {})) return
+  // if (_.isEqualWith(mem.session, {})) return
   return (
     <div
       id="popoverContent"

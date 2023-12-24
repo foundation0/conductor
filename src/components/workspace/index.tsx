@@ -93,7 +93,7 @@ export default function Workspace() {
       navigate("/c/")
     }
     emit({
-      type: "user.sync"
+      type: "user.sync",
     })
   }, [workspace_id])
 
@@ -215,7 +215,7 @@ export default function Workspace() {
   const onResize = (event: any, { size }: any) => {
     mem.organizer_width = size.width
     emit({
-      type: "layout_resize"
+      type: "layout_resize",
     })
     // setPreference({ key: 'organizer-width', value: size.width });
     const ai_selector_width =
@@ -256,7 +256,10 @@ export default function Workspace() {
           resizeHandles={["e"]}
           handleSize={[1000, 1000]}
           onResizeStop={() => {
-            setPreference({ key: "organizer-width", value: mem.organizer_width })
+            setPreference({
+              key: "organizer-width",
+              value: mem.organizer_width,
+            })
           }}
         >
           <div
@@ -355,7 +358,7 @@ export default function Workspace() {
                             })
                             navigate(`/c/${workspace_id}/${sess.session.id}`)
                             emit({
-                              type: 'sessions/change'
+                              type: "sessions/change",
                             })
                             setTimeout(
                               () => handleAIChange({ value: AI?.id || "c1" }),

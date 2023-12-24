@@ -708,9 +708,9 @@ export default function Chat({
                   className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content md:-left-[25%]"
                 >
                   <AISelector
-                    installed_ais={installed_ais}
+                    // installed_ais={installed_ais}
                     session_id={session_id}
-                    user_state={user_state}
+                    // user_state={user_state}
                   />
                 </div>
               </div>
@@ -747,9 +747,9 @@ export default function Chat({
                       className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content md:-left-[25%]"
                     >
                       <AISelector
-                        installed_ais={installed_ais}
+                        // installed_ais={installed_ais}
                         session_id={session_id}
-                        user_state={user_state}
+                        // user_state={user_state}
                       />
                     </div>
                   </div>
