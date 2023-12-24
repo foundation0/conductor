@@ -231,7 +231,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                 onSave={(name: any) => {
                   resetFieldEditId()
                   updateGroup({ group_id: group.id, name })
-                  fieldFocus({ selector: "#input" })
+                  fieldFocus({ selector: `#input-${session_id}` })
                 }}
                 onCancel={resetFieldEditId}
                 onBlur={resetFieldEditId}
@@ -406,7 +406,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                         folder_id: folder.id,
                         name,
                       })
-                      fieldFocus({ selector: "#input" })
+                      fieldFocus({ selector: `#input-${session_id}` })
                     }}
                     onCancel={resetFieldEditId}
                     onBlur={resetFieldEditId}
@@ -568,7 +568,7 @@ export default function GroupsTree({ groups }: { groups: GroupT[] }) {
                               session_id: session.id,
                               name,
                             })
-                            fieldFocus({ selector: "#input" })
+                            fieldFocus({ selector: `#input-${session_id}` })
                             return false
                           }}
                           onCancel={resetFieldEditId}

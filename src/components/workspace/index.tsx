@@ -79,7 +79,7 @@ export default function Workspace() {
   useEffect(() => {
     const l = window.addEventListener("focus", () => {
       setTimeout(() => {
-        fieldFocus({ selector: "#input" })
+        fieldFocus({ selector: `#input-${session_id}` })
       }, 200)
     })
 

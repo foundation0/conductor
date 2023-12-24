@@ -308,6 +308,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                                     meta: {
                                       role: "continue",
                                     },
+                                    parent_id: row[1].id,
                                     message:
                                       "continue your previous message. don't acknowledge or comment this request, just continue your previous message.",
                                   },
@@ -371,12 +372,11 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                           fieldFocus({ selector: "#input" })
                         }}
                       >
-                        <RxCornerBottomLeft className="w-3 h-3 text-zinc-700" />
+                        {/* <RxCornerBottomLeft className="w-3 h-3 text-zinc-700" />
                         <div className="flex flex-row gap-1 items-center text-xs text-zinc-500 hover:text-zinc-100 cursor-pointer transition-all">
-                          {/* <RiAddCircleFill className="w-3 h-3" /> */}
                           <LuGitBranchPlus className="w-3 h-3" />
                           <div>Create new thread</div>
-                        </div>
+                        </div> */}
                       </div>
                     : null}
                   </div>

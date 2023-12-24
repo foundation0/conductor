@@ -7,6 +7,8 @@ import { fieldFocus } from "@/libraries/field_focus"
 import { error } from "@/libraries/logging"
 import SessionsActions from "@/data/actions/sessions"
 import { MessageRowT } from "@/data/schemas/sessions"
+import { getMemoryState } from "./memory"
+import { mChatSessionT } from "@/data/schemas/memory"
 
 // create new branch
 export const onNewBranchClick = async ({
@@ -17,9 +19,13 @@ export const onNewBranchClick = async ({
   parent_id: string
 }) => {
   // mark other messages with same parent_id as not active
-  const { MessagesState } = await initLoaders()
-  const ss = await MessagesState({ session_id })
-  const msgs: TextMessageT[] = ss?.get()
+  // const { MessagesState } = await initLoaders()
+  // const ss = await MessagesState({ session_id })
+  const mem_session = getMemoryState<mChatSessionT>({
+    id: `session-${session_id}`,
+  })
+  if (!mem_session) return
+  const msgs: TextMessageT[] = mem_session.messages.raw
   const raw_messages = _.uniqBy(msgs || [], "id")
   let updated_raw_messages = _.cloneDeep(raw_messages || [])
   const new_branch_msg: TextMessageT = {
@@ -48,23 +54,25 @@ export const onNewBranchClick = async ({
   })
   updated_raw_messages.push(new_branch_msg)
 
-  emit({
-    type: "chat/new-branch",
-    data: {
-      target: session_id,
-      id: new_branch_msg.id,
-      parent_id,
-    },
-  })
-  // hacky settimeout because react...
-  emit({
-    type: "chat/raw-messages",
-    data: {
-      target: session_id,
-      messages: updated_raw_messages,
-    },
-  })
-  fieldFocus({ selector: "#input" })
+  // emit({
+  //   type: "chat/new-branch",
+  //   data: {
+  //     target: session_id,
+  //     id: new_branch_msg.id,
+  //     parent_id,
+  //   },
+  // })
+  // emit({
+  //   type: "chat/raw-messages",
+  //   data: {
+  //     target: session_id,
+  //     messages: updated_raw_messages,
+  //   },
+  // })
+  mem_session.messages.branch_msg_id = new_branch_msg.id
+  mem_session.messages.branch_parent_id = parent_id
+  mem_session.messages.raw = updated_raw_messages
+  fieldFocus({ selector: `#input-${session_id}` })
 }
 
 // switch active branch
@@ -79,7 +87,11 @@ export const onBranchClick = async ({
   no_update?: boolean
   msgs?: TextMessageT[]
 }) => {
-  let messages = msgs
+  const mem_session = getMemoryState<mChatSessionT>({
+    id: `session-${session_id}`,
+  })
+  if (!mem_session) return
+  let messages = mem_session.messages.raw
   if (!messages) {
     messages = await query({
       type: "sessions.getMessages",
@@ -141,17 +153,21 @@ export const onBranchClick = async ({
   */
   if (no_update) return updated_messages
 
-  emit({
-    type: "chat/raw-messages",
-    data: {
-      target: session_id,
-      messages: updated_messages,
-    },
-  })
-  await SessionsActions.updateMessages({
-    session_id,
-    messages: updated_messages,
-  })
+  // emit({
+  //   type: "chat/raw-messages",
+  //   data: {
+  //     target: session_id,
+  //     messages: updated_messages,
+  //   },
+  // })
+  mem_session.messages.raw = updated_messages
+  // emit({
+  //   type: 'sessions.updateMessages',
+  //   data: {
+  //     session_id,
+  //     messages: updated_messages,
+  //   }
+  // })
 }
 
 // Build message tree

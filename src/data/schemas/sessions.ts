@@ -30,6 +30,9 @@ export const TextMessageS = z.object({
 })
 export type TextMessageT = z.infer<typeof TextMessageS>
 
+export const TextMessagesS = z.array(TextMessageS)
+export type TextMessagesT = z.infer<typeof TextMessagesS>
+
 export type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 
 export const CostS = z.object({

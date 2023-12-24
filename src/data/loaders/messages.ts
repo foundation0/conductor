@@ -1,9 +1,6 @@
-import { getRemoteKey, store } from "@/data/storage/IDB"
+import { store } from "@/data/storage/IDB"
 import { TextMessageS } from "@/data/schemas/sessions"
 import * as z from "zod"
-import { listen } from "@/libraries/events"
-import { getMemoryState } from "@/libraries/memory"
-import { getCF } from "@/libraries/cloudflare"
 export type TextMessageT = z.infer<typeof TextMessageS>
 
 let cache: { [key: string]: TextMessageT[] | null } = {}

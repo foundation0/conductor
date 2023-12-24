@@ -11,8 +11,9 @@ import AppstateActions from "@/data/actions/app"
 import _ from "lodash"
 import useMemory from "@/components/hooks/useMemory"
 import { mChatSessionT } from "@/data/schemas/memory"
-import { SessionsT } from "@/data/schemas/sessions"
+import { SessionsT, TextMessagesT } from "@/data/schemas/sessions"
 import { initLoaders } from "@/data/loaders"
+import { info } from "@/libraries/logging"
 
 export default function Session({
   workspace_id,
@@ -30,6 +31,11 @@ export default function Session({
   const { sessions_state } = useLoaderData() as {
     sessions_state: SessionsT
   }
+  const mem_messages = useMemory<TextMessagesT>({
+    id: session_id,
+    state: [],
+  })
+
   const mem_session = useMemory<mChatSessionT>({
     id: `session-${session_id}`,
     state: {
@@ -85,7 +91,9 @@ export default function Session({
     }
 
     const state = await MessagesState({ session_id })
-    state?.sync && state.sync()
+    state?.sync && (await state.sync())
+    _.assign(mem_messages, state)
+    info({ message: `refreshSession ${session_id}` })
   }
 
   useEffect(() => {
@@ -93,6 +101,10 @@ export default function Session({
       refreshSession()
     }
   }, [activated])
+
+  useEffect(() => {
+    mem_session.messages.raw = mem_messages
+  }, [JSON.stringify(mem_messages)])
 
   useEffect(() => {
     getPreference({ key: "notepad-width" }).then((width: string) => {

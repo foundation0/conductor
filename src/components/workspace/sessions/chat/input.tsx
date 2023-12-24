@@ -206,7 +206,7 @@ export default function Input({
             null
           : <RichTextarea
               tabIndex={1}
-              id="input"
+              id={`input-${session_id}`}
               style={{ width: "100%", resize: "none" }}
               onFocus={(e) => {
                 e.target.focus()

@@ -6,6 +6,7 @@ import {
   ReceiptS,
   SessionsS,
   TextMessageS,
+  TextMessagesS,
 } from "@/data/schemas/sessions"
 import { nanoid } from "nanoid"
 import { AppStateT } from "@/data/loaders/app"
@@ -76,12 +77,16 @@ const API: { [key: string]: Function } = {
   }) {
     const { MessagesState } = await initLoaders()
     const messages_state = await MessagesState({ session_id })
-    const res = await messages_state.set(messages)
+    if(messages && messages.length === 0) return
+    if(!TextMessagesS.safeParse(messages).success) {
+      return error({ message: "Invalid messages", data: messages })
+    }
+    const res = await messages_state.set(messages, null, true)
     if (typeof res === "object" && "error" in res)
       return error({ message: "Failed to update messages", data: res })
     emit({
       type: "sessions.updateMessages.done",
-      data: { messages },
+      data: { target: session_id, messages },
     })
   },
 
@@ -178,7 +183,7 @@ const API: { [key: string]: Function } = {
     // remove any message with temp id
     updated_messages = updated_messages.filter((m) => m.id !== "temp")
 
-    const res = await messages_state.set(updated_messages)
+    const res = await messages_state.set(updated_messages, null, true)
     ph().capture("sessions/message_added")
     if (typeof res === "object" && "error" in res)
       return error({ message: "Failed to add a message", data: res })

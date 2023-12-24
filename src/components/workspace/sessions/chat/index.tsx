@@ -51,7 +51,11 @@ import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import Input from "@/components/workspace/sessions/chat/input"
 import { AISelector, AISelectorButton } from "./ai_selector"
 import { emit, query } from "@/libraries/events"
-import { ChatSessionT, MessageRowT } from "@/data/schemas/sessions"
+import {
+  ChatSessionT,
+  MessageRowT,
+  TextMessagesT,
+} from "@/data/schemas/sessions"
 import useMemory from "@/components/hooks/useMemory"
 import { Match, Switch } from "react-solid-flow"
 import {
@@ -73,9 +77,9 @@ export default function Chat({
   workspace_id: string
   session_id: string
 }) {
-  const { MessagesState } = useLoaderData() as {
-    MessagesState: Function
-  }
+  // const { MessagesState } = useLoaderData() as {
+  //   MessagesState: Function
+  // }
 
   const user_state = useMemory<UserT>({ id: "user" })
   const ai_state = useMemory<AIsT>({ id: "ais" })
@@ -138,59 +142,31 @@ export default function Chat({
       "px",
   )
 
-  async function appendOrUpdateProcessedMessage({
-    message,
-  }: {
-    message: TextMessageT
-  }) {
-    // find the message in processed_messages
-    const msg_index = _.findIndex(
-      mem_session.messages.active,
-      (msg) => msg[1].id === message.id,
-    )
-    let new_processed_messages = _.cloneDeep(mem_session.messages.active || [])
-    if (msg_index === -1) {
-      // if message is not found, append it to the end
-      new_processed_messages?.push([[], message, []])
-    } else {
-      // if message is found, update it
-      new_processed_messages[msg_index][1] = message
-    }
-
-    // setProcessedMessages(new_processed_messages)
-    mem_session.messages.active = new_processed_messages
-    emit({
-      type: "chat/processed-messages",
-      data: {
-        target: session_id,
-        messages: new_processed_messages,
-        module,
-      },
-    })
-    return new_processed_messages
-  }
-
-  function addRawMessage({ message }: { message: TextMessageT }) {
-    mem_session.messages.raw = [...(raw_messages || []), message]
-  }
+  // function addRawMessage({ message }: { message: TextMessageT }) {
+  //   mem_session.messages.raw = [...(raw_messages || []), message]
+  // }
 
   async function send({
     message,
     meta,
+    parent_id,
   }: {
     message: string
     meta?: TextMessageT["meta"]
+    parent_id?: string
   }) {
     const ai = _.find(ai_state, { id: _.get(session, "settings.ai") || "c1" })
     if (!ai) return error({ message: "AI not found" })
 
-    const ss = await MessagesState({ session_id: sid })
-    const msgs: TextMessageT[] = ss?.get()
-
-    const raw_msgs = _.uniqBy(msgs || [], "id")
+    // const msgs = raw_messages
+    // const raw_msgs = _.uniqBy(msgs || [], "id")
 
     // Add temp message to processed messages to show it in the UI faster - will get overwritten automatically once raw_messages are updated
-    let processed_messages_update = await updateMessages({ raw_msgs })
+    let processed_messages_update = await updateMessages({
+      raw_msgs: mem_session.messages.raw,
+    })
+
+    // if this is not a branch or continue message, add a temp message to processed messages
     if (!branch_msg_id && meta?.role !== "continue") {
       const tmp_id = nanoid(10)
       const temp_msg = {
@@ -202,7 +178,7 @@ export default function Chat({
         meta: meta || {},
         source: `user:${user_state.id}`,
         active: true,
-        parent_id: branch_parent_id,
+        parent_id: parent_id || branch_parent_id,
       }
       const p_msgs: MessageRowT[] = [
         ...(processed_messages_update || []),
@@ -210,16 +186,15 @@ export default function Chat({
       ]
 
       mem_session.messages.active = p_msgs
-      emit({
-        type: "chat/processed-messages",
-        data: {
-          target: session_id,
-          messages: p_msgs,
-          module,
-        },
-      })
-
       mem_session.generation.in_progress = true
+      // emit({
+      //   type: "chat/processed-messages",
+      //   data: {
+      //     target: session_id,
+      //     messages: p_msgs,
+      //     module,
+      //   },
+      // })
     }
 
     const msg_ok = await addMessage({
@@ -228,13 +203,13 @@ export default function Chat({
       branch_parent_id: branch_parent_id,
       message,
       meta,
+      parent_id,
       message_id: branch_msg_id || "",
       raw_messages: raw_messages || [],
       user_state,
       ai,
       callbacks: {
-        appendOrUpdateProcessedMessage,
-        addRawMessage,
+        // addRawMessage,
         onError: async () => {
           await updateMessages()
           navigate(`/c/${workspace_id}/${sid}`)
@@ -246,7 +221,7 @@ export default function Chat({
       setInputText(message)
     }
     if (branch_msg_id) mem_session.messages.branch_msg_id = ""
-    setTimeout(() => fieldFocus({ selector: "#input" }), 200)
+    setTimeout(() => fieldFocus({ selector: `#input-${session_id}` }), 200)
   }
 
   async function computeMessageTokens({ text }: { text: string }) {
@@ -426,7 +401,14 @@ export default function Chat({
         module,
       },
     })
-
+    emit({
+      type: "sessions.updateMessages",
+      data: {
+        target: session_id,
+        session_id,
+        messages: raw_msgs || raw_messages || [],
+      },
+    })
     if (rows) mem_session.messages.active = rows
     return rows
   }
@@ -624,6 +606,14 @@ export default function Chat({
   })
 
   useEvent({
+    name: "sessions.updateMessages.done",
+    target: session_id,
+    action: ({ messages }: { messages: TextMessageT[] }) => {
+      mem_session.messages.raw = messages
+    },
+  })
+
+  useEvent({
     name: "store/update",
     target: session_id,
     action: ({ session }: { session: any }) => {
@@ -638,14 +628,16 @@ export default function Chat({
       session_id,
       message,
       meta,
+      parent_id,
     }: {
       session_id: string
       message: string
       meta: TextMessageT["meta"]
+      parent_id?: string
     }) => {
       if (session_id !== sid) return
       send_msg_timer = setTimeout(() => {
-        send({ message, meta })
+        send({ message, meta, parent_id })
       }, 100)
     },
   })
