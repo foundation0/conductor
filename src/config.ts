@@ -33,7 +33,7 @@ const config = {
           session_backup: false,
           data_backup: {
             active: false,
-            auto_sync_interval: 1000 * 60 * 1, // 1 minutes
+            auto_sync_interval: 1000 * 60 * 5, // 1 minutes
             excluded: [],
           },
         },
