@@ -46,9 +46,9 @@ const config = {
         "https://db.services.foundation0.net/"
       : override("DB_URI") || "http://localhost:6002/",
     CF: {
-      sync_interval: 1000 * 60,
-      get_limit: 500,
-      set_limit: 1000,
+      sync_interval: 1000 * 60 * 5,
+      get_limit: 1000,
+      set_limit: 5000,
     },
   },
   services: {
