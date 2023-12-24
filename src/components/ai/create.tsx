@@ -211,17 +211,17 @@ export default function CreatePersona() {
     [],
   )
 
-  const processValues = useCallback(() => {
-    if (!selected_llm)
+  const processValues = () => {
+    if (!mem_ai.selected_llm)
       return error({ message: "Please select a default LLM model" })
 
     const llm_module = _.find(
       user_state.modules.installed,
-      (mod) => mod.id === selected_llm.split("/")[0],
+      (mod) => mod.id === mem_ai.selected_llm.split("/")[0],
     )
     const llm_variant = _.find(
       llm_module?.meta.variants,
-      (variant) => variant.id === selected_llm.split("/")[1],
+      (variant) => variant.id === mem_ai.selected_llm.split("/")[1],
     )
     const default_llm_module: LLMModuleT = {
       _v: 1,
@@ -240,7 +240,7 @@ export default function CreatePersona() {
       }`
       return error({ message: missing_values, data: per.error })
     }
-  }, [JSON.stringify([values, selected_llm])])
+  }
 
   const createPersona = async () => {
     mem_ai.creation_in_process = true
@@ -276,7 +276,7 @@ export default function CreatePersona() {
     fieldFocus({ selector: "#name" })
   }, [])
 
-  const onDrop = useCallback((acceptedFiles: any, fileRejections: any) => {
+  const onDrop = (acceptedFiles: any, fileRejections: any) => {
     if (fileRejections.length > 0) {
       fileRejections.map(({ file, errors }: any) => {
         return error({
@@ -309,7 +309,7 @@ export default function CreatePersona() {
       }
       reader.readAsDataURL(acceptedFiles[0] as any)
     }
-  }, [])
+  }
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     maxFiles: 1,
@@ -419,7 +419,7 @@ export default function CreatePersona() {
                     )?.name}` || "Unified LLM Engine / GPT-4",
                 }}
                 onChange={(e: any) => {
-                  mem_ai.values_show = e.value
+                  mem_ai.selected_llm = e.value
                 }}
                 options={generate_llm_module_options({
                   user_state,
