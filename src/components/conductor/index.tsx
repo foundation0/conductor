@@ -49,14 +49,14 @@ export default function Conductor() {
   let workspace_id = useParams().workspace_id as string
   let session_id = useParams().session_id as string
 
-  const mem: mAppT = createMemoryState({
+  const mem = createMemoryState<mAppT>({
     id: "app",
     state: {
       workspace_id: useParams().workspace_id as string,
       session_id: useParams().session_id as string,
     },
   })
-
+  if (!mem) return null
   if (mem.workspace_id === undefined || mem.workspace_id !== workspace_id) {
     mem.workspace_id = workspace_id
   }
@@ -64,9 +64,10 @@ export default function Conductor() {
     mem.session_id = session_id
   }
 
-  const mem_balances: mBalancesT = useMemory({
+  const mem_balances = useMemory<mBalancesT>({
     id: "balances",
   })
+  if (!mem_balances) return null
 
   // Fetch balances
   useEffect(() => {

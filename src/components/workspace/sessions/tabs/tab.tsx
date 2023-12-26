@@ -23,22 +23,10 @@ export function Tab({
   const url_session_id = useParams().session_id
   const navigate = useNavigate()
 
-  // hackity hack to fix race condition with session state memory
-  // const [mem_session, setMemSession] = useState<mChatSessionT | null>(null)
-  const [generation_in_progress, setGenerationInProgress] = useState(false)
-
-  // useEvent({
-  //   name: "session/generation/in_progress",
-  //   target: session_id,
-  //   action: ({ value }: { value: boolean }) => {
-  //     setGenerationInProgress(value)
-  //   },
-  // })
-
-  // const mem_session = useMemory<mChatSessionT>({
-  //   id: `session-${session_id}`,
-  //   fail_on_create: true,
-  // }) || { generation: { in_progress: false } } 
+  const mem_session = useMemory<mChatSessionT>({
+    id: `session-${session_id}`,
+  })
+  if (!mem_session) return null
 
   return (
     <div
@@ -56,7 +44,7 @@ export function Tab({
       data-tip={label}
     >
       <div className="flex flex-shrink-0">
-        {generation_in_progress ?
+        {mem_session?.generation?.in_progress ?
           <div
             className="float-right w-3.5 h-3.5 flex justify-center items-center mr-0.5"
             role="status"
@@ -88,6 +76,7 @@ export function Tab({
           className="flex ml-3 text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit transition-all"
           onClick={async (e) => {
             e.preventDefault()
+            e.stopPropagation()
             if (!session_id) return
             const new_tab: OpenSessionT = await query({
               type: "app.removeOpenSession",

@@ -391,7 +391,7 @@ export async function addMessage({
         } as TextMessageT,
       }
       m = await SessionsActions.addMessage(msg)
-      // m && mem_session.messages.raw.push(m)
+      m && mem_session.messages.raw.push(m)
     }
 
     const active_path = computeActivePath(messages.raw || [])
@@ -537,7 +537,8 @@ export async function addMessage({
             status: "ready",
           } as TextMessageT,
         }
-        await SessionsActions.addMessage(data)
+        const mm = await SessionsActions.addMessage(data)
+        mm && mem_session.messages.raw.push(mm)
         fieldFocus({ selector: `#input-${session_id}` })
         return true
       } else if (!has_error && !stream_response) {

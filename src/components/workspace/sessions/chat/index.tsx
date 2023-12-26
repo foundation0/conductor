@@ -115,8 +115,6 @@ export default function Chat({
 
   const { in_progress: gen_in_progress, msgs_in_mem } = generation
 
-  const navigate = useNavigate()
-
   // setup stores
   const [sid] = useState(session_id)
 
@@ -547,7 +545,9 @@ export default function Chat({
   // })
 
   // if (session_id !== (useParams().session_id as string)) return null
-  if (!session || !module) return null
+  console.log(session_id, mem_session)
+
+  if (!mem_session.session || !mem_session.module) return null
   {
     /* <Switch> */
   }
@@ -575,10 +575,7 @@ export default function Chat({
           scrollBehavior="auto"
           className={`flex flex-1`}
         >
-          {(
-            mem_session.messages.active &&
-            mem_session.messages.active?.length > 0
-          ) ?
+          {mem_session.messages.raw && mem_session.messages.raw?.length > 0 ?
             <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4 pt-2">
               <div className="dropdown">
                 <AISelectorButton session_id={session_id} />

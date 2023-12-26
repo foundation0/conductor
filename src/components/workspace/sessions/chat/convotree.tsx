@@ -66,9 +66,9 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
 
   if (!mem_session) return error({ message: "No session" })
   const { session } = mem_session
-  const rows = mem_session.messages.active
+  // const rows = mem_session.messages.active
 
-  useEffect(() => {
+  async function updateActiveMessages() {
     const active_path = computeActivePath(mem_session.messages.raw || [])
     if (!active_path) return
     const active = buildMessageTree({
@@ -78,7 +78,14 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
     })
     active && (mem_session.messages.active = active)
     updateParticipants({ session, messages: mem_session.messages.active })
+  }
+
+  useEffect(() => {
+    updateActiveMessages()
   }, [mem_session.messages?.raw?.length])
+
+  if(mem_session.messages.raw?.length > 0 &&
+    mem_session.messages.active?.length === 0) updateActiveMessages()
 
   useEffect(() => {
     if (!mem_session.messages.active?.length) return
@@ -193,22 +200,23 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
   })
 
   async function init() {
-    const raw_messages = await query<TextMessageT[]>({
-      type: "sessions.getMessagesBySessionId",
-      data: {
-        session_id,
-      },
-    })
-    const active_path = computeActivePath(raw_messages || [])
+    // const raw_messages = await query<TextMessageT[]>({
+    //   type: "sessions.getMessagesBySessionId",
+    //   data: {
+    //     session_id,
+    //   },
+    // })
+    const active_path = computeActivePath(mem_session.messages.raw || [])
     if (!active_path) return
     let rows = buildMessageTree({
-      messages: raw_messages || [],
+      messages: mem_session.messages.raw  || [],
       first_id: "first",
       activePath: active_path,
     })
     if (!rows) return null
     updateParticipants({ session, messages: rows })
   }
+
   useEffect(() => {
     init()
     const interval = setInterval(() => setAgoRefresh(ago_refresh + 1), 60000)
@@ -232,7 +240,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
       style={{ paddingBottom: `${paddingBottom}px` }}
     >
       <div className="flex flex-col gap-6 min-w-[500px] w-full max-w-screen-lg">
-        {_(rows)
+        {_(mem_session.messages.active)
           .reject((r) => {
             // filter out the "continue" messages
             return r[1]?.meta?.role === "continue" && r[1]?.type === "human"
@@ -313,8 +321,8 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                       }
                     />
 
-                    {_.last(rows)?.[1].type === "ai" &&
-                      _.last(rows)?.[1].id === row[1].id &&
+                    {_.last(mem_session.messages.active)?.[1].type === "ai" &&
+                      _.last(mem_session.messages.active)?.[1].id === row[1].id &&
                       !gen_in_progress && (
                         <div className="flex flex-1 justify-end text-xs text-zinc-500 hover:text-zinc-100 cursor-pointer transition-all mr-1">
                           <div
@@ -343,12 +351,12 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                           </div>
                         </div>
                       )}
-                    {rows[
-                      _.findIndex(rows, (r) => r[1].id === row[1].id) + 1
+                    {mem_session.messages.active[
+                      _.findIndex(mem_session.messages.active, (r) => r[1].id === row[1].id) + 1
                     ]?.[2]?.length > 0 &&
                       row[1].type === "ai" &&
-                      rows[
-                        _.findIndex(rows, (r) => r[1].id === row[1].id) + 1
+                      mem_session.messages.active[
+                        _.findIndex(mem_session.messages.active, (r) => r[1].id === row[1].id) + 1
                       ][2].map((m) => {
                         if (m.hash === "1337") return null
                         return (
@@ -384,7 +392,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                     {(
                       row[1].parent_id !== "first" &&
                       row[1].type === "ai" &&
-                      _.last(rows)?.[1].id !== row[1].id
+                      _.last(mem_session.messages.active)?.[1].id !== row[1].id
                     ) ?
                       <div
                         className="gap-1 p-0 ml-1 cursor-pointer flex h-full justify-start align-start"
@@ -414,8 +422,8 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
             )
           })
           .value()}
-        {_.last(rows)?.[1].type === "human" &&
-          _.last(rows)?.[1].text &&
+        {_.last(mem_session.messages.active)?.[1].type === "human" &&
+          _.last(mem_session.messages.active)?.[1].text &&
           gen_in_progress && (
             <div
               className={`flex flex-col flex-grow-1 transition-all ${

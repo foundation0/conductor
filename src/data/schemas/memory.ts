@@ -26,6 +26,7 @@ export type mChatSessionT = {
     tokens: number
     branch_msg_id: string
     branch_parent_id: string | boolean
+    empty_local?: boolean
   }
   generation: {
     in_progress: boolean

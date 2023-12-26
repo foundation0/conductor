@@ -1,36 +1,52 @@
-import _ from "lodash"
+import _, { set } from "lodash"
 import Session from "./session"
 import Tabs from "./tabs"
-import { useNavigate } from "react-router-dom"
-import { useEffect } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
 import "react-resizable/css/styles.css"
 import eventEmitter, { emit, listen, query } from "@/libraries/events"
 import { initLoaders } from "@/data/loaders"
 import { SessionT, WorkspaceT } from "@/data/schemas/workspace"
-import { SessionTypesT, SessionsT } from "@/data/schemas/sessions"
+import { ChatSessionT, SessionTypesT, SessionsT } from "@/data/schemas/sessions"
 import { useEvent } from "@/components/hooks/useEvent"
 import useMemory from "@/components/hooks/useMemory"
 import { AppStateT } from "@/data/loaders/app"
 import { OpenSessionS } from "@/data/schemas/app"
 import { z } from "zod"
-import { mAppT } from "@/data/schemas/memory"
+import { mAppT, mChatSessionT } from "@/data/schemas/memory"
 import { AIsT } from "@/data/schemas/ai"
 import { UserT } from "@/data/schemas/user"
+import { createMemoryState } from "@/libraries/memory"
+import { Module } from "@/modules"
+import { buildMessageTree, computeActivePath } from "@/libraries/branching"
 
 export default function Workspace() {
+  const url_workspace_id = useParams().workspace_id
+  const url_session_id = useParams().session_id
+
   const mem_app: mAppT = useMemory({ id: "app" })
 
   const user_state = useMemory<UserT>({ id: "user" })
   const app_state = useMemory<AppStateT>({ id: "appstate" })
+
+  const ai_state = useMemory<AIsT>({
+    id: "ais",
+  })
 
   // const [open_sidebar, setOpenSidebar] = useMemory<string>({ id: 'session-index', state: "")
   const mem = useMemory<{
     open_sidebar: string
     sessions: SessionTypesT[]
     active_sessions: { [key: string]: boolean }
+    open_sessions: ChatSessionT[]
   }>({
     id: "session-index",
-    state: { sessions: [], active_sessions: {}, open_sidebar: "" },
+    state: {
+      sessions: [],
+      active_sessions: {},
+      open_sidebar: "",
+      open_sessions: [],
+    },
   })
 
   const mem_width = useMemory<{
@@ -54,8 +70,6 @@ export default function Workspace() {
 
   async function updateSessions() {
     const { SessionState } = await initLoaders()
-    // const app_state: AppStateT = await AppState.get()
-    // const user_state = await UserState.get()
 
     // get all the sessions for this workspace
     const workspace: WorkspaceT | undefined = _.find(user_state.workspaces, {
@@ -112,6 +126,7 @@ export default function Workspace() {
       })
       .compact()
       .value()
+
     if (_sessions && _sessions.length > 0) mem.sessions = _sessions
     // if session_id exists in sessions, set it to active
     const session_index = _.findIndex(mem.sessions, { id: mem_app.session_id })
@@ -119,33 +134,160 @@ export default function Workspace() {
 
     if (session_index !== -1)
       mem.active_sessions = { ...sids, [mem_app.session_id]: true }
-    else handleMissingSession({ session_id: mem_app.session_id })
+    else {
+      handleMissingSession({ session_id: mem_app.session_id })
+    }
   }
 
-  function update() {
-    updateSessions()
+  async function update() {
+    await updateSessions()
+    await setupSessionStores()
     // mem.active_sessions = { ...mem.active_sessions, [session_id]: true }
   }
 
-  useEffect(() => update(), [])
-  useEffect(
-    () => update(),
-    [JSON.stringify([mem_app.workspace_id, mem_app.session_id])],
-  )
+  useEffect(() => {
+    update()
+  }, [])
+  useEffect(() => {
+    update()
+  }, [
+    JSON.stringify([
+      url_workspace_id,
+      // url_session_id,
+      mem_app.workspace_id,
+      mem_app.session_id,
+      app_state.open_sessions,
+      user_state.workspaces,
+    ]),
+  ])
 
-  function setSidebar(sidebar: string) {
-    setTimeout(() => eventEmitter.emit("layout_resize"), 200)
-    if (mem.open_sidebar === sidebar) return (mem.open_sidebar = "")
-    mem.open_sidebar = sidebar
+  async function initSession({ session_id }: { session_id: string }) {
+    const { SessionState } = await initLoaders()
+    const sessions_state: SessionsT = await SessionState.get()
+    const { MessagesState } = (await initLoaders()) as {
+      MessagesState: Function
+    }
+    const mem_session = createMemoryState<mChatSessionT>({
+      id: `session-${session_id}`,
+      state: {
+        id: session_id,
+        session: sessions_state?.active[session_id],
+        module: undefined,
+        module_ctx_len: 0,
+        ai: undefined,
+        input: { change_timer: null, text: "", tokens: 0 },
+        context: {
+          data_refs: [],
+          tokens: 0,
+        },
+        messages: {
+          raw: [],
+          active: [],
+          branch_msg_id: "",
+          branch_parent_id: "",
+          tokens: 0,
+          empty_local: true,
+        },
+        generation: {
+          in_progress: false,
+          controller: undefined,
+          msgs_in_mem: [],
+          msg_update_ts: 0,
+        },
+      },
+    })
+    if (!mem_session || !mem_session?.messages) return false
+    // Get the messages
+    const state = await MessagesState({ session_id })
+    const local_raw = await state.get()
+    if (local_raw.length > 0) mem_session.messages.raw = local_raw
+
+    const active_path = computeActivePath(mem_session.messages.raw || [])
+    if (!active_path) return
+    const active = buildMessageTree({
+      messages: mem_session.messages.raw || [],
+      first_id: "first",
+      activePath: active_path,
+    })
+    active && (mem_session.messages.active = active)
+
+    state?.sync &&
+      state.sync().then(async () => {
+        const synced_msgs = await state.get()
+        if (synced_msgs.length > 0) {
+          mem_session.messages.raw = synced_msgs
+          mem_session.messages.empty_local = false
+          const active_path = computeActivePath(mem_session.messages.raw || [])
+          if (!active_path) return
+          const active = buildMessageTree({
+            messages: mem_session.messages.raw || [],
+            first_id: "first",
+            activePath: active_path,
+          })
+          active && (mem_session.messages.active = active)
+        }
+      })
+
+    // Get the AI used
+    mem_session.ai = _.find(ai_state, {
+      id: mem_session?.session?.settings?.ai || "c1",
+    }) as AIsT[0]
+
+    // Get the module used
+    mem_session.module =
+      (await Module(mem_session?.session?.settings?.module?.id)) || undefined
   }
 
-  async function handleMissingSession({ session_id }: { session_id: string }) {
+  async function setupSessionStores() {
+    const { SessionState } = await initLoaders()
+    const sessions_state: SessionsT = await SessionState.get()
+
+    const unprocessed_sessions = _.difference(
+      _(mem.active_sessions).keys().value(),
+      mem.open_sessions.map((s) => s.id),
+    )
+    if (unprocessed_sessions.length === 0) return
+    const sessss = _(unprocessed_sessions)
+      .compact()
+      .map(async (session_id) => {
+        await initSession({ session_id })
+        return sessions_state?.active[session_id]
+      })
+      .value()
+    const s = await Promise.all(sessss)
+    const _s = _([...mem.open_sessions, s])
+      .flattenDeep()
+      .uniqBy("id")
+      .compact()
+      .value()
+    mem.open_sessions = _s || []
+  }
+
+  useEffect(() => {
+    setupSessionStores()
+  }, [JSON.stringify([mem.active_sessions])])
+
+  useEvent({
+    name: ["sessions/change", "sessions.removeOpenSession.done"],
+    action: update,
+  })
+
+  // function setSidebar(sidebar: string) {
+  //   setTimeout(() => eventEmitter.emit("layout_resize"), 200)
+  //   if (mem.open_sidebar === sidebar) return (mem.open_sidebar = "")
+  //   mem.open_sidebar = sidebar
+  // }
+
+  function handleMissingSession({ session_id }: { session_id: string }) {
     // get session index from active sessions
     const session_index = _.findIndex(mem.sessions, { id: session_id })
     if (session_index !== -1) return
 
-    // delete from open sessions
+    // delete from active sessions
     mem.active_sessions = _.omit(mem.active_sessions, session_id)
+
+    // delete from open sessions
+    mem.open_sessions = _.reject(mem.open_sessions, { id: session_id })
 
     // switch to another session
     if (mem.sessions.length === 0) {
@@ -166,7 +308,11 @@ export default function Workspace() {
   })
 
   useEvent({
-    name: ["sessions/change", "sessions.updateSessions.done"],
+    name: [
+      "sessions/change",
+      "sessions.updateSessions.done",
+      "sessions.addSession.done",
+    ],
     action: () => update,
   })
 
@@ -199,51 +345,81 @@ export default function Workspace() {
   }, [window.innerWidth])
 
   listen({
-    type: ['layout_resize', 'sessions/change'],
+    type: ["layout_resize", "sessions/change"],
     action: () => {
       computeContentWidth()
       setTimeout(computeContentWidth, 500)
-    }
+    },
   })
+
+  const [Sessions, setSessions] = useState<any[]>([])
+
+  useEffect(
+    () => {
+      setSessions(
+        _(
+          _.intersection(
+            mem.open_sessions.map((s) => s.id),
+            _.keys(mem.active_sessions),
+          ),
+        )
+          .compact()
+          .orderBy("id")
+          // .filter(session_id => session_stores.includes(session_id))
+          .map((session_id) => {
+            if (!session_id) return null
+            const session = _.find(mem.sessions, { id: session_id })
+            if (!session) return null
+            return (
+              <Session
+                key={session.id}
+                activated={mem.active_sessions[session.id] || false}
+                workspace_id={mem_app.workspace_id}
+                session_id={session.id}
+                type={session.type || "chat"}
+              />
+            )
+          })
+          .compact()
+          .value(),
+      )
+    },
+    [
+      JSON.stringify(
+        _.intersection(
+          mem.open_sessions.map((s) => s.id),
+          _.keys(mem.active_sessions),
+        ),
+      ),
+    ] || "[]",
+  )
 
   return (
     <div
       className="flex flex-1"
       style={{ width: mem_width.content_width + "px" }}
     >
-      <div
-        id="ContentTabs"
-        className="flex flex-1 gap-1 grow flex-col overflow-hidden"
-        style={{ width: mem_width.content_width + "px" }}
-      >
+      {mem.open_sessions.length > 0 ?
         <div
-          id="Tabs"
-          className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950 rounded-md"
-          // style={{ width: mem_width.content_width + "px" }}
+          id="ContentTabs"
+          className="flex flex-1 gap-1 grow flex-col overflow-hidden"
+          style={{ width: mem_width.content_width + "px" }}
         >
-          <Tabs />
+          <div
+            id="Tabs"
+            className="flex flex-row bg-zinc-800 h-10 border-b-zinc-950 rounded-md"
+            // style={{ width: mem_width.content_width + "px" }}
+          >
+            <Tabs />
+          </div>
+          <div id="ContentViews" className="flex flex-1">
+            {Sessions}
+          </div>
         </div>
-        <div id="ContentViews" className="flex flex-1">
-          {_(Object.keys(mem.active_sessions))
-            .compact()
-            .map((session_id) => {
-              if (!session_id) return null
-              const session = _.find(mem.sessions, { id: session_id })
-              if (!session) return null
-              return (
-                <Session
-                  key={session.id}
-                  activated={mem.active_sessions[session.id] || false}
-                  workspace_id={mem_app.workspace_id}
-                  session_id={session.id}
-                  type={session.type || "chat"}
-                />
-              )
-            })
-            .compact()
-            .value()}
+      : <div className="flex flex-1 flex-col justify-center items-center">
+          Loading...
         </div>
-      </div>
+      }
     </div>
   )
 }

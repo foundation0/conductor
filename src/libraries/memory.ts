@@ -7,11 +7,20 @@ export function getMemoryState<T>({ id }: { id: string }) {
   return STATES[id] as T
 }
 
-export function createMemoryState({ id, state, fail_on_create }: { id: string; state: any, fail_on_create?: boolean }) {
+export function createMemoryState<T>({
+  id,
+  state,
+  fail_on_create,
+}: {
+  id: string
+  state: any
+  fail_on_create?: boolean
+}) {
   if (!STATES[id] && fail_on_create) return false
-  if (STATES[id]) return STATES[id]
-  STATES[id] = proxy(state)
-  return STATES[id]
+  if (STATES[id]) return STATES[id] as T
+  if (state) STATES[id] = proxy(state)
+  else return null
+  return STATES[id] as T
 }
 
 export function destroyMemoryState({ id }: { id: string }) {
@@ -19,4 +28,3 @@ export function destroyMemoryState({ id }: { id: string }) {
   delete STATES[id]
   return true
 }
-

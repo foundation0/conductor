@@ -250,7 +250,7 @@ export const store = async <TData>({
   destroy: () => void
 } | null> => {
   // get memory for stores
-  let mem = createMemoryState({
+  let mem = createMemoryState<any>({
     id: "stores",
     state: {
       [name]: { status: "initializing", updated_at: new Date().getTime() },

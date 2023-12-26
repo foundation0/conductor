@@ -19,6 +19,7 @@ import { useEvent } from "@/components/hooks/useEvent"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 import { Tab } from "./tab"
+import { ChatSessionT, SessionTypesT } from "@/data/schemas/sessions"
 
 export default function Tabs() {
   const app_state = useMemory<AppStateT>({ id: "appstate" })
@@ -30,6 +31,15 @@ export default function Tabs() {
   const mem_app: mAppT = useMemory({ id: "app" })
   const { workspace_id, session_id } = mem_app
   if (!workspace_id || !session_id) return null
+
+  const mem_session_index = useMemory<{
+    open_sidebar: string
+    sessions: SessionTypesT[]
+    active_sessions: { [key: string]: boolean }
+    open_sessions: ChatSessionT[]
+  }>({
+    id: "session-index",
+  })
 
   const mem = useMemory<{
     open_tabs: any
@@ -92,72 +102,101 @@ export default function Tabs() {
 
   // Generate visible tabs
   const generateVisibleTabs = () => {
-    const active_workspace = user_state.workspaces.find(
-      (ws) => ws.id === workspace_id,
-    ) as z.infer<typeof WorkspaceS>
-    if (!workspace_id || active_workspace === null) return
-    const workspace_open_sessions =
-      _(app_state.open_sessions)
-        .filter(
-          (session: z.infer<typeof OpenSessionS>) =>
-            session.workspace_id === active_workspace.id,
-        )
-        .uniqBy("session_id")
-        .value() || []
+    // const workspace_open_sessions =
+    //   _(app_state.open_sessions)
+    //     .filter(
+    //       (session: z.infer<typeof OpenSessionS>) =>
+    //         session.workspace_id === active_workspace.id,
+    //     )
+    //     .uniqBy("session_id")
+    //     .value() || []
 
     // get session data
-    const o = workspace_open_sessions
-      .map((open_session: z.infer<typeof OpenSessionS>) => {
-        // get session data from workspaces.groups.folders.sessions
+    // const o = workspace_open_sessions
+    //   .map((open_session: z.infer<typeof OpenSessionS>) => {
+    //     // get session data from workspaces.groups.folders.sessions
+    //     const s = _.find(
+    //       active_workspace.groups.flatMap((g) =>
+    //         g.folders.flatMap((f) => f.sessions),
+    //       ),
+    //       { id: open_session.session_id },
+    //     )
+
+    //     if (!s) return false
+    //     return (
+    //       <Tab
+    //         key={s.id}
+    //         session_id={s.id}
+    //         workspace_id={workspace_id}
+    //         label={s.name}
+    //       />
+    //     )
+    //   })
+    //   .filter(Boolean)
+
+    const _o = _.keys(mem_session_index.active_sessions).map(
+      (session_id: string) => {
+        const active_workspace = user_state.workspaces.find(
+          (ws) => ws.id === workspace_id,
+        ) as z.infer<typeof WorkspaceS>
+        if (!workspace_id || active_workspace === null) return
         const s = _.find(
           active_workspace.groups.flatMap((g) =>
             g.folders.flatMap((f) => f.sessions),
           ),
-          { id: open_session.session_id },
+          { id: session_id },
         )
-
         if (!s) return false
-        return <Tab key={s.id} session_id={s.id} workspace_id={workspace_id} label={s.name} />
-      })
-      .filter(Boolean)
-
+        return (
+          <Tab
+            key={s.id}
+            session_id={s.id}
+            workspace_id={workspace_id}
+            label={s.name}
+          />
+        )
+      },
+    )
     // setOpenTabs(o)
-    mem.open_tabs = o
+    mem.open_tabs = _o
     // resizeHandler()
     // setTimeout(resizeHandler, 1000)
   }
 
   useEffect(() => {
-    generateVisibleTabs()
-  }, [
-    JSON.stringify([
-      app_state.open_sessions,
-      user_state.workspaces,
-      app_state.active_sessions,
-      workspace_id,
-      session_id,
-    ]),
-  ])
+    // generateVisibleTabs()
+  }, [JSON.stringify(mem_session_index.active_sessions) || ""])
+  // useEffect(() => {
+  //   generateVisibleTabs()
+  // }, [
+  //   JSON.stringify([
+  //     app_state.open_sessions,
+  //     user_state.workspaces,
+  //     app_state.active_sessions,
+  //     // workspace_id,
+  //     session_id,
+  //   ]),
+  // ])
 
   // if there are no open sessions, add the first session from first group to open sessions
-  useEffect(() => {
-    const active_workspace = user_state.workspaces.find(
-      (ws) => ws.id === workspace_id,
-    ) as z.infer<typeof WorkspaceS>
-    if (open_tabs?.length === 0) {
-      const first_group = _.first(active_workspace.groups)
-      if (!first_group) throw new Error("first group not found")
-      const first_folder = _.first(first_group.folders)
-      if (!first_folder) throw new Error("first folder not found")
-      const first_session = _.first(first_folder.sessions)
+  // useEffect(() => {
+  //   const active_workspace = user_state.workspaces.find(
+  //     (ws) => ws.id === workspace_id,
+  //   ) as z.infer<typeof WorkspaceS>
+  //   if (open_tabs?.length === 0) {
+  //     const first_group = _.first(active_workspace.groups)
+  //     if (!first_group) throw new Error("first group not found")
+  //     const first_folder = _.first(first_group.folders)
+  //     if (!first_folder) throw new Error("first folder not found")
+  //     const first_session = _.first(first_folder.sessions)
 
-      if (first_session) {
-        navigate(`/c/${workspace_id}/${first_session.id}`)
-      } else {
-        console.warn("first session not found")
-      }
-    }
-  }, [mem.open_tabs?.length === 0])
+  //     if (first_session) {
+  //       navigate(`/c/${workspace_id}/${first_session.id}`)
+  //     } else {
+  //       console.warn("first session not found")
+  //     }
+  //   }
+  // }, [mem.open_tabs?.length === 0])
 
   // if the current session is not in tabs, add it
   async function matchTabsWithOpenSessions() {
@@ -274,27 +313,27 @@ export default function Tabs() {
     },
   })
 
-  useEvent({
-    name: [
-      "sessions.addSession.done",
-      "sessions.updateSession.done",
-      "app.changeActiveSession.done",
-      "app.removeOpenSession.done",
-    ],
-    action: generateVisibleTabs,
-  })
+  // useEvent({
+  //   name: [
+  //     "sessions.addSession.done",
+  //     "sessions.updateSession.done",
+  //     "app.changeActiveSession.done",
+  //     "app.removeOpenSession.done",
+  //   ],
+  //   action: generateVisibleTabs,
+  // })
 
-  useEvent({
-    name: "store/update",
-    target: "appstate",
-    action: generateVisibleTabs,
-  })
+  // useEvent({
+  //   name: "store/update",
+  //   target: "appstate",
+  //   action: generateVisibleTabs,
+  // })
 
-  useEvent({
-    name: "store/update",
-    target: "user",
-    action: generateVisibleTabs,
-  })
+  // useEvent({
+  //   name: "store/update",
+  //   target: "user",
+  //   action: generateVisibleTabs,
+  // })
 
   // useEvent({
   //   name: "sessions/change",
@@ -315,7 +354,27 @@ export default function Tabs() {
         className="tabs flex flex-row flex-1 items-center overflow-hidden"
         ref={containerRef}
       >
-        {open_tabs}
+        {_.map(mem_session_index.open_sessions, (ss: ChatSessionT) => {
+          const active_workspace = user_state.workspaces.find(
+            (ws) => ws.id === workspace_id,
+          ) as z.infer<typeof WorkspaceS>
+          if (!workspace_id || active_workspace === null) return
+          const s = _.find(
+            active_workspace.groups.flatMap((g) =>
+              g.folders.flatMap((f) => f.sessions),
+            ),
+            { id: ss.id },
+          )
+          if (!s) return false
+          return (
+            <Tab
+              key={s.id}
+              session_id={s.id}
+              workspace_id={workspace_id}
+              label={s.name}
+            />
+          )
+        })}
       </div>
       <div id="TabsActions" className="flex flex-row justify-end ml-3">
         <div className=" flex flex-row flex-1 gap-3 pr-3 justify-end items-center ">

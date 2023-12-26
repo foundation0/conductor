@@ -3,11 +3,7 @@ import {
   getBytesBalance,
   getPricing,
 } from "@/components/user/wallet"
-import {
-  mBalancesT,
-  mModulesT,
-  mPricesT,
-} from "@/data/schemas/memory"
+import { mBalancesT, mModulesT, mPricesT } from "@/data/schemas/memory"
 import _ from "lodash"
 import { createMemoryState } from "./memory"
 import { getActiveUser } from "./active_user"
@@ -18,13 +14,14 @@ import models from "@/modules/models.json"
 import { emit } from "./events"
 
 export async function mPrices() {
-  const mem: mPricesT = createMemoryState({
+  const mem = createMemoryState<mPricesT>({
     id: "prices",
     state: {
       prices: [],
     },
   })
-  let pricing: mPricesT['prices'] | ErrorT = await getPricing()
+  if (!mem) return null
+  let pricing: mPricesT["prices"] | ErrorT = await getPricing()
   if ("error" in pricing) {
     console.error(pricing.error)
     pricing = []
@@ -53,14 +50,16 @@ export async function mPrices() {
 export async function mBalances() {
   const user_state = getActiveUser()
   if (!user_state) return
-  const mem: mBalancesT = createMemoryState({
-    id: "prices",
+  const mem = createMemoryState<mBalancesT>({
+    id: "balances",
     state: {
       credits: 0,
       bytes: 0,
       status: "active",
     },
   })
+  if (!mem) return null
+
   getBalance({
     public_key: user_state.public_key,
     master_key: user_state.master_key,
@@ -88,7 +87,7 @@ export async function mBalances() {
 }
 
 export async function mModules() {
-  let updated_mods = models as mModulesT['modules']
+  let updated_mods = models as mModulesT["modules"]
   try {
     if (navigator.onLine) {
       updated_mods = (await fetchWithTimeout(
@@ -102,18 +101,19 @@ export async function mModules() {
     if (models_cache) updated_mods = models_cache
     else models_cache = models // use the fixed models.json as last resort
   }
-  const mem_modules: mModulesT = createMemoryState({
+  let mem_modules = createMemoryState<mModulesT>({
     id: "modules",
     state: { modules: updated_mods },
   })
+  if (!mem_modules) mem_modules = { modules: updated_mods }
   mem_modules.modules = updated_mods
 }
 
 export default async () => {
   await Promise.all([mModules(), mPrices(), mBalances()])
-  
+
   // update modules if in case they've already loaded
   emit({
-    type: 'modules/update'
+    type: "modules/update",
   })
 }

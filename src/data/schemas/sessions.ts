@@ -17,7 +17,9 @@ export const TextMessageS = z.object({
       role: z.enum(["msg", "continue", "regen", "temp"]).catch("msg"),
     })
     .optional(),
-  status: z.enum(["pending", "sent", "ready", "read", "deleted"]).catch("ready"),
+  status: z
+    .enum(["pending", "sent", "ready", "read", "deleted"])
+    .catch("ready"),
   text: z.string().min(1),
   context_refs: z.array(z.string()).optional(),
   source: z.string().min(1),
@@ -87,9 +89,11 @@ export const ChatSessionS = z.object({
       locked: z.boolean().optional(),
       settings: z.record(z.any()).optional(),
     }),
-    memory: z.object({
-      rag_mode: z.enum(["full", "similarity", "none"]).catch("full"),
-    }).optional(),
+    memory: z
+      .object({
+        rag_mode: z.enum(["full", "similarity", "none"]).catch("full"),
+      })
+      .optional(),
     ai: z.string().optional(),
   }),
   receipts: z.array(ReceiptS).optional(),
