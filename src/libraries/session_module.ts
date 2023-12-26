@@ -59,6 +59,7 @@ export async function handleAIChange({ value }: { value: string }) {
 
   // update session default ai
   mem_session.session.settings.ai = ai.id
+  mem_session.ai = ai
 
   // update session llm if not locked
   if (!session.settings.module.locked) {

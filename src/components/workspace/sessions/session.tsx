@@ -14,6 +14,7 @@ import { mChatSessionT } from "@/data/schemas/memory"
 import { SessionsT, TextMessagesT } from "@/data/schemas/sessions"
 import { initLoaders } from "@/data/loaders"
 import { info } from "@/libraries/logging"
+import { AIsT } from "@/data/schemas/ai"
 
 export default function Session({
   workspace_id,
@@ -28,6 +29,11 @@ export default function Session({
 }) {
   if (!session_id) return null
   if (!activated) return null
+
+  const ai_state = useMemory<AIsT>({
+    id: "ais",
+  })
+
   const { sessions_state } = useLoaderData() as {
     sessions_state: SessionsT
   }
@@ -43,6 +49,7 @@ export default function Session({
       session: sessions_state.active[session_id],
       module: undefined,
       module_ctx_len: 0,
+      ai: undefined,
       input: { change_timer: null, text: "", tokens: 0 },
       context: {
         data_refs: [],
@@ -63,6 +70,7 @@ export default function Session({
       },
     },
   })
+
   const { session } = mem_session
   const mem = useMemory<{
     open_sidebar: string
@@ -91,8 +99,20 @@ export default function Session({
     }
 
     const state = await MessagesState({ session_id })
+    _.assign(mem_messages, await state.get())
+    _.assign(mem_session.messages.raw, await state.get())
     state?.sync && (await state.sync())
-    _.assign(mem_messages, state)
+    _.assign(mem_messages, await state.get())
+    _.assign(mem_session.messages.raw, await state.get())
+
+    mem_session.ai = _.find(ai_state, {
+      id: mem_session.session.settings.ai || "c1",
+    }) as AIsT[0]
+
+    // tell pending components its ok to load the mem_session state
+    emit({
+      type: "mem_session/created",
+    })
     info({ message: `refreshSession ${session_id}` })
   }
 

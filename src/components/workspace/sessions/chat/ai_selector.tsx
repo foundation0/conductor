@@ -163,12 +163,12 @@ export function AISelector({
           }}
           value={{
             label: `${
-              _.find(installed_ais, { id: mem.session.settings.ai })?.persona
+              _.find(installed_ais, { id: mem.session.settings.ai || 'c1' })?.persona
                 .name ||
               _.first(_.get(installed_ais, "persona.name")) ||
               "click to select"
             }`,
-            value: `${mem.session.settings.ai}`,
+            value: `${mem.session.settings.ai || 'c1'}`,
           }}
           placeholder="Choose AI..."
           options={mem.ai_options}
@@ -237,10 +237,10 @@ export const AISelectorButton = function ({
         <div className="flex flex-col  items-center justify-center">
           <img
             src={
-              _.find(ai_state, { id: session?.settings?.ai })?.meta?.avatar ||
+              _.find(ai_state, { id: session?.settings?.ai || 'c1' })?.meta?.avatar ||
               getAvatar({
                 seed:
-                  _.find(ai_state, { id: session?.settings?.ai })?.meta?.name ||
+                  _.find(ai_state, { id: session?.settings?.ai || 'c1' })?.meta?.name ||
                   "",
               })
             }
@@ -249,7 +249,7 @@ export const AISelectorButton = function ({
         </div>
         <div className="flex flex-row flex-grow flex-1 items-center text-zinc-500 hover:text-zinc-200 transition-all">
           <div className="flex flex-col flex-1 text-zinc-200">
-            {_.find(ai_state, { id: session?.settings?.ai })?.persona.name}
+            {_.find(ai_state, { id: session?.settings?.ai || 'c1' })?.persona.name}
           </div>
           <div className="flex flex-col">
             <TbSelector className="" />

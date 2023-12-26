@@ -24,6 +24,7 @@ export const OpenSessionS = z.object({
   session_id: z.string(),
   order: z.number().optional(),
 })
+export type OpenSessionT = z.infer<typeof OpenSessionS>
 
 export const LogItemS = z.object({
   _v: z.number().default(1),

@@ -1,20 +1,26 @@
 import { TextMessageT } from "@/data/loaders/sessions"
 import SessionsActions from "@/data/actions/sessions"
-import _ from "lodash"
-import { compileSlidingWindowMemory } from "@/libraries/ai"
-import { error } from "@/libraries/logging"
+import _, { trim } from "lodash"
+import {
+  compileSlidingWindowMemory,
+  createFullContext,
+  tokenizeInput,
+  tokenizeMessages,
+} from "@/libraries/ai"
+import { error, info } from "@/libraries/logging"
 import { UserT } from "@/data/loaders/user"
 import { MessageRowT } from "@/data/schemas/sessions"
 import { nanoid } from "nanoid"
-import { AIT } from "@/data/schemas/ai"
+import { AIT, AIsT } from "@/data/schemas/ai"
 import { AIToInstruction } from "@/libraries/ai"
 import { ReceiptT } from "@/data/schemas/sessions"
-import { emit, query } from "@/libraries/events"
+import { emit } from "@/libraries/events"
 import { Module } from "@/modules"
-import { initLoaders } from "@/data/loaders"
 import { getMemoryState } from "@/libraries/memory"
 import { mChatSessionT, mModulesT } from "@/data/schemas/memory"
 import config from "@/config"
+import { buildMessageTree, computeActivePath } from "@/libraries/branching"
+import { fieldFocus } from "@/libraries/field_focus"
 
 async function getParentId({
   branch_parent_id,
@@ -48,6 +54,84 @@ async function getParentId({
       return { parent_id: null, resend }
     } else return { parent_id, resend }
   } else return { parent_id, resend }
+}
+
+export async function computeMessageTokens({
+  text,
+  session_id,
+}: {
+  text: string
+  session_id: string
+}) {
+  const mem_session = getMemoryState<mChatSessionT>({
+    id: `session-${session_id}`,
+  })
+  if (!mem_session) return false
+
+  const user_state = getMemoryState<UserT>({ id: "user" })
+  if (!user_state) return false
+
+  const msgs = mem_session.messages.active?.map((m) => m[1]) || []
+  const msg_toks = await tokenizeMessages({
+    messages: [
+      ...msgs,
+      {
+        _v: 1,
+        id: "tmp",
+        type: "human",
+        hash: "123",
+        text: text,
+        source: `user:${user_state.id}`,
+        active: true,
+        parent_id: "test",
+        version: "1.0",
+        created_at: new Date().toISOString(),
+        status: "ready",
+      },
+    ],
+    model: mem_session.session.settings.module.variant,
+  })
+  if (msg_toks) {
+    mem_session.messages.tokens = msg_toks.usedTokens
+    emit({
+      type: "sessions/tokensUpdate",
+      data: {
+        target: session_id,
+        tokens: msg_toks.usedTokens,
+      },
+    })
+  }
+}
+
+export async function computeAssociatedDataTokens({
+  session_id,
+}: {
+  session_id: string
+}) {
+  const mem_session = getMemoryState<mChatSessionT>({
+    id: `session-${session_id}`,
+  })
+  if (!mem_session) return false
+  const fctx = await createFullContext({ session_id })
+  if (!fctx) return error({ message: "Failed to create full context" })
+  const ctx = fctx.ctx
+  if (ctx) {
+    const toks = await tokenizeInput({
+      input: ctx,
+      model: mem_session.session.settings.module.variant,
+    })
+    if (toks) {
+      mem_session.context.tokens = toks.usedTokens
+    }
+  } else {
+    mem_session.context.tokens = 0
+  }
+  emit({
+    type: "sessions/tokensUpdate",
+    data: {
+      target: session_id,
+    },
+  })
 }
 
 async function appendOrUpdateProcessedMessage({
@@ -91,15 +175,15 @@ async function appendOrUpdateProcessedMessage({
 export async function addMessage({
   session_id,
   // context,
-  processed_messages,
+  // processed_messages,
   branch_parent_id,
   message,
   meta,
   message_id,
   parent_id,
-  raw_messages,
-  user_state,
-  ai,
+  // raw_messages,
+  // user_state,
+  // ai,
   callbacks: {
     // addRawMessage,
     onError,
@@ -107,20 +191,24 @@ export async function addMessage({
 }: {
   session_id: string
   context?: { pageContent: string; metadata: { id: string; name: string } }[]
-  processed_messages: MessageRowT[]
+  // processed_messages: MessageRowT[]
   branch_parent_id: string | boolean
   message: string
   parent_id?: string
   meta: TextMessageT["meta"]
   message_id?: string
-  raw_messages: TextMessageT[]
-  user_state: UserT
-  ai: AIT
+  // raw_messages: TextMessageT[]
+  // user_state: UserT
+  // ai: AIT
   callbacks: {
     // addRawMessage: Function
     onError?: Function
   }
 }): Promise<boolean | undefined> {
+  // Initialize memory states
+  const user_state = getMemoryState<UserT>({ id: "user" })
+  if (!user_state) return error({ message: "no user" })
+
   const mem_modules = getMemoryState<mModulesT>({ id: "modules" })
   if (!mem_modules) return error({ message: "no modules" })
 
@@ -129,7 +217,16 @@ export async function addMessage({
   })
   if (!mem_session) return error({ message: "no session" })
 
-  const { session } = mem_session
+  const { session, messages } = mem_session
+
+  const ai_state = getMemoryState<AIsT>({ id: "ais" })
+  if (!ai_state) return error({ message: "no ais" })
+  const ai = _.find(ai_state, { id: mem_session.session?.settings?.ai || "c1" })
+  if (!ai) return error({ message: "AI not found" })
+
+  // const processed_messages: MessageRowT[] = messages.active || []
+
+  // get the active module
   const module_id = _.get(session, "settings.module.id")
   let active_module = await Module(module_id)
 
@@ -142,6 +239,7 @@ export async function addMessage({
   if (!active_module) throw new Error("No module")
   const module = active_module
 
+  // update AI last used
   emit({
     type: "user.updateAILastUsed",
     data: {
@@ -149,7 +247,7 @@ export async function addMessage({
     },
   })
 
-  // get the variant
+  // get the module variant
   const variant = _.find(module?.specs.meta.variants, {
     id: session?.settings.module.variant,
   })
@@ -164,9 +262,10 @@ export async function addMessage({
       data: { module_id: module.specs.id },
     })
 
+  // get the parent id for the message
   const { parent_id: pid, resend } = await getParentId({
-    raw_messages,
-    processed_messages,
+    raw_messages: mem_session.messages.raw,
+    processed_messages: mem_session.messages.active,
     meta,
     branch_parent_id:
       typeof branch_parent_id === "string" ? branch_parent_id : "",
@@ -175,10 +274,11 @@ export async function addMessage({
   if (!parent_id) {
     return error({
       message: "no parent message",
-      data: { raw_messages, message },
+      data: { raw_messages: mem_session.messages.raw, message },
     })
   }
 
+  //
   if (message || resend) {
     // let's start the failsafe timer
     let failsafe_timer = setTimeout(async () => {
@@ -205,6 +305,10 @@ export async function addMessage({
         mem_session.generation.in_progress = false
         mem_session.generation.msg_update_ts = new Date().getTime()
       }
+      emit({
+        type: "session/generation/in_progress",
+        data: { value: false, target: session_id },
+      })
     }
 
     let m: TextMessageT | undefined = undefined
@@ -218,7 +322,7 @@ export async function addMessage({
         instructions: AIToInstruction({ ai }) || "you are a helpful assistant",
         user: message,
       },
-      messages: _.map(processed_messages, (m) => m[1]).filter(
+      messages: _.map(mem_session.messages.active, (m) => m[1]).filter(
         (m) => m.hash !== "1337",
       ), // 1337 is the hash for temporary messages - TODO: use meta.role for this
     })
@@ -267,7 +371,7 @@ export async function addMessage({
     }
 
     // @ts-ignore
-    if (resend) m = _.last(processed_messages)?.[1]
+    if (resend) m = _.last(mem_session.messages.active)?.[1]
     else {
       // add the user message to the session's messages
       const msg: { session_id: string; message: TextMessageT } = {
@@ -286,14 +390,26 @@ export async function addMessage({
           parent_id,
         } as TextMessageT,
       }
-      // m = await SessionsActions.addMessage(msg)
-      // if (m) mem_session.messages.raw.push(msg.message)
-      m = msg.message
-      mem_session.messages.raw.push(m)
-      // addRawMessage({ message: m })
+      m = await SessionsActions.addMessage(msg)
+      // m && mem_session.messages.raw.push(m)
     }
 
+    const active_path = computeActivePath(messages.raw || [])
+    if (!active_path) return
+
+    let rows = buildMessageTree({
+      messages: mem_session.messages.raw || [],
+      first_id: "first",
+      activePath: active_path,
+    })
+
+    if (rows) mem_session.messages.active = rows
+
     mem_session.generation.in_progress = true
+    emit({
+      type: "session/generation/in_progress",
+      data: { value: true, target: session_id },
+    })
 
     if (m) {
       const source = `ai:${module?.specs?.id}/${session?.settings.module.variant}/${ai?.id}`
@@ -319,9 +435,6 @@ export async function addMessage({
             },
             session_id,
           })
-
-          if (mem_session)
-            mem_session.generation.msg_update_ts = new Date().getTime()
         }
         gen_failsafe_timer = setTimeout(() => {
           emit({
@@ -400,9 +513,9 @@ export async function addMessage({
             message: "error in computing costs",
             data: { model: session.settings.module.variant },
           })
-        console.log(
-          `Input: ${receipt.details.input.tokens} tokens, $${receipt.details.input.cost_usd} : Output: ${receipt.details.output.tokens} tokens, $${receipt.details.output.cost_usd} : Total: $${receipt.cost_usd}`,
-        )
+        info({
+          message: `Input: ${receipt.details.input.tokens} tokens, $${receipt.details.input.cost_usd} : Output: ${receipt.details.output.tokens} tokens, $${receipt.details.output.cost_usd} : Total: $${receipt.cost_usd}`,
+        })
         SessionsActions.addCost({
           session_id,
           receipt,
@@ -415,31 +528,17 @@ export async function addMessage({
             id: nanoid(10),
             type: "ai",
             hash: "123",
-            text: stream_response,
+            text: stream_response.replace(/▮/g, "").trim(),
             meta: meta || { role: "msg" },
             context: memory.ctx,
             source,
             parent_id: m.id || "",
             created_at: new Date().toISOString(),
             status: "ready",
-          } as TextMessageT
+          } as TextMessageT,
         }
         await SessionsActions.addMessage(data)
-        mem_session.messages.raw.push(m)
-        //if (m) mem_session.messages.raw.push(m)
-        // addRawMessage({ message: m })
-        // await query({
-        //   type: "sessions.updateMessages",
-        //   data: {
-        //     session_id,
-        //     messages: mem_session.messages.raw,
-        //   },
-        // })
-        // emit({
-        //   type: "sessions.addMessage",
-        //   data,
-        // })
-
+        fieldFocus({ selector: `#input-${session_id}` })
         return true
       } else if (!has_error && !stream_response) {
         emit({

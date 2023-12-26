@@ -38,6 +38,7 @@ const API: { [key: string]: Function } = {
     notepads[session_id].clips = _(notepads[session_id].clips)
       .uniqBy("id")
       .value()
+    notepads._updated = new Date().getTime()
     await NotepadState.set(notepads, false, true)
 
     ph().capture("notepad/add")

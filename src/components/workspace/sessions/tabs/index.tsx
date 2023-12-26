@@ -18,6 +18,7 @@ import { PiChatCircleDotsBold } from "react-icons/pi"
 import { useEvent } from "@/components/hooks/useEvent"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
+import { Tab } from "./tab"
 
 export default function Tabs() {
   const app_state = useMemory<AppStateT>({ id: "appstate" })
@@ -116,49 +117,7 @@ export default function Tabs() {
         )
 
         if (!s) return false
-        return (
-          <div
-            className={`flex flex-row min-w-[50px] max-w-[200px] flex-nowrap flex-shrink border-transparent border-0 tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom transition-colors ph-no-capture ${
-              session_id === s.id ?
-                "tab-active bg-zinc-900/50 text-zinc-200"
-              : " bg-zinc-800 hover:bg-zinc-900/50 text-zinc-600 hover:text-zinc-300"
-            }`}
-            // style={{ width: `${relative_width || 100}px` }}
-            key={s.id}
-            onClick={() => {
-              emit({ type: "sessions/change", data: { session_id: s.id } })
-              navigate(`/c/${workspace_id}/${s.id}`)
-            }}
-            data-tip={s.name}
-          >
-            <div className="flex flex-shrink-0">
-              <PiChatCircleDotsBold className={`w-3.5 h-3.5 pr-1 `} />
-            </div>
-            <div className="truncate" data-original-text={s.name}>
-              {s.name}
-            </div>
-            <div className="flex flex-1 justify-end">
-              <div
-                className="flex ml-3 text-sm rotate-45 hover:bg-zinc-700 hover:text-zinc-100 rounded-full h-fit transition-all"
-                onClick={async (e) => {
-                  e.preventDefault()
-                  if (!session_id) return
-                  const new_tab = await AppStateActions.removeOpenSession({
-                    session_id: s.id,
-                  })
-
-                  if (session_id === s.id)
-                    navigate(`/c/${workspace_id}/${new_tab?.session_id}`)
-                  else {
-                    navigate(`/c/${workspace_id}/${session_id}`)
-                  }
-                }}
-              >
-                <RxPlus />
-              </div>
-            </div>
-          </div>
-        )
+        return <Tab key={s.id} session_id={s.id} workspace_id={workspace_id} label={s.name} />
       })
       .filter(Boolean)
 

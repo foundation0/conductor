@@ -179,6 +179,14 @@ export async function getRemote({
             } else if (remote_updated < local_updated) {
               // if remote is older than local, return local
               return { store: s, result: "older_found" }
+            } else if (remote_updated === 0 && local_updated === 0) {
+              // both are objects but no updated timestamp
+              let merged_state = { ...s }
+              _.assign(merged_state, cf_vstate?.data)
+              const parsed_remote = ztype.safeParse(merged_state)
+              if (parsed_remote.success) {
+                return { store: merged_state, result: "new_found" }
+              }
             } else if (remote_updated === local_updated) {
               // if remote is same as local, return local
               return { store: s, result: "equal" }
@@ -495,6 +503,9 @@ function createAutoSyncTimer({ name, API }: { name: string; API: any }): any {
   clearTimeout(auto_sync_timers[name])
   auto_sync_timers[name] = setTimeout(
     async () => {
+      if (name === "notepads") {
+        console.log("syncing notepads")
+      }
       await API.sync()
       createAutoSyncTimer({
         name,

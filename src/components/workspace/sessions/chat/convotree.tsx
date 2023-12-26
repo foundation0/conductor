@@ -7,11 +7,9 @@ import React, {
 import { TextMessageT } from "@/data/loaders/sessions"
 import Message from "./message"
 import _ from "lodash"
-import { RiAddCircleFill } from "react-icons/ri"
 import { fieldFocus } from "@/libraries/field_focus"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import { useLoaderData, useParams } from "react-router-dom"
 import { AIsT } from "@/data/schemas/ai"
 import { UserT } from "@/data/loaders/user"
 import { ModuleT } from "@/data/schemas/modules"
@@ -26,45 +24,67 @@ import {
   buildMessageTree,
   computeActivePath,
 } from "../../../../libraries/branching"
-import { RxCornerBottomLeft } from "react-icons/rx"
-import { LuGitBranchPlus } from "react-icons/lu"
 import useMemory from "@/components/hooks/useMemory"
 import { mChatSessionT } from "@/data/schemas/memory"
+import { LuGitBranchPlus } from "react-icons/lu"
+import { RxCornerBottomLeft } from "react-icons/rx"
 dayjs.extend(relativeTime)
 
 type MessageRowT = [TextMessageT[], TextMessageT, TextMessageT[]]
 
 type ConversationTreeProps = {
-  rows: MessageRowT[] | undefined
+  // rows: MessageRowT[] | undefined
   paddingBottom: number
   msgs_in_mem?: string[]
-  ai: AIsT[0]
+  //ai: AIsT[0]
   gen_in_progress?: boolean
   session_id: string
 }
 
 const ConversationTree: React.FC<ConversationTreeProps> = ({
-  rows,
+  // rows,
   paddingBottom,
   msgs_in_mem,
-  ai,
+  // ai,
   gen_in_progress,
   session_id,
 }) => {
-  if (!rows) {
-    return null
-  }
+  // if (!rows) {
+  //   return null
+  // }
 
   // const { ai_state, user_state } = useLoaderData() as { ai_state: AIsT; user_state: UserT }
   const user_state = useMemory<UserT>({ id: "user" })
+  if (!user_state) return error({ message: "No user" })
   const ai_state = useMemory<AIsT>({ id: "ais" })
+  if (!ai_state) return error({ message: "No ai" })
 
   const [ago_refresh, setAgoRefresh] = useState(1)
   const mem_session = useMemory<mChatSessionT>({
     id: `session-${session_id}`,
   })
+
   if (!mem_session) return error({ message: "No session" })
   const { session } = mem_session
+  const rows = mem_session.messages.active
+
+  useEffect(() => {
+    const active_path = computeActivePath(mem_session.messages.raw || [])
+    if (!active_path) return
+    const active = buildMessageTree({
+      messages: mem_session.messages.raw || [],
+      first_id: "first",
+      activePath: active_path,
+    })
+    active && (mem_session.messages.active = active)
+    updateParticipants({ session, messages: mem_session.messages.active })
+  }, [mem_session.messages?.raw?.length])
+
+  useEffect(() => {
+    if (!mem_session.messages.active?.length) return
+    updateParticipants({ session, messages: mem_session.messages.active })
+  }, [mem_session.messages.active?.length])
+
   // const [session, setSession] = useState<ChatSessionT | undefined>(undefined)
 
   // setup participants
@@ -117,11 +137,14 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
           <img
             className={`rounded-full w-3 h-3`}
             /* style={{ borderColor: user_variant_settings?.color || "#00000000" }} */
-            src={ai?.meta?.avatar || getAvatar({
-              seed:
-                _.find(ai_state, { id: m.source.split("/")[2] })?.meta?.name ||
-                "",
-            })}
+            src={
+              ai?.meta?.avatar ||
+              getAvatar({
+                seed:
+                  _.find(ai_state, { id: m.source.split("/")[2] })?.meta
+                    ?.name || "",
+              })
+            }
           />
         )
 
@@ -344,14 +367,15 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                               isActive={false}
                               avatar={participants["user"]}
                               onClick={() => {
-                                emit({
-                                  type: "chat/branch-click",
-                                  data: {
-                                    msg_id: m.id,
-                                    target: session_id,
-                                  },
-                                })
-                                // fieldFocus({ selector: "#input" })
+                                mem_session.messages.branch_msg_id = m.id
+                                // emit({
+                                //   type: "chat/branch-click",
+                                //   data: {
+                                //     msg_id: m.id,
+                                //     target: session_id,
+                                //   },
+                                // })
+                                fieldFocus({ selector: `#input-${session_id}` })
                               }}
                             />
                           </div>
@@ -399,7 +423,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
               }`}
             >
               <div className="ml-12 text-xs font-semibold text-zinc-600">
-                {ai.persona.name}
+                {mem_session.ai.persona.name}
                 {" - " + dayjs().from(dayjs(), true) + " ago"}
               </div>
               <div className="flex flex-row">
@@ -410,7 +434,12 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                         <span className="text-sm w-full h-full flex justify-center items-center">
                           <img
                             className={`rounded-full w-3 h-3`}
-                            src={ai?.meta?.avatar || getAvatar({ seed: ai?.meta?.name || "" })}
+                            src={
+                              mem_session.ai?.meta?.avatar ||
+                              getAvatar({
+                                seed: mem_session.ai?.meta?.name || "",
+                              })
+                            }
                           />
                         </span>
                       </div>

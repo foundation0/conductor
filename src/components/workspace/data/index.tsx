@@ -317,7 +317,7 @@ export default function DataOrganizer() {
                     onClick={() => {
                       if (!sid) return error({ message: "no session id" })
                       const mem_session = getMemoryState<mChatSessionT>({
-                        id: `session-${session_id}`,
+                        id: `session-${url_session_id}`,
                       })
                       if (!mem_session) return error({ message: "no session" })
                       mem_session?.session?.data?.push(d)

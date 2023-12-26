@@ -24,4 +24,5 @@ export const NotepadS = z.object({
 })
 export type NotepadT = z.infer<typeof NotepadS>
 
+// export const NotepadsWithUpdateS = NotepadS.extend({ _updated: z.number().optional() })
 export const NotepadsS = z.record(NotepadS)

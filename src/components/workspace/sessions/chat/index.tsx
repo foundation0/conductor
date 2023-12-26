@@ -23,7 +23,11 @@ import { queryIndex } from "@/libraries/data"
 import config from "@/config"
 
 // Libraries
-import { addMessage } from "../messages/add_message"
+import {
+  addMessage,
+  computeAssociatedDataTokens,
+  computeMessageTokens,
+} from "../../../../engine/sessions"
 import { autoRename } from "../../../../modules/auto_renamer"
 import { error } from "@/libraries/logging"
 import { fieldFocus } from "@/libraries/field_focus"
@@ -65,6 +69,7 @@ import {
 } from "@/libraries/ai"
 import { mChatSessionT } from "@/data/schemas/memory"
 import { AppStateT } from "@/data/loaders/app"
+import { getMemoryState } from "@/libraries/memory"
 
 const padding = 50
 
@@ -108,18 +113,12 @@ export default function Chat({
     branch_parent_id,
   } = messages
 
-  const {
-    in_progress: gen_in_progress,
-    msgs_in_mem,
-    msg_update_ts,
-  } = generation
+  const { in_progress: gen_in_progress, msgs_in_mem } = generation
 
   const navigate = useNavigate()
 
   // setup stores
   const [sid] = useState(session_id)
-
-  const [installed_ais, setInstalledAIs] = useState<AIsT>(ai_state)
 
   const [input_text, setInputText] = useState<string>("")
 
@@ -142,10 +141,6 @@ export default function Chat({
       "px",
   )
 
-  // function addRawMessage({ message }: { message: TextMessageT }) {
-  //   mem_session.messages.raw = [...(raw_messages || []), message]
-  // }
-
   async function send({
     message,
     meta,
@@ -155,132 +150,29 @@ export default function Chat({
     meta?: TextMessageT["meta"]
     parent_id?: string
   }) {
-    const ai = _.find(ai_state, { id: _.get(session, "settings.ai") || "c1" })
-    if (!ai) return error({ message: "AI not found" })
-
-    // const msgs = raw_messages
-    // const raw_msgs = _.uniqBy(msgs || [], "id")
-
-    // Add temp message to processed messages to show it in the UI faster - will get overwritten automatically once raw_messages are updated
-    let processed_messages_update = await updateMessages({
-      raw_msgs: mem_session.messages.raw,
-    })
-
-    // if this is not a branch or continue message, add a temp message to processed messages
-    if (!branch_msg_id && meta?.role !== "continue") {
-      const tmp_id = nanoid(10)
-      const temp_msg = {
-        _v: 1,
-        id: tmp_id,
-        type: "human",
-        hash: "123",
-        text: message,
-        meta: meta || {},
-        source: `user:${user_state.id}`,
-        active: true,
-        parent_id: parent_id || branch_parent_id,
-      }
-      const p_msgs: MessageRowT[] = [
-        ...(processed_messages_update || []),
-        [[], temp_msg as TextMessageT, []],
-      ]
-
-      mem_session.messages.active = p_msgs
-      mem_session.generation.in_progress = true
-      // emit({
-      //   type: "chat/processed-messages",
-      //   data: {
-      //     target: session_id,
-      //     messages: p_msgs,
-      //     module,
-      //   },
-      // })
-    }
-
     const msg_ok = await addMessage({
       session_id: sid,
-      processed_messages: processed_messages_update || [],
+      // processed_messages: processed_messages_update || [],
       branch_parent_id: branch_parent_id,
       message,
       meta,
       parent_id,
       message_id: branch_msg_id || "",
-      raw_messages: raw_messages || [],
-      user_state,
-      ai,
       callbacks: {
-        // addRawMessage,
         onError: async () => {
-          await updateMessages()
-          navigate(`/c/${workspace_id}/${sid}`)
+          // await updateMessages()
+          // navigate(`/c/${workspace_id}/${sid}`)
         },
       },
     })
     if (!msg_ok) {
-      updateMessages()
       setInputText(message)
     }
     if (branch_msg_id) mem_session.messages.branch_msg_id = ""
     setTimeout(() => fieldFocus({ selector: `#input-${session_id}` }), 200)
   }
 
-  async function computeMessageTokens({ text }: { text: string }) {
-    const msgs = mem_session.messages.active?.map((m) => m[1]) || []
-    const msg_toks = await tokenizeMessages({
-      messages: [
-        ...msgs,
-        {
-          _v: 1,
-          id: "tmp",
-          type: "human",
-          hash: "123",
-          text: text,
-          source: `user:${user_state.id}`,
-          active: true,
-          parent_id: "test",
-          version: "1.0",
-          created_at: new Date().toISOString(),
-          status: "ready",
-        },
-      ],
-      model: mem_session.session.settings.module.variant,
-    })
-    if (msg_toks) {
-      mem_session.messages.tokens = msg_toks.usedTokens
-      emit({
-        type: "sessions/tokensUpdate",
-        data: {
-          target: session_id,
-          tokens: msg_toks.usedTokens,
-        },
-      })
-    }
-  }
-
-  async function computeAssociatedDataTokens() {
-    const fctx = await createFullContext({ session_id: sid })
-    if (!fctx) return error({ message: "Failed to create full context" })
-    const ctx = fctx.ctx
-    if (ctx) {
-      const toks = await tokenizeInput({
-        input: ctx,
-        model: mem_session.session.settings.module.variant,
-      })
-      if (toks) {
-        mem_session.context.tokens = toks.usedTokens
-      }
-    } else {
-      mem_session.context.tokens = 0
-    }
-    emit({
-      type: "sessions/tokensUpdate",
-      data: {
-        target: session_id,
-      },
-    })
-  }
-
-  async function updateData() {
+  async function updateAttachedData() {
     // if (!session) return
     const session = await query<ChatSessionT>({
       type: "sessions.getById",
@@ -296,7 +188,7 @@ export default function Chat({
         !_.isEqual(data, mem_session.context.data_refs)
       ) {
         mem_session.context.data_refs = data
-        computeAssociatedDataTokens()
+        computeAssociatedDataTokens({ session_id: sid })
       }
       // setup index
       await queryIndex({
@@ -309,109 +201,94 @@ export default function Chat({
   }
 
   // Update local session state when sessions[sid] changes
-  const updateSession = async () => {
-    const { SessionState } = await initLoaders()
-    const sessions_state = await SessionState.get()
-    const session = sessions_state.active[sid]
-    if (!session) return
+  // const updateSession = async () => {
+  //   const { SessionState } = await initLoaders()
+  //   const sessions_state = await SessionState.get()
+  //   const session = sessions_state.active[sid]
+  //   if (!session) return
 
-    mem_session.session = session
-    setInstalledAIs(ai_state)
-    // deal with legacy sessions without AIs
-    if (!session.settings.ai) {
-      // add default ai
-      const new_session = _.cloneDeep(session)
-      new_session.settings.ai = "c1"
+  //   mem_session.session = session
+  //   // setInstalledAIs(ai_state)
+  //   // deal with legacy sessions without AIs
+  //   if (!session.settings.ai) {
+  //     // add default ai
+  //     const new_session = _.cloneDeep(session)
+  //     new_session.settings.ai = "c1"
 
-      mem_session.session = new_session
-      // update session in sessions
-      const new_sessions = _.cloneDeep(sessions_state)
-      new_sessions.active[sid] = new_session
-      await SessionsActions.updateSessions(new_sessions)
-    }
-    const workspace = user_state.workspaces.find(
-      (w: any) => w.id === workspace_id,
-    ) as z.infer<typeof WorkspaceS>
+  //     mem_session.session = new_session
+  //     // update session in sessions
+  //     const new_sessions = _.cloneDeep(sessions_state)
+  //     new_sessions.active[sid] = new_session
+  //     await SessionsActions.updateSessions(new_sessions)
+  //   }
+  //   const workspace = user_state.workspaces.find(
+  //     (w: any) => w.id === workspace_id,
+  //   ) as z.infer<typeof WorkspaceS>
 
-    const msgs = await query<TextMessageT[]>({
-      type: "sessions.getMessages",
-      data: { session_id: sid },
-    })
-    updateData()
-    let session_name = ""
-    for (const group of workspace.groups) {
-      for (const folder of group.folders) {
-        const session = folder.sessions?.find((s) => s.id === sid)
-        if (session) session_name = session.name
-      }
-    }
-    const active_session = _.find(app_state.open_sessions, { session_id: sid })
-    if (
-      mem_session.messages.tokens === 0 &&
-      mem_session.messages.active.length > 0
-    )
-      computeMessageTokens({ text: input_text })
-    if (
-      mem_session.context.tokens === 0 &&
-      mem_session.context.data_refs.length > 0
-    )
-      computeAssociatedDataTokens()
+  //   const msgs = await query<TextMessageT[]>({
+  //     type: "sessions.getMessages",
+  //     data: { session_id: sid },
+  //   })
+  //   updateData()
+  //   let session_name = ""
+  //   for (const group of workspace.groups) {
+  //     for (const folder of group.folders) {
+  //       const session = folder.sessions?.find((s) => s.id === sid)
+  //       if (session) session_name = session.name
+  //     }
+  //   }
+  //   const active_session = _.find(app_state.open_sessions, { session_id: sid })
+  //   if (
+  //     mem_session.messages.tokens === 0 &&
+  //     mem_session.messages.active.length > 0
+  //   )
+  //     computeMessageTokens({ text: input_text })
+  //   if (
+  //     mem_session.context.tokens === 0 &&
+  //     mem_session.context.data_refs.length > 0
+  //   )
+  //     computeAssociatedDataTokens()
 
-    if (
-      _.size(msgs) >= 2 &&
-      _.size(msgs) <= 5 &&
-      session_name === "Untitled" &&
-      active_session
-    ) {
-      const generated_session_name = await autoRename({
-        session_id: sid,
-        messages: msgs,
-        user_id: user_state.id,
-      })
-      if (generated_session_name) {
-        // update session name
-        await UserActions.renameItem({
-          new_name: generated_session_name,
-          group_id: active_session.group_id,
-          folder_id: active_session.folder_id,
-          session_id: sid,
-        })
+  //   if (
+  //     _.size(msgs) >= 2 &&
+  //     _.size(msgs) <= 5 &&
+  //     session_name === "Untitled" &&
+  //     active_session
+  //   ) {
+  //     const generated_session_name = await autoRename({
+  //       session_id: sid,
+  //       messages: msgs,
+  //       user_id: user_state.id,
+  //     })
+  //     if (generated_session_name) {
+  //       // update session name
+  //       await UserActions.renameItem({
+  //         new_name: generated_session_name,
+  //         group_id: active_session.group_id,
+  //         folder_id: active_session.folder_id,
+  //         session_id: sid,
+  //       })
 
-        // navigate(`/c/${workspace_id}/${sid}`)
-      }
-    }
-  }
+  //       // navigate(`/c/${workspace_id}/${sid}`)
+  //     }
+  //   }
+  // }
 
   // update processed messages
-  async function updateMessages({
-    raw_msgs,
-  }: { raw_msgs?: TextMessageT[] } = {}) {
-    const active_path = computeActivePath(raw_msgs || raw_messages || [])
-    if (!active_path) return
-    let rows = buildMessageTree({
-      messages: raw_msgs || raw_messages || [],
-      first_id: "first",
-      activePath: active_path,
-    })
-    emit({
-      type: "chat/processed-messages",
-      data: {
-        target: session_id,
-        messages: rows,
-        module,
-      },
-    })
-    emit({
-      type: "sessions.updateMessages",
-      data: {
-        target: session_id,
-        session_id,
-        messages: raw_msgs || raw_messages || [],
-      },
-    })
-    if (rows) mem_session.messages.active = rows
-    return rows
-  }
+  // async function updateMessages({
+  //   raw_msgs,
+  // }: { raw_msgs?: TextMessageT[] } = {}) {
+  //   const active_path = computeActivePath(raw_msgs || raw_messages || [])
+  //   if (!active_path) return
+  //   let rows = buildMessageTree({
+  //     messages: raw_msgs || raw_messages || [],
+  //     first_id: "first",
+  //     activePath: active_path,
+  //   })
+
+  //   if (rows) mem_session.messages.active = rows
+  //   return rows
+  // }
 
   async function updateModule({ module_id }: { module_id?: string } = {}) {
     if (!module_id) module_id = _.get(session, "settings.module.id")
@@ -484,24 +361,24 @@ export default function Chat({
     updateModule()
   }, [JSON.stringify([_.get(session, "settings.module") || {}, session])])
 
-  useEffect(() => {
-    updateSession()
-  }, [JSON.stringify([gen_in_progress, branch_parent_id])])
+  // useEffect(() => {
+  //   updateSession()
+  // }, [JSON.stringify([gen_in_progress, branch_parent_id])])
 
   // update raw messages when msg_update_ts changes
-  useEffect(() => {
-    query<TextMessageT[]>({
-      type: "sessions.getMessages",
-      data: { session_id: sid },
-    }).then((msgs) => {
-      mem_session.messages.raw = msgs
-    })
-  }, [msg_update_ts])
+  // useEffect(() => {
+  //   query<TextMessageT[]>({
+  //     type: "sessions.getMessages",
+  //     data: { session_id: sid },
+  //   }).then((msgs) => {
+  //     mem_session.messages.raw = msgs
+  //   })
+  // }, [msg_update_ts])
 
   // update active path when raw_messages changes
-  useEffect(() => {
-    updateMessages()
-  }, [JSON.stringify([raw_messages])])
+  // useEffect(() => {
+  //   updateMessages()
+  // }, [JSON.stringify([raw_messages])])
 
   // useEffect to add and remove the event listener
   useEffect(() => {
@@ -524,8 +401,8 @@ export default function Chat({
       variant_id: string
     }) {
       await updateModule({ module_id })
-      computeMessageTokens({ text: input_text })
-      computeAssociatedDataTokens()
+      computeMessageTokens({ text: input_text, session_id })
+      computeAssociatedDataTokens({ session_id })
     },
   })
 
@@ -548,40 +425,40 @@ export default function Chat({
     },
   })
 
-  useEvent({
-    name: "chat/raw-messages",
-    target: session_id,
-    action: ({ messages }: { messages: TextMessageT[] }) => {
-      mem_session.messages.raw = messages
-    },
-  })
+  // useEvent({
+  //   name: "chat/raw-messages",
+  //   target: session_id,
+  //   action: ({ messages }: { messages: TextMessageT[] }) => {
+  //     mem_session.messages.raw = messages
+  //   },
+  // })
 
-  useEvent({
-    name: "chat/branch-click",
-    target: session_id,
-    action: async (data: {
-      msg_id: string
-      no_update?: boolean
-      msgs?: TextMessageT[]
-    }) => {
-      const container_e = document.querySelector(
-        ".react-auto-scroll__scroll-container",
-      ) as HTMLElement | null
-      const offset = container_e?.scrollTop || 0
-      await onBranchClick({ ...data, session_id })
-      if (container_e) {
-        container_e?.scrollTo({ top: offset })
-      }
-    },
-  })
+  // useEvent({
+  //   name: "chat/branch-click",
+  //   target: session_id,
+  //   action: async (data: {
+  //     msg_id: string
+  //     no_update?: boolean
+  //     msgs?: TextMessageT[]
+  //   }) => {
+  //     const container_e = document.querySelector(
+  //       ".react-auto-scroll__scroll-container",
+  //     ) as HTMLElement | null
+  //     const offset = container_e?.scrollTop || 0
+  //     await onBranchClick({ ...data, session_id })
+  //     if (container_e) {
+  //       container_e?.scrollTo({ top: offset })
+  //     }
+  //   },
+  // })
 
-  useEvent({
-    name: "chat/new-branch-click",
-    target: session_id,
-    action: ({ parent_id }: { parent_id: string }) => {
-      onNewBranchClick({ parent_id, session_id })
-    },
-  })
+  // useEvent({
+  //   name: "chat/new-branch-click",
+  //   target: session_id,
+  //   action: ({ parent_id }: { parent_id: string }) => {
+  //     onNewBranchClick({ parent_id, session_id })
+  //   },
+  // })
 
   useEvent({
     name: [
@@ -590,36 +467,36 @@ export default function Chat({
       "sessions/change",
     ],
     target: session_id,
-    action: updateData,
+    action: updateAttachedData,
   })
 
-  useEvent({
-    name: [
-      "sessions/change",
-      "sessions.updateSession.done",
-      "chat/processRawMessages",
-      "sessions.clearMessages.done",
-      "sessions.deleteMessage.done",
-    ],
-    target: session_id,
-    action: () => updateSession(),
-  })
+  // useEvent({
+  //   name: [
+  //     "sessions/change",
+  //     "sessions.updateSession.done",
+  //     "chat/processRawMessages",
+  //     "sessions.clearMessages.done",
+  //     "sessions.deleteMessage.done",
+  //   ],
+  //   target: session_id,
+  //   action: () => updateSession(),
+  // })
 
-  useEvent({
-    name: "sessions.updateMessages.done",
-    target: session_id,
-    action: ({ messages }: { messages: TextMessageT[] }) => {
-      mem_session.messages.raw = messages
-    },
-  })
+  // useEvent({
+  //   name: "sessions.updateMessages.done",
+  //   target: session_id,
+  //   action: ({ messages }: { messages: TextMessageT[] }) => {
+  //     mem_session.messages.raw = messages
+  //   },
+  // })
 
-  useEvent({
-    name: "store/update",
-    target: session_id,
-    action: ({ session }: { session: any }) => {
-      updateMessages({ raw_msgs: session })
-    },
-  })
+  // useEvent({
+  //   name: "store/update",
+  //   target: session_id,
+  //   action: ({ session }: { session: any }) => {
+  //     updateMessages({ raw_msgs: session })
+  //   },
+  // })
 
   useEvent({
     name: "chat.send",
@@ -649,25 +526,25 @@ export default function Chat({
       clearTimeout(mem_session.input.change_timer)
       mem_session.input.change_timer = setTimeout(async () => {
         // compute tokens for input
-        computeMessageTokens({ text })
+        computeMessageTokens({ text, session_id })
       }, 1000)
     },
   })
 
-  useEvent({
-    name: "chat/processed-messages",
-    target: session_id,
-    action: async ({ messages }: { messages: MessageRowT[] }) => {
-      if (!messages || messages?.length === 0) return
-      const toks = await tokenizeMessages({
-        messages: messages.map((m) => m[1]),
-        model: mem_session.session.settings.module.variant,
-      })
-      if (toks) {
-        mem_session.messages.tokens = toks.usedTokens
-      }
-    },
-  })
+  // useEvent({
+  //   name: "chat/processed-messages",
+  //   target: session_id,
+  //   action: async ({ messages }: { messages: MessageRowT[] }) => {
+  //     if (!messages || messages?.length === 0) return
+  //     const toks = await tokenizeMessages({
+  //       messages: messages.map((m) => m[1]),
+  //       model: mem_session.session.settings.module.variant,
+  //     })
+  //     if (toks) {
+  //       mem_session.messages.tokens = toks.usedTokens
+  //     }
+  //   },
+  // })
 
   // if (session_id !== (useParams().session_id as string)) return null
   if (!session || !module) return null
@@ -698,7 +575,10 @@ export default function Chat({
           scrollBehavior="auto"
           className={`flex flex-1`}
         >
-          {processed_messages && processed_messages?.length > 0 ?
+          {(
+            mem_session.messages.active &&
+            mem_session.messages.active?.length > 0
+          ) ?
             <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 pb-4 pt-2">
               <div className="dropdown">
                 <AISelectorButton session_id={session_id} />
@@ -707,28 +587,18 @@ export default function Chat({
                   tabIndex={0}
                   className="dropdown-content z-[1] card card-compact shadow bg-primary text-primary-content md:-left-[25%]"
                 >
-                  <AISelector
-                    // installed_ais={installed_ais}
-                    session_id={session_id}
-                    // user_state={user_state}
-                  />
+                  <AISelector session_id={session_id} />
                 </div>
               </div>
             </div>
           : null}
           <div className="Messages flex flex-1 flex-col" style={{ height }}>
-            {processed_messages && processed_messages?.length > 0 ?
+            {mem_session.messages.raw && mem_session.messages.raw?.length > 0 ?
               <ConversationTree
                 session_id={sid}
-                rows={processed_messages}
                 paddingBottom={input_height + 30}
                 msgs_in_mem={msgs_in_mem}
                 gen_in_progress={gen_in_progress}
-                ai={
-                  _.find(ai_state, {
-                    id: _.get(session, "settings.ai") || null,
-                  }) as AIsT[0]
-                }
               />
             : <div
                 id="BlankChat"
