@@ -1,4 +1,4 @@
-.chat {
+.chat, .Clip {
   &>*:not(:last-child) {
     margin-bottom: 1rem;
   }
@@ -99,7 +99,7 @@
     border-radius: 5px;
     color: #c9d1d9;
     background: #171c24;
-    font-size: 0.8rem;
+    font-size: 0.7rem !important;
     padding: 2px 5px;
   }
 

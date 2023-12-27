@@ -16,18 +16,21 @@
       }
     }
   }
-
+  .Clip > div > pre {
+    @apply bg-transparent m-0 p-0 #{!important};
+  }
   .code {
-    @apply my-4;
+    @apply my-4 bg-transparent #{!important};
+
     font-size: 10px !important;
 
     pre {
-      @apply bg-zinc-900 border border-zinc-800 rounded;
+      // @apply bg-zinc-900 border border-zinc-800 rounded;
     }
 
     code {
       /* @apply bg-zinc-900; */
-      font-size: 0.7rem;
+      font-size: 0.6rem !important;
       text-wrap: wrap;
     }
   }
@@ -54,5 +57,13 @@
   }
   hr {
     @apply my-4 border-b-[1px] border-zinc-700;
+  }
+  ul, ol {
+    white-space: initial  !important;
+    @apply mb-3 #{!important};
+  }
+  li {
+    white-space: initial !important;
+    @apply mb-1 #{!important};
   }
 }

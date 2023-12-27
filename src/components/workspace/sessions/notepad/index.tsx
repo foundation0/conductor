@@ -324,7 +324,7 @@ export default function Notepad() {
             ?.map((c) => {
               return (
                 <div
-                  className={`flex flex-col w-auto rounded-xl px-4 py-3 text-xs relative cursor-text bg-zinc-800/50 border-2 border-zinc-900/80 text-sm rounded-lg ph-no-capture ${
+                  className={`Clip flex flex-col w-auto rounded-xl px-4 py-3 text-xs relative cursor-text bg-zinc-800/50 border-2 border-zinc-900/80 text-sm rounded-lg ph-no-capture ${
                     field_edit_id === c.id + "all/edit" ? "border-dashed" : ""
                   }`}
                   key={c.id}
