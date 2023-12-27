@@ -485,7 +485,7 @@ export const store = async <TData>({
       error({ message: "no active user" })
       return null
     }
-    await API.sync()
+    API.sync()
   }
 
   // If the store exists, validate it against the schema and save it to the local storage if it doesn't exist

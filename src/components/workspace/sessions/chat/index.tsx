@@ -34,8 +34,6 @@ import {
 } from "../../../../libraries/branching"
 
 // Schemas
-import { AIsT } from "@/data/schemas/ai"
-import { UserT } from "@/data/loaders/user"
 import { TextMessageT } from "@/data/loaders/sessions"
 
 // Components
@@ -43,28 +41,18 @@ import ConversationTree from "@/components/workspace/sessions/chat/convotree"
 import Input from "@/components/workspace/sessions/chat/input"
 import { AISelector, AISelectorButton } from "./ai_selector"
 import { emit, query } from "@/libraries/events"
-import {
-  ChatSessionT,
-} from "@/data/schemas/sessions"
+import { ChatSessionT } from "@/data/schemas/sessions"
 import useMemory from "@/components/hooks/useMemory"
 import { mChatSessionT } from "@/data/schemas/memory"
-import { AppStateT } from "@/data/loaders/app"
 
 const padding = 50
 
-let send_msg_timer: any = null
-
 export default function Chat({
-  workspace_id,
   session_id,
 }: {
   workspace_id: string
   session_id: string
 }) {
-  const user_state = useMemory<UserT>({ id: "user" })
-  const ai_state = useMemory<AIsT>({ id: "ais" })
-  const app_state = useMemory<AppStateT>({ id: "appstate" })
-
   const stores_mem = useMemory<{
     [key: string]: Partial<{
       status: "ready" | "initializing" | "error" | "syncing"
@@ -77,12 +65,11 @@ export default function Chat({
     id: `session-${session_id}`,
   })
   if (!mem_session) return
-  const { module, session, messages, generation } = mem_session
+  const { session, messages, generation } = mem_session
 
   if (!session || !messages || !generation) return
 
   const {
-    raw: raw_messages,
     active: processed_messages,
     branch_msg_id,
     branch_parent_id,
@@ -334,8 +321,22 @@ export default function Chat({
     updateModule()
   }, [JSON.stringify([_.get(session, "settings.module") || {}, session])])
 
-    // useEffect to add and remove the event listener
+  // useEffect to add and remove the event listener
   useEffect(() => {
+    updateModule({
+      module_id: mem_session.session?.settings?.module?.id || "c1",
+    })
+    if (
+      mem_session.messages.tokens === 0 &&
+      mem_session.messages.active.length > 0
+    )
+      computeMessageTokens({ text: input_text, session_id })
+    if (
+      mem_session.context.tokens === 0 &&
+      _.size(mem_session.session?.data) > 0
+    )
+      updateAttachedData()
+
     window.addEventListener("resize", handleResize)
 
     // Cleanup function to remove the event listener when the component unmounts
@@ -347,13 +348,7 @@ export default function Chat({
   useEvent({
     name: "sessions/module-change",
     target: session_id,
-    async action({
-      module_id,
-      variant_id,
-    }: {
-      module_id: string
-      variant_id: string
-    }) {
+    async action({ module_id }: { module_id: string; variant_id: string }) {
       await updateModule({ module_id })
       computeMessageTokens({ text: input_text, session_id })
       computeAssociatedDataTokens({ session_id })
@@ -432,9 +427,7 @@ export default function Chat({
       parent_id?: string
     }) => {
       if (session_id !== sid) return
-      send_msg_timer = setTimeout(() => {
-        send({ message, meta, parent_id })
-      }, 100)
+      send({ message, meta, parent_id })
     },
   })
 
@@ -450,9 +443,8 @@ export default function Chat({
     },
   })
 
-
   if (!mem_session.session || !mem_session.module) return null
-  
+
   return (
     <div className="flex flex-1 flex-col relative" ref={eContainer}>
       <div className="flex flex-1">

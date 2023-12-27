@@ -147,9 +147,9 @@ export default function Workspace() {
     // mem.active_sessions = { ...mem.active_sessions, [session_id]: true }
   }
 
-  useEffect(() => {
-    update()
-  }, [])
+  // useEffect(() => {
+  //   update()
+  // }, [])
   useEffect(() => {
     update()
   }, [
@@ -274,7 +274,7 @@ export default function Workspace() {
   }, [JSON.stringify([mem.active_sessions])])
 
   useEvent({
-    name: ["sessions/change", "sessions.removeOpenSession.done"],
+    name: ["sessions.removeOpenSession.done"],
     action: update,
   })
 

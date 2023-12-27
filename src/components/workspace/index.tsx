@@ -44,8 +44,6 @@ import { RxPlus } from "react-icons/rx"
 import { handleAIChange } from "@/libraries/session_module"
 import { error } from "@/libraries/logging"
 
-type LoaderT = { app_state: AppStateT; user_state: UserT }
-
 export default function Workspace() {
   let workspace_id = useParams().workspace_id as string
   let session_id = useParams().session_id as string
