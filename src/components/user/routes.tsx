@@ -2,6 +2,7 @@ import { loader } from "@/data/loaders"
 import { LocalUsersPage } from "./local_users"
 import { RegisterPage } from "./register"
 import { AddExistingUser } from "./existing_user"
+import Common from "./common"
 // import { Guest }  from "./guest"
 
 export const UserIdR = {
@@ -13,17 +14,23 @@ export const UserIdR = {
 export const LocalUsersR = {
   loader,
   path: "authentication",
-  element: <LocalUsersPage />,
+  element: <Common>
+    <LocalUsersPage />
+  </Common>,
 }
 
 export const OnboardingR = {
   path: "onboarding",
-  element: <RegisterPage />,
+  element: <Common>
+    <RegisterPage />
+  </Common>,
 }
 
 export const AddExistingUserR = {
   path: "login",
-  element: <AddExistingUser />,
+  element: <Common>
+    <AddExistingUser />
+  </Common>,
 }
 
 export const GuestUserR = {
