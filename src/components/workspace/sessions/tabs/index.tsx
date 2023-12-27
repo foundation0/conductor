@@ -19,6 +19,7 @@ import { useEvent } from "@/components/hooks/useEvent"
 import { mAppT } from "@/data/schemas/memory"
 import useMemory from "@/components/hooks/useMemory"
 import { Tab } from "./tab"
+import { TabLoader } from "./tab-loader"
 import { ChatSessionT, SessionTypesT } from "@/data/schemas/sessions"
 
 export default function Tabs() {
@@ -44,11 +45,12 @@ export default function Tabs() {
   const mem = useMemory<{
     open_tabs: any
     debounce: any
+    loading_tab_label?: string
+
   }>({
     id: `session-${session_id}-tabs`,
     state: { open_tabs: null },
   })
-  const { open_tabs } = mem
 
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -162,41 +164,6 @@ export default function Tabs() {
     // resizeHandler()
     // setTimeout(resizeHandler, 1000)
   }
-
-  useEffect(() => {
-    // generateVisibleTabs()
-  }, [JSON.stringify(mem_session_index.active_sessions) || ""])
-  // useEffect(() => {
-  //   generateVisibleTabs()
-  // }, [
-  //   JSON.stringify([
-  //     app_state.open_sessions,
-  //     user_state.workspaces,
-  //     app_state.active_sessions,
-  //     // workspace_id,
-  //     session_id,
-  //   ]),
-  // ])
-
-  // if there are no open sessions, add the first session from first group to open sessions
-  // useEffect(() => {
-  //   const active_workspace = user_state.workspaces.find(
-  //     (ws) => ws.id === workspace_id,
-  //   ) as z.infer<typeof WorkspaceS>
-  //   if (open_tabs?.length === 0) {
-  //     const first_group = _.first(active_workspace.groups)
-  //     if (!first_group) throw new Error("first group not found")
-  //     const first_folder = _.first(first_group.folders)
-  //     if (!first_folder) throw new Error("first folder not found")
-  //     const first_session = _.first(first_folder.sessions)
-
-  //     if (first_session) {
-  //       navigate(`/c/${workspace_id}/${first_session.id}`)
-  //     } else {
-  //       console.warn("first session not found")
-  //     }
-  //   }
-  // }, [mem.open_tabs?.length === 0])
 
   // if the current session is not in tabs, add it
   async function matchTabsWithOpenSessions() {
@@ -314,6 +281,14 @@ export default function Tabs() {
   })
 
   // useEvent({
+  //   name: 'tab-loader',
+  //   action: () => {
+  //     if(!mem.loading_tab_label) mem.loading_tab_label = "Loading..."
+  //     else mem.loading_tab_label = ""
+  //   }
+  // })
+
+  // useEvent({
   //   name: [
   //     "sessions.addSession.done",
   //     "sessions.updateSession.done",
@@ -375,6 +350,7 @@ export default function Tabs() {
             />
           )
         })}
+        {/* {mem.loading_tab_label && <TabLoader label={mem.loading_tab_label} />} */}
       </div>
       <div id="TabsActions" className="flex flex-row justify-end ml-3">
         <div className=" flex flex-row flex-1 gap-3 pr-3 justify-end items-center ">

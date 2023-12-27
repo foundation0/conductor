@@ -1,13 +1,8 @@
-// TODO: This component has bloated with too many responsibilities. Refactor it into smaller components using events.
-
 // React
 import { useEffect, useRef, useState } from "react"
-import { useLoaderData, useNavigate, useParams } from "react-router-dom"
 
 // Helpers
 import _ from "lodash"
-import { z } from "zod"
-import { nanoid } from "nanoid"
 import AutoScroll from "@brianmcallister/react-auto-scroll"
 
 // Icons
@@ -17,8 +12,6 @@ import { KBDs } from "./kbd"
 
 // Data
 import Data from "@/components/workspace/data/data"
-import { WorkspaceS } from "@/data/schemas/workspace"
-import { initLoaders } from "@/data/loaders"
 import { queryIndex } from "@/libraries/data"
 import config from "@/config"
 
@@ -28,7 +21,6 @@ import {
   computeAssociatedDataTokens,
   computeMessageTokens,
 } from "../../../../engine/sessions"
-import { autoRename } from "../../../../modules/auto_renamer"
 import { error } from "@/libraries/logging"
 import { fieldFocus } from "@/libraries/field_focus"
 import { Module } from "@/modules/"
@@ -36,19 +28,15 @@ import { useEvent } from "@/components/hooks/useEvent"
 
 // Actions
 import SessionActions from "@/data/actions/sessions"
-import SessionsActions from "@/data/actions/sessions"
-import UserActions from "@/data/actions/user"
 import {
-  computeActivePath,
   onBranchClick,
   onNewBranchClick,
-  buildMessageTree,
 } from "../../../../libraries/branching"
 
 // Schemas
 import { AIsT } from "@/data/schemas/ai"
 import { UserT } from "@/data/loaders/user"
-import { SessionsT, TextMessageT } from "@/data/loaders/sessions"
+import { TextMessageT } from "@/data/loaders/sessions"
 
 // Components
 import ConversationTree from "@/components/workspace/sessions/chat/convotree"
@@ -57,19 +45,10 @@ import { AISelector, AISelectorButton } from "./ai_selector"
 import { emit, query } from "@/libraries/events"
 import {
   ChatSessionT,
-  MessageRowT,
-  TextMessagesT,
 } from "@/data/schemas/sessions"
 import useMemory from "@/components/hooks/useMemory"
-import { Match, Switch } from "react-solid-flow"
-import {
-  createFullContext,
-  tokenizeInput,
-  tokenizeMessages,
-} from "@/libraries/ai"
 import { mChatSessionT } from "@/data/schemas/memory"
 import { AppStateT } from "@/data/loaders/app"
-import { getMemoryState } from "@/libraries/memory"
 
 const padding = 50
 
@@ -82,10 +61,6 @@ export default function Chat({
   workspace_id: string
   session_id: string
 }) {
-  // const { MessagesState } = useLoaderData() as {
-  //   MessagesState: Function
-  // }
-
   const user_state = useMemory<UserT>({ id: "user" })
   const ai_state = useMemory<AIsT>({ id: "ais" })
   const app_state = useMemory<AppStateT>({ id: "appstate" })
@@ -359,26 +334,7 @@ export default function Chat({
     updateModule()
   }, [JSON.stringify([_.get(session, "settings.module") || {}, session])])
 
-  // useEffect(() => {
-  //   updateSession()
-  // }, [JSON.stringify([gen_in_progress, branch_parent_id])])
-
-  // update raw messages when msg_update_ts changes
-  // useEffect(() => {
-  //   query<TextMessageT[]>({
-  //     type: "sessions.getMessages",
-  //     data: { session_id: sid },
-  //   }).then((msgs) => {
-  //     mem_session.messages.raw = msgs
-  //   })
-  // }, [msg_update_ts])
-
-  // update active path when raw_messages changes
-  // useEffect(() => {
-  //   updateMessages()
-  // }, [JSON.stringify([raw_messages])])
-
-  // useEffect to add and remove the event listener
+    // useEffect to add and remove the event listener
   useEffect(() => {
     window.addEventListener("resize", handleResize)
 
@@ -423,40 +379,32 @@ export default function Chat({
     },
   })
 
-  // useEvent({
-  //   name: "chat/raw-messages",
-  //   target: session_id,
-  //   action: ({ messages }: { messages: TextMessageT[] }) => {
-  //     mem_session.messages.raw = messages
-  //   },
-  // })
+  useEvent({
+    name: "chat/branch-click",
+    target: session_id,
+    action: async (data: {
+      msg_id: string
+      no_update?: boolean
+      msgs?: TextMessageT[]
+    }) => {
+      const container_e = document.querySelector(
+        ".react-auto-scroll__scroll-container",
+      ) as HTMLElement | null
+      const offset = container_e?.scrollTop || 0
+      await onBranchClick({ ...data, session_id })
+      if (container_e) {
+        container_e?.scrollTo({ top: offset })
+      }
+    },
+  })
 
-  // useEvent({
-  //   name: "chat/branch-click",
-  //   target: session_id,
-  //   action: async (data: {
-  //     msg_id: string
-  //     no_update?: boolean
-  //     msgs?: TextMessageT[]
-  //   }) => {
-  //     const container_e = document.querySelector(
-  //       ".react-auto-scroll__scroll-container",
-  //     ) as HTMLElement | null
-  //     const offset = container_e?.scrollTop || 0
-  //     await onBranchClick({ ...data, session_id })
-  //     if (container_e) {
-  //       container_e?.scrollTo({ top: offset })
-  //     }
-  //   },
-  // })
-
-  // useEvent({
-  //   name: "chat/new-branch-click",
-  //   target: session_id,
-  //   action: ({ parent_id }: { parent_id: string }) => {
-  //     onNewBranchClick({ parent_id, session_id })
-  //   },
-  // })
+  useEvent({
+    name: "chat/new-branch-click",
+    target: session_id,
+    action: ({ parent_id }: { parent_id: string }) => {
+      onNewBranchClick({ parent_id, session_id })
+    },
+  })
 
   useEvent({
     name: [
@@ -468,34 +416,7 @@ export default function Chat({
     action: updateAttachedData,
   })
 
-  // useEvent({
-  //   name: [
-  //     "sessions/change",
-  //     "sessions.updateSession.done",
-  //     "chat/processRawMessages",
-  //     "sessions.clearMessages.done",
-  //     "sessions.deleteMessage.done",
-  //   ],
-  //   target: session_id,
-  //   action: () => updateSession(),
-  // })
-
-  // useEvent({
-  //   name: "sessions.updateMessages.done",
-  //   target: session_id,
-  //   action: ({ messages }: { messages: TextMessageT[] }) => {
-  //     mem_session.messages.raw = messages
-  //   },
-  // })
-
-  // useEvent({
-  //   name: "store/update",
-  //   target: session_id,
-  //   action: ({ session }: { session: any }) => {
-  //     updateMessages({ raw_msgs: session })
-  //   },
-  // })
-
+  // TODO: Refactor this out because its useless with multi-threading
   useEvent({
     name: "chat.send",
     target: session_id,
@@ -529,44 +450,9 @@ export default function Chat({
     },
   })
 
-  // useEvent({
-  //   name: "chat/processed-messages",
-  //   target: session_id,
-  //   action: async ({ messages }: { messages: MessageRowT[] }) => {
-  //     if (!messages || messages?.length === 0) return
-  //     const toks = await tokenizeMessages({
-  //       messages: messages.map((m) => m[1]),
-  //       model: mem_session.session.settings.module.variant,
-  //     })
-  //     if (toks) {
-  //       mem_session.messages.tokens = toks.usedTokens
-  //     }
-  //   },
-  // })
-
-  // if (session_id !== (useParams().session_id as string)) return null
-  console.log(session_id, mem_session)
 
   if (!mem_session.session || !mem_session.module) return null
-  {
-    /* <Switch> */
-  }
-  {
-    /* <Match when={stores_mem[sid]?.status === "error"}>
-      <div className="flex flex-grow text-xs justify-center items-center text-zinc-500 font-semibold">
-        Error loading session :/
-      </div>
-    </Match> */
-  }
-  {
-    /* <Match
-      when={
-        stores_mem[sid]?.status === "initializing" ||
-        stores_mem[sid]?.status === "ready" ||
-        stores_mem[sid]?.status === "syncing"
-      }
-    > */
-  }
+  
   return (
     <div className="flex flex-1 flex-col relative" ref={eContainer}>
       <div className="flex flex-1">
@@ -692,7 +578,5 @@ export default function Chat({
         </div>
       )}
     </div>
-    /*       </Match>
-    </Switch> */
   )
 }

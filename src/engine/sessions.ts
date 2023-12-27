@@ -1,6 +1,6 @@
 import { TextMessageT } from "@/data/loaders/sessions"
 import SessionsActions from "@/data/actions/sessions"
-import _, { trim } from "lodash"
+import _, { get, trim } from "lodash"
 import {
   compileSlidingWindowMemory,
   createFullContext,
@@ -14,13 +14,16 @@ import { nanoid } from "nanoid"
 import { AIT, AIsT } from "@/data/schemas/ai"
 import { AIToInstruction } from "@/libraries/ai"
 import { ReceiptT } from "@/data/schemas/sessions"
-import { emit } from "@/libraries/events"
+import { emit, query } from "@/libraries/events"
 import { Module } from "@/modules"
 import { getMemoryState } from "@/libraries/memory"
-import { mChatSessionT, mModulesT } from "@/data/schemas/memory"
+import { mAppT, mChatSessionT, mModulesT } from "@/data/schemas/memory"
 import config from "@/config"
 import { buildMessageTree, computeActivePath } from "@/libraries/branching"
 import { fieldFocus } from "@/libraries/field_focus"
+import { autoRename } from "@/modules/auto_renamer"
+import { SessionT } from "@/data/schemas/workspace"
+import { AppStateT } from "@/data/loaders/app"
 
 async function getParentId({
   branch_parent_id,
@@ -540,6 +543,9 @@ export async function addMessage({
         const mm = await SessionsActions.addMessage(data)
         mm && mem_session.messages.raw.push(mm)
         fieldFocus({ selector: `#input-${session_id}` })
+
+        // run session namer in the background
+        autoSessionNameGenerator({ session_id})
         return true
       } else if (!has_error && !stream_response) {
         emit({
@@ -553,6 +559,69 @@ export async function addMessage({
           data: { module_id: module.specs.id },
         })
       }
+    }
+  }
+}
+
+async function autoSessionNameGenerator({ session_id } : { session_id: string }) {
+  // Initialize memory states
+  const mem_app = getMemoryState<mAppT>({ id: "app" })
+  if (!mem_app) return error({ message: "no mem_app" })
+
+  const user_state = getMemoryState<UserT>({ id: "user" })
+  if (!user_state) return error({ message: "no user" })
+
+  const app_state = getMemoryState<AppStateT>({ id: "appstate" })
+  if(!app_state) return error({ message: "no app" })
+
+  const mem_session = getMemoryState<mChatSessionT>({
+    id: `session-${session_id}`,
+  })
+  if (!mem_session) return error({ message: "no session" })
+
+  const msgs = mem_session?.messages?.raw || []
+
+  const session: SessionT = await query({
+    type: 'user.getSessionFromWorkspace',
+    data: {
+      workspace_id: mem_app.workspace_id,
+      session_id
+    }
+  })
+
+  if(!session) return error({ message: "no session found" })
+  const active_session = _.find(app_state.open_sessions, { session_id })
+  if(!active_session) return error({ message: "no active session found" })
+
+  if (
+    _.size(msgs) >= 2 &&
+    _.size(msgs) <= 5 &&
+    session.name === "Untitled"
+  ) {
+    const generated_session_name = await autoRename({
+      session_id,
+      messages: msgs,
+      user_id: user_state.id,
+    })
+    if (generated_session_name) {
+      // update session name
+      emit({
+        type: 'user.renameItem',
+        data: {
+          new_name: generated_session_name,
+        group_id: active_session.group_id,
+        folder_id: active_session.folder_id,
+        session_id,
+        }
+      })
+      // await UserActions.renameItem({
+      //   new_name: generated_session_name,
+      //   group_id: active_session.group_id,
+      //   folder_id: active_session.folder_id,
+      //   session_id: sid,
+      // })
+
+      // navigate(`/c/${workspace_id}/${sid}`)
     }
   }
 }

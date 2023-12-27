@@ -951,6 +951,11 @@ const API: { [key: string]: Function } = {
       },
     })
   },
+  async getSessionFromWorkspace({ session_id, workspace_id }: { session_id: string, workspace_id: string }) {
+    const { sessions } = await API.getSessions({ workspace_id })
+    const session = _.find(sessions, { id: session_id })
+    return session
+  },
   async sync() {
     const { UserState } = await initLoaders()
     await UserState.sync()

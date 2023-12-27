@@ -1,15 +1,10 @@
-import { useEvent } from "@/components/hooks/useEvent"
 import useMemory from "@/components/hooks/useMemory"
 import { OpenSessionT } from "@/data/schemas/app"
 import { mChatSessionT } from "@/data/schemas/memory"
 import { emit, query } from "@/libraries/events"
-import { getMemoryState } from "@/libraries/memory"
-import { useEffect, useState } from "react"
 import { PiChatCircleDotsBold } from "react-icons/pi"
 import { RxPlus } from "react-icons/rx"
 import { useNavigate, useParams } from "react-router-dom"
-
-let mem_session
 
 export function Tab({
   session_id,
@@ -33,7 +28,7 @@ export function Tab({
       className={`flex flex-row min-w-[50px] max-w-[200px] flex-nowrap flex-shrink border-transparent border-0 tab m-0 px-3 h-full text-xs font-semibold justify-start items-center tooltip tooltip-bottom transition-colors ph-no-capture ${
         url_session_id === session_id ?
           "tab-active bg-zinc-900/50 text-zinc-200"
-        : " bg-zinc-800 hover:bg-zinc-900/50 text-zinc-600 hover:text-zinc-300"
+        : " bg-zinc-800 hover:bg-zinc-900/20 text-zinc-600 hover:text-zinc-300"
       }`}
       // style={{ width: `${relative_width || 100}px` }}
       // key={session_id}

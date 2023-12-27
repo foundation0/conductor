@@ -1,7 +1,7 @@
 import { useLoaderData, useNavigate } from "react-router-dom"
 import _ from "lodash"
 import { NotepadsT } from "@/data/loaders/notepad"
-import { Clip, NotepadS, NotepadT } from "@/data/schemas/notepad"
+import { ClipT, NotepadS, NotepadT } from "@/data/schemas/notepad"
 import { useEffect, useState } from "react"
 // @ts-ignore
 import {
@@ -69,7 +69,7 @@ export default function Notepad() {
     if (!session_id || edited_clip === c.data) return
     const updated_notepad = {
       ...notepad,
-      clips: notepad?.clips.map((clip) =>
+      clips: notepad?.clips.map((clip: ClipT) =>
         clip.id === c.id ? { ...clip, data: edited_clip } : clip,
       ),
     }
@@ -136,7 +136,7 @@ export default function Notepad() {
   }, [used_icon_id])
 
   const moveClip = async ({ dir, clip }: { dir: "up" | "down"; clip: any }) => {
-    const clip_i = notepad?.clips.findIndex((c) => c.id === clip.id)
+    const clip_i = notepad?.clips.findIndex((c: ClipT) => c.id === clip.id)
     if (clip_i === undefined || !notepad) return
     if (
       (clip_i <= 0 && dir === "up") ||
@@ -178,7 +178,7 @@ export default function Notepad() {
         if (session) session_name = session.name
       }
     }
-    const text = notepad.clips.map((c) => c.data).join("\n\n")
+    const text = notepad.clips.map((c: ClipT) => c.data).join("\n\n")
     return {
       text,
       session_name:
@@ -230,7 +230,7 @@ export default function Notepad() {
 
   const [is_hovering, setIsHovering] = useState("")
 
-  const handleMouseHover = (state: boolean, c: Clip) => {
+  const handleMouseHover = (state: boolean, c: ClipT) => {
     if (state && !is_hovering) {
       clearInterval(mouse_over_timer)
       emit({ type: "chat/message-hover", data: { id: c.id } })
@@ -295,7 +295,7 @@ export default function Notepad() {
                     disabled={notepad?.clips?.length || 0 > 0 ? false : true}
                     onClick={() => {
                       if (!notepad) return
-                      const text = notepad.clips.map((c) => c.data).join("\n\n")
+                      const text = notepad.clips.map((c: ClipT) => c.data).join("\n\n")
                       copyToClipboard(text)
                     }}
                   >

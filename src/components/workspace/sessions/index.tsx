@@ -1,10 +1,10 @@
-import _, { set } from "lodash"
+import _ from "lodash"
 import Session from "./session"
 import Tabs from "./tabs"
 import { useNavigate, useParams } from "react-router-dom"
 import { useEffect, useState } from "react"
 import "react-resizable/css/styles.css"
-import eventEmitter, { emit, listen, query } from "@/libraries/events"
+import { emit, listen, query } from "@/libraries/events"
 import { initLoaders } from "@/data/loaders"
 import { SessionT, WorkspaceT } from "@/data/schemas/workspace"
 import { ChatSessionT, SessionTypesT, SessionsT } from "@/data/schemas/sessions"
@@ -39,6 +39,7 @@ export default function Workspace() {
     sessions: SessionTypesT[]
     active_sessions: { [key: string]: boolean }
     open_sessions: ChatSessionT[]
+    loading_tab_label?: string
   }>({
     id: "session-index",
     state: {
@@ -46,6 +47,7 @@ export default function Workspace() {
       active_sessions: {},
       open_sidebar: "",
       open_sessions: [],
+      loading_tab_label: false
     },
   })
 
@@ -197,6 +199,16 @@ export default function Workspace() {
       },
     })
     if (!mem_session || !mem_session?.messages) return false
+
+    // Get the AI used
+    mem_session.ai = _.find(ai_state, {
+      id: mem_session?.session?.settings?.ai || "c1",
+    }) as AIsT[0]
+
+    // Get the module used
+    mem_session.module =
+      (await Module(mem_session?.session?.settings?.module?.id)) || undefined
+
     // Get the messages
     const state = await MessagesState({ session_id })
     const local_raw = await state.get()
@@ -227,15 +239,6 @@ export default function Workspace() {
           active && (mem_session.messages.active = active)
         }
       })
-
-    // Get the AI used
-    mem_session.ai = _.find(ai_state, {
-      id: mem_session?.session?.settings?.ai || "c1",
-    }) as AIsT[0]
-
-    // Get the module used
-    mem_session.module =
-      (await Module(mem_session?.session?.settings?.module?.id)) || undefined
   }
 
   async function setupSessionStores() {
@@ -261,6 +264,9 @@ export default function Workspace() {
       .compact()
       .value()
     mem.open_sessions = _s || []
+    emit({
+      type: 'tab-loader'
+    })
   }
 
   useEffect(() => {
@@ -412,7 +418,10 @@ export default function Workspace() {
           >
             <Tabs />
           </div>
-          <div id="ContentViews" className="flex flex-1">
+          <div
+            id="ContentViews"
+            className="flex flex-1 rounded-md mb-0.5 bg-zinc-900 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30 justify-center"
+          >
             {Sessions}
           </div>
         </div>
