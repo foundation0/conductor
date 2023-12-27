@@ -426,7 +426,7 @@ export default function Workspace() {
             {Sessions}
           </div>
         </div>
-      : <div className="flex flex-1 flex-col justify-center items-center">
+      : <div className="flex flex-1 flex-col rounded-md mb-0.5 bg-zinc-900 bg-gradient-to-br from-zinc-800/30 to-zinc-700/30 justify-center items-center text-zinc-500">
           Loading...
         </div>
       }
