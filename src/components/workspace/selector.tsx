@@ -18,6 +18,7 @@ import { mAppT } from "@/data/schemas/memory"
 import useMemory from "../hooks/useMemory"
 import ShapesIcon from "@/assets/icons/shapes.svg"
 import { FaUser } from "react-icons/fa"
+import PersonaIcon from "@/assets/icons/persona.svg"
 
 export default function WorkspaceSelector() {
   // const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
@@ -125,7 +126,27 @@ export default function WorkspaceSelector() {
             <div className="flex rounded-full justify-center items-center">
               <div
                 className="tooltip tooltip-right"
-                data-tip="View available and installed modules"
+                data-tip="Create custom AI"
+              >
+                <Link
+                  to={`/c/ai/create`}
+                  className={`flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer border-zinc-800 border-2  hover:bg-zinc-850 hover:border-zinc-500 text-zinc-400 hover:text-zinc-200 saturate-0 hover:saturate-100 transition-all 
+                  ${
+                    location.pathname === "/c/ai/create" ?
+                      "saturate-100 border-zinc-500"
+                    : ""
+                  }`}
+                >
+                  <div className="">
+                    <img src={PersonaIcon} className="w-6 h-6 " />
+                  </div>
+                </Link>
+              </div>
+            </div>
+            <div className="flex rounded-full justify-center items-center">
+              <div
+                className="tooltip tooltip-right"
+                data-tip="AI & module settings"
               >
                 <Link
                   to={`/c/modules`}
