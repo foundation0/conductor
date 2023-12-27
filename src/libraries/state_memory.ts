@@ -49,7 +49,7 @@ export async function mPrices() {
 
 export async function mBalances() {
   const user_state = getActiveUser()
-  if (!user_state) return
+  
   const mem = createMemoryState<mBalancesT>({
     id: "balances",
     state: {
@@ -59,7 +59,7 @@ export async function mBalances() {
     },
   })
   if (!mem) return null
-
+  if (!user_state) return
   getBalance({
     public_key: user_state.public_key,
     master_key: user_state.master_key,

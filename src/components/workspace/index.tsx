@@ -42,12 +42,28 @@ import { getAvatar } from "@/libraries/ai"
 import PersonaIcon from "@/assets/icons/persona.svg"
 import { RxPlus } from "react-icons/rx"
 import { handleAIChange } from "@/libraries/session_module"
+import { error } from "@/libraries/logging"
 
 type LoaderT = { app_state: AppStateT; user_state: UserT }
 
 export default function Workspace() {
-  const mem_app: mAppT = useMemory({ id: "app" })
-  const { workspace_id, session_id } = mem_app
+  let workspace_id = useParams().workspace_id as string
+  let session_id = useParams().session_id as string
+
+  const _mem = useMemory<mAppT>({
+    id: "app",
+    state: {
+      workspace_id: useParams().workspace_id as string,
+      session_id: useParams().session_id as string,
+    },
+  })
+  if (!_mem) return null
+  if (_mem.workspace_id === undefined || _mem.workspace_id !== workspace_id) {
+    _mem.workspace_id = workspace_id
+  }
+  if (_mem.session_id === undefined || _mem.session_id !== session_id) {
+    _mem.session_id = session_id
+  }
 
   // const { app_state, user_state } = useLoaderData() as LoaderT
   const app_state = useMemory<AppStateT>({ id: "appstate" })
@@ -74,6 +90,28 @@ export default function Workspace() {
 
   // const workspace_id = useParams().workspace_id
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!workspace_id) {
+      // get the first workspace and its first session
+      const workspace = user_state.workspaces[0]
+      workspace_id = workspace?.id
+      const group = workspace?.groups[0]
+      const folder = group?.folders[0]
+      const session = _.get(folder, "sessions[0]")
+      if (!session) {
+        error({ message: "No session found in workspace", data: { workspace } })
+        return
+      }
+      session_id = session?.id
+      _mem.workspace_id = workspace_id
+      _mem.session_id = session_id
+      if (window.location.pathname === "/c/")
+        navigate(`/c/${workspace_id}/${session_id}`)
+    }
+    _mem.workspace_id = workspace_id
+    _mem.session_id = session_id
+  }, [JSON.stringify([workspace_id, session_id])])
 
   // set focus to input when window regains focus
   useEffect(() => {

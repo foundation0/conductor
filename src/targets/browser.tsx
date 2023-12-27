@@ -30,6 +30,7 @@ if (typeof window !== "undefined") {
   window.global = window;
 }
 
+// INITIALIZE COMMON STATES
 await stateMem()
 
 function AuthProvider({ children }: { children: React.ReactNode }) {

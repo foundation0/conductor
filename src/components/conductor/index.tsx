@@ -46,23 +46,6 @@ export default function Conductor() {
   const location = useLocation()
   const auth = useAuth()
   const navigate = useNavigate()
-  let workspace_id = useParams().workspace_id as string
-  let session_id = useParams().session_id as string
-
-  const mem = createMemoryState<mAppT>({
-    id: "app",
-    state: {
-      workspace_id: useParams().workspace_id as string,
-      session_id: useParams().session_id as string,
-    },
-  })
-  if (!mem) return null
-  if (mem.workspace_id === undefined || mem.workspace_id !== workspace_id) {
-    mem.workspace_id = workspace_id
-  }
-  if (mem.session_id === undefined || mem.session_id !== session_id) {
-    mem.session_id = session_id
-  }
 
   const mem_balances = useMemory<mBalancesT>({
     id: "balances",
@@ -108,42 +91,6 @@ export default function Conductor() {
   }, [])
 
   useEffect(() => {
-    if (!workspace_id) {
-      // get the first workspace and its first session
-      const workspace = user_state.workspaces[0]
-      workspace_id = workspace?.id
-      const group = workspace?.groups[0]
-      const folder = group?.folders[0]
-      const session = _.get(folder, "sessions[0]")
-      if (!session) {
-        error({ message: "No session found in workspace", data: { workspace } })
-        return
-      }
-      session_id = session?.id
-      mem.workspace_id = workspace_id
-      mem.session_id = session_id
-      if (window.location.pathname === "/c/")
-        navigate(`/c/${workspace_id}/${session_id}`)
-    }
-    mem.workspace_id = workspace_id
-    mem.session_id = session_id
-  }, [JSON.stringify([workspace_id, session_id])])
-
-  const [guest_mode, setGuestMode] = useState<boolean>(
-    getLS({ key: "guest-mode" }),
-  )
-
-  const unload = useCallback(() => {
-    // remove guest-mode if it exists
-    if (getLS({ key: "guest-mode" })) {
-      auth.signout(() => {})
-      delLS({ key: "guest-mode" })
-    }
-    return true
-  }, [])
-  useBeforeUnload(unload)
-
-  useEffect(() => {
     // upgrade user's modules
     getModules().then((module_specs) => {
       // let updated_modules: ModuleT[] = _.merge((module_specs || []), user_state.modules?.installed || [])
@@ -178,22 +125,6 @@ export default function Conductor() {
         return ai
       })
     })
-
-    // TEMPORARY HACK TO MINIMIZE THE CHANGE OF SYNC FAILING
-    // let timeout: any = null
-    // function resetTimeout() {
-    //   clearTimeout(timeout)
-    //   timeout = setTimeout(
-    //     () => {
-    //       window?.location?.reload()
-    //       console.log("ref")
-    //     },
-    //     15 * 60 * 1000,
-    //   ) // 15 minutes
-    // }
-    // document.addEventListener("click", resetTimeout)
-    // document.addEventListener("mousemove", resetTimeout)
-    // document.addEventListener("keypress", resetTimeout)
   }, [])
 
   useEffect(() => {
@@ -204,8 +135,9 @@ export default function Conductor() {
 
   useEffect(() => {
     if (
-      auth?.user &&
-      !user_state?.experiences?.find((e) => e.id === "onboarding/v1")
+      auth?.user
+      // &&
+      // !user_state?.experiences?.find((e) => e.id === "onboarding/v1")
     ) {
       // get the first workspace and its first session
       const workspace = user_state.workspaces[0]
@@ -251,20 +183,6 @@ export default function Conductor() {
     <div
       className={`flex flex-col flex-1 m-0 p-0 dark h-full h-[100dvh] bg-[#111]/60`}
     >
-      {/* {guest_mode && (
-        <div className="h-6 w-full flex justify-center items-center text-[11px] font-semibold text-zinc-300">
-          <div className="text-yellow-500">You are using guest mode, no history is saved</div>
-          <div className="ml-2 text-zinc-500"> ➜ </div>
-          <div
-            className="underline hover:no-underline ml-2 cursor-pointer"
-            onClick={() => {
-              ;(window as any)["ConvertGuest"].showModal()
-            }}
-          >
-            Convert to a free Conductor account and unlock history.
-          </div>
-        </div>
-      )} */}
       <main
         id="Conductor"
         className={`flex flex-row flex-1 m-0 p-0 h-full h-[100dvh] dark bg-[#111]/60`}

@@ -1,7 +1,12 @@
 import { HiPlus } from "react-icons/hi"
 import { For } from "react-solid-flow"
 import PromptIcon from "@/assets/prompt.svg"
-import { Location, useLoaderData, useLocation } from "react-router-dom"
+import {
+  Location,
+  useLoaderData,
+  useLocation,
+  useParams,
+} from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import AppStateActions from "@/data/actions/app"
@@ -22,8 +27,8 @@ export default function WorkspaceSelector() {
   const location: Location = useLocation()
 
   // const workspace_id = useParams().workspace_id
-  const mem_app: mAppT = useMemory({ id: "app" })
-  const { workspace_id, session_id } = mem_app
+  // const mem_app: mAppT = useMemory({ id: "app" })
+  let workspace_id = useParams().workspace_id as string
   useEffect(() => {
     if (!workspace_id) return
     AppStateActions.updateAppState({ active_workspace_id: workspace_id })
