@@ -30,47 +30,6 @@ export default function Session({
   if (!session_id) return null
   if (!activated) return null
 
-  const ai_state = useMemory<AIsT>({
-    id: "ais",
-  })
-
-  const { sessions_state } = useLoaderData() as {
-    sessions_state: SessionsT
-  }
-  const mem_messages = useMemory<TextMessagesT>({
-    id: session_id,
-    state: [],
-  })
-
-  // const mem_session = useMemory<mChatSessionT>({
-  //   id: `session-${session_id}`,
-  //   state: {
-  //     id: session_id,
-  //     session: sessions_state.active[session_id],
-  //     module: undefined,
-  //     module_ctx_len: 0,
-  //     ai: undefined,
-  //     input: { change_timer: null, text: "", tokens: 0 },
-  //     context: {
-  //       data_refs: [],
-  //       tokens: 0,
-  //     },
-  //     messages: {
-  //       raw: [],
-  //       active: [],
-  //       branch_msg_id: "",
-  //       branch_parent_id: "",
-  //       tokens: 0,
-  //     },
-  //     generation: {
-  //       in_progress: false,
-  //       controller: undefined,
-  //       msgs_in_mem: [],
-  //       msg_update_ts: 0,
-  //     },
-  //   },
-  // })
-
   const mem_session = useMemory<mChatSessionT>({
     id: `session-${session_id}`,
   })
@@ -97,30 +56,30 @@ export default function Session({
     setPreference({ key: "notepad-width", value: mem.sidebar_width })
   }
 
-  // async function refreshSession() {
-  //   const { MessagesState } = (await initLoaders()) as {
-  //     MessagesState: Function
-  //   }
+  async function refreshSession() {
+    const { MessagesState } = (await initLoaders()) as {
+      MessagesState: Function
+    }
 
-  //   const state = await MessagesState({ session_id })
-  //   state?.sync && (await state.sync())
-  //   _.assign(mem_messages, await state.get())
-  //   _.assign(mem_session.messages.raw, await state.get())
+    const state = await MessagesState({ session_id })
+    state?.sync && (await state.sync())
+    // _.assign(mem_messages, await state.get())
+    _.assign(mem_session.messages.raw, await state.get())
 
-  //   mem_session.ai = _.find(ai_state, {
-  //     id: mem_session.session.settings.ai || "c1",
-  //   }) as AIsT[0]
-  // }
+    // mem_session.ai = _.find(ai_state, {
+    //   id: mem_session.session.settings.ai || "c1",
+    // }) as AIsT[0]
+  }
 
   // useEffect(() => {
   //   refreshSession()
   // }, [activated])
 
-  // useEvent({
-  //   name: 'store/update',
-  //   target: sid,
-  //   action: refreshSession
-  // })
+  useEvent({
+    name: 'store/update',
+    target: sid,
+    action: refreshSession
+  })
 
   // useEffect(() => {
   //   mem_session.messages.raw = mem_messages

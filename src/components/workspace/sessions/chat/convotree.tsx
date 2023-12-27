@@ -82,7 +82,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
 
   useEffect(() => {
     updateActiveMessages()
-  }, [mem_session.messages?.raw?.length])
+  }, [JSON.stringify(mem_session.messages?.raw || [])])
 
   if(mem_session.messages.raw?.length > 0 &&
     mem_session.messages.active?.length === 0) updateActiveMessages()

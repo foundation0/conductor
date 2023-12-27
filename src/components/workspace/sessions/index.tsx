@@ -166,6 +166,7 @@ export default function Workspace() {
   async function initSession({ session_id }: { session_id: string }) {
     const { SessionState } = await initLoaders()
     const sessions_state: SessionsT = await SessionState.get()
+    
     const { MessagesState } = (await initLoaders()) as {
       MessagesState: Function
     }

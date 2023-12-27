@@ -321,7 +321,7 @@ export default function Chat({
     updateModule()
   }, [JSON.stringify([_.get(session, "settings.module") || {}, session])])
 
-  // useEffect to add and remove the event listener
+  // Initialize session
   useEffect(() => {
     updateModule({
       module_id: mem_session.session?.settings?.module?.id || "c1",
