@@ -383,7 +383,7 @@ export default function CreatePersona() {
                   autoHeight
                   placeholder="What do you call this AI? (e.g. 'Researcher Raymond')"
                   style={{ width: "100%", resize: "none" }}
-                  value={values["name"]}
+                  defaultValue={values["name"]}
                   onChange={(e) =>
                     (mem_ai.values = { ...values, name: e.target.value })
                   }
@@ -449,7 +449,7 @@ export default function CreatePersona() {
                     values["name"] || "Researcher Raymond"
                   } is a world class researcher at the University of Oxford who is passionate about health and fitness')`}
                   style={{ width: "100%", resize: "none" }}
-                  value={values["description"]}
+                  defaultValue={values["description"]}
                   onChange={(e) =>
                     (mem_ai.values = { ...values, description: e.target.value })
                   }
@@ -489,7 +489,7 @@ export default function CreatePersona() {
                       values["name"] || "Researcher Raymond"
                     } talking to? (e.g. 'university students', 'health enthusiasts')`}
                     style={{ width: "100%", resize: "none" }}
-                    value={values["audience"] || ""}
+                    defaultValue={values["audience"] || ""}
                     onChange={(e) =>
                       (mem_ai.values = { ...values, audience: e.target.value })
                     }
@@ -533,7 +533,7 @@ export default function CreatePersona() {
                       values["name"] || "Researcher Raymond"
                     } has a PhD in biochemistry and has published over 100 papers in the field of health and fitness')`}
                     style={{ width: "100%", resize: "none" }}
-                    value={values["background"] || ""}
+                    defaultValue={values["background"] || ""}
                     onChange={(e) =>
                       (mem_ai.values = {
                         ...values,
@@ -582,7 +582,7 @@ export default function CreatePersona() {
                           values["name"] || "Researcher Raymond"
                         } is very informal, friendly, patient, and simplifies scientific jargon to laymen terms')`}
                         style={{ width: "100%", resize: "none" }}
-                        value={values["styles"]?.[index] || ""}
+                        defaultValue={values["styles"]?.[index] || ""}
                         onChange={(e) =>
                           (mem_ai.values = {
                             ...values,
@@ -633,7 +633,7 @@ export default function CreatePersona() {
                             "Researcher Raymond's"
                           } traits and skills? (e.g. 'expert at reading academic papers')`}
                           style={{ width: "100%", resize: "none" }}
-                          value={values["traits"]?.[index]?.skill || ""}
+                          defaultValue={values["traits"]?.[index]?.skill || ""}
                           onChange={(e) =>
                             (mem_ai.values = {
                               ...values,
@@ -733,7 +733,7 @@ export default function CreatePersona() {
                             values["name"] || "Researcher Raymond"
                           } should always suggest follow up questions.')`}
                           style={{ width: "100%", resize: "none" }}
-                          value={values["responsibilities"]?.[index] || ""}
+                          defaultValue={values["responsibilities"]?.[index] || ""}
                           onChange={(e) => {
                             mem_ai.values = {
                               ...values,
@@ -819,7 +819,7 @@ export default function CreatePersona() {
                       (values["name"] && values["name"]) || "Researcher Raymond"
                     }! I can help you research any topic or material you might have!')`}
                     style={{ width: "100%", resize: "none" }}
-                    value={values["welcome_message"] || ""}
+                    defaultValue={values["welcome_message"] || ""}
                     onChange={(e) =>
                       (mem_ai.values = {
                         ...values,
@@ -869,7 +869,7 @@ export default function CreatePersona() {
                           autoHeight
                           placeholder={`What are the key learnings in the document?`}
                           style={{ width: "100%", resize: "none" }}
-                          value={values["prompt_suggestions"]?.[index] || ""}
+                          defaultValue={values["prompt_suggestions"]?.[index] || ""}
                           onChange={(e) => {
                             mem_ai.values = {
                               ...values,
@@ -961,7 +961,7 @@ export default function CreatePersona() {
                             values["name"] || "Researcher Raymond"
                           } can't tell lies')`}
                           style={{ width: "100%", resize: "none" }}
-                          value={values["limitations"]?.[index] || ""}
+                          defaultValue={values["limitations"]?.[index] || ""}
                           onChange={(e) =>
                             (mem_ai.values = {
                               ...values,
