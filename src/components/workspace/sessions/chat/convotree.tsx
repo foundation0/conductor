@@ -239,7 +239,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
       className="flex flex-row justify-center px-6"
       style={{ paddingBottom: `${paddingBottom}px` }}
     >
-      <div className="flex flex-col gap-6 min-w-[500px] w-full max-w-screen-lg">
+      <div className="flex flex-col gap-6 min-w-[200px] w-full max-w-screen-lg">
         {_(mem_session.messages.active)
           .reject((r) => {
             // filter out the "continue" messages
