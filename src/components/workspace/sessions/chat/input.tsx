@@ -54,8 +54,6 @@ export default function Input({
   const [message, setMessage] = useState<string>("")
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
-  const { ctx_sum, ctx_used, memory_indicator, module_name } = mem
-
   // compute memory indicator status
   async function computeUsedMemory() {
     const sum = mem_session.context.tokens + mem_session.messages.tokens
@@ -317,23 +315,23 @@ export default function Input({
                 <button>{/* <AISelector session_id={session_id} /> */}</button>
                 <div
                   className="flex flex-col justify-center items-center mr-0.5 tooltip tooltip-top  w-[15px]"
-                  data-tip={`Using ${module_name}.\n${
-                    memory_indicator !== "red" ?
+                  data-tip={`Using ${mem.module_name}.\n${
+                    mem.memory_indicator !== "red" ?
                       `${
-                        ctx_used > 1 ? 100 : _.round(ctx_used * 100)
+                        mem.ctx_used > 1 ? 100 : _.round(mem.ctx_used * 100)
                       }% of memory used`
                     : session.settings?.memory?.rag_mode === "full" ?
                       `Current reasoning engine out of memory.\nYou need minimum ${_.round(
-                        ctx_sum * 0.8,
+                        mem.ctx_sum * 0.8,
                       )} word memory\nto continue.\n\nYou can also switch to relevance mode.`
                     : `Relevance mode activate.\n100% of memory used.`
                   }`}
                 >
                   <RiRobot2Fill
                     className={`w-[12px] cursor-pointer ${
-                      memory_indicator === "yellow" && "text-yellow-400"
-                    } ${memory_indicator === "green" && "text-green-400"}  ${
-                      memory_indicator === "red" && "text-red-400"
+                      mem.memory_indicator === "yellow" && "text-yellow-400"
+                    } ${mem.memory_indicator === "green" && "text-green-400"}  ${
+                      mem.memory_indicator === "red" && "text-red-400"
                     }`}
                     onClick={() => {
                       /* const d = document.getElementById(`session-${session_id}-ai-select`) as HTMLDialogElement | null
@@ -350,10 +348,10 @@ export default function Input({
                 <div
                   className="flex flex-col justify-center mr-0.5 tooltip tooltip-top w-[15px]"
                   data-tip={`Total cost: $${_.sumBy(
-                    session.receipts,
+                    mem_session.session.receipts,
                     (l) => l.cost_usd,
                   ).toFixed(8)}\nTotal tokens used: ${_.sumBy(
-                    session.receipts,
+                    mem_session.session.receipts,
                     (l) => l.details.input.tokens + l.details.output.tokens,
                   ).toFixed(0)}`}
                   onClick={async (e) => {
@@ -397,11 +395,11 @@ export default function Input({
                   type="submit"
                   className={"tooltip tooltip-top w-[15px]"}
                   data-tip={
-                    message.length !== 0 && memory_indicator !== "red" ?
+                    message.length !== 0 && mem.memory_indicator !== "red" ?
                       `Send message`
                     : "No message or\nmemory full"
                   }
-                  disabled={message.length === 0 || memory_indicator === "red"}
+                  disabled={message.length === 0 || mem.memory_indicator === "red"}
                 >
                   <img src={MessageIcon} className="rotate-90" />
                 </button>
@@ -423,23 +421,23 @@ export default function Input({
                 </button>
                 <div
                   className="flex flex-col justify-center items-center mr-4 pl-2 tooltip tooltip-top w-[15px]"
-                  data-tip={`Using ${module_name}.\n${
-                    memory_indicator !== "red" ?
+                  data-tip={`Using ${mem.module_name}.\n${
+                    mem.memory_indicator !== "red" ?
                       `${
-                        ctx_used > 1 ? 100 : _.round(ctx_used * 100)
+                        mem.ctx_used > 1 ? 100 : _.round(mem.ctx_used * 100)
                       }% of memory used`
                     : session.settings?.memory?.rag_mode === "full" ?
                       `Current reasoning engine out of memory.\nYou need minimum ${_.round(
-                        ctx_sum * 0.8,
+                        mem.ctx_sum * 0.8,
                       )} word memory\nto continue.\n\nYou can also switch to relevance mode.`
                     : `Relevance mode activate.\n100% of memory used.`
                   }`}
                 >
                   <RiRobot2Fill
                     className={`w-[12px] cursor-pointer ${
-                      memory_indicator === "yellow" && "text-yellow-400"
-                    } ${memory_indicator === "green" && "text-green-400"}  ${
-                      memory_indicator === "red" && "text-red-400"
+                      mem.memory_indicator === "yellow" && "text-yellow-400"
+                    } ${mem.memory_indicator === "green" && "text-green-400"}  ${
+                      mem.memory_indicator === "red" && "text-red-400"
                     }`}
                     onClick={() => {
                       /* const d = document.getElementById(`session-${session_id}-ai-select`) as HTMLDialogElement | null
