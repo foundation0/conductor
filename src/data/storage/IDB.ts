@@ -109,6 +109,7 @@ export async function getRemote({
     error({ message: "no remote key" })
     return
   }
+  if(config.defaults.user.data.cloud_storage.data_backup.active === false) return
 
   // Check the last time the store was checked for updates
   const lasted_checked = getLS({ key: `${remote_key}-last_checked` })
@@ -411,6 +412,7 @@ export const store = async <TData>({
     },
     sync: async ({ cf_store }: { cf_store?: any } = {}) => {
       if (!active_user || !enc_key) return
+      if(config.defaults.user.data.cloud_storage.data_backup.active === false) return
       mem[name] = { status: "syncing", updated_at: new Date().getTime() }
       if (!cf_store || cf_store?.store)
         cf_store = await getRemote({

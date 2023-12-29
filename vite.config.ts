@@ -32,13 +32,13 @@ export default defineConfig(({ mode }) => {
       faviconsPlugin({
         icons: {
           favicons: {
-            source: "./src/assets/logo.png",
+            source: "./src/assets/logo-app.png",
           },
           android: {
-            source: "./src/assets/logo.png",
+            source: "./src/assets/logo-app.png",
           },
           appleStartup: {
-            source: "./src/assets/logo.png",
+            source: "./src/assets/logo-app.png",
           },
         },
       }),

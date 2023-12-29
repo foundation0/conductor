@@ -15,6 +15,8 @@ const setter_timers: any = {}
 
 const setters = new Map()
 export function set({ key, value }: SetT) {
+  if(config.defaults.user.data.cloud_storage.data_backup.active === false) return
+
   const last_hash = getLS({ key: `${key}-checksum` }) || 0
   const hash = createHash({ str: value, format: 'hex' })
   if (last_hash === hash) {
@@ -42,6 +44,8 @@ export function set({ key, value }: SetT) {
 
 const getters = new Map()
 export function get({ key, checksum }: { key: string, checksum?: string }) {
+  if(config.defaults.user.data.cloud_storage.data_backup.active === false) return
+
   // const guest_mode = getLS({ key: "guest-mode" })
   // const guest_mode = false
   // if (!guest_mode && !getters.has(key)) {
