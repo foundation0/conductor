@@ -1,12 +1,7 @@
 import { HiPlus } from "react-icons/hi"
 import { For } from "react-solid-flow"
 import PromptIcon from "@/assets/prompt.svg"
-import {
-  Location,
-  useLoaderData,
-  useLocation,
-  useParams,
-} from "react-router-dom"
+import { Location, useLocation, useParams } from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import AppStateActions from "@/data/actions/app"
@@ -14,21 +9,19 @@ import { Link } from "react-router-dom"
 import { useEffect } from "react"
 import _ from "lodash"
 import { BsDiscord } from "react-icons/bs"
-import { mAppT } from "@/data/schemas/memory"
 import useMemory from "../hooks/useMemory"
 import ShapesIcon from "@/assets/icons/shapes.svg"
 import { FaUser } from "react-icons/fa"
 import PersonaIcon from "@/assets/icons/persona.svg"
+import { emit } from "@/libraries/events"
+import { FiSidebar } from "react-icons/fi"
 
 export default function WorkspaceSelector() {
-  // const { app_state, user_state } = useLoaderData() as { app_state: AppStateT; user_state: UserT }
   const app_state = useMemory<AppStateT>({ id: "appstate" })
   const user_state = useMemory<UserT>({ id: "user" })
   if (!app_state || !user_state) return null
   const location: Location = useLocation()
 
-  // const workspace_id = useParams().workspace_id
-  // const mem_app: mAppT = useMemory({ id: "app" })
   let workspace_id = useParams().workspace_id as string
   useEffect(() => {
     if (!workspace_id) return
@@ -46,8 +39,6 @@ export default function WorkspaceSelector() {
             <For each={user_state.workspaces}>
               {(workspace) => {
                 let session_id = ""
-                // if (!app_state.active_sessions[workspace.id]) {
-                // session_id?.match(/^0x/)
                 // if not, get the first session id from the workspace's first group's first folder
                 // use lodash chaining
                 session_id = _.chain(workspace.groups)
@@ -59,13 +50,6 @@ export default function WorkspaceSelector() {
                   .get("id")
                   .value()
 
-                /* session_id =
-                    _.first(
-                      _.first(_.first(_.find(user_state.workspaces, { id: workspace_id })?.groups)?.folders)?.sessions
-                    )?.id || "" */
-                // } else {
-                //   session_id = app_state.active_sessions[workspace.id].session_id
-                // }
                 return (
                   <div
                     className="tooltip tooltip-right relative"
@@ -112,6 +96,28 @@ export default function WorkspaceSelector() {
             <div className="flex rounded-full justify-center items-center">
               <div
                 className="tooltip tooltip-right"
+                data-tip="Open/close organizer"
+              >
+                <div
+                  onClick={() => {
+                    emit({ type: "workspace/toggleSidebar" })
+                  }}
+                  className={`flex items-center justify-center w-10 h-10 p-0 px-0 rounded-xl cursor-pointer text-zinc-400 hover:text-zinc-200 saturate-0 hover:saturate-100 transition-all 
+                  ${
+                    location.pathname === "/c/ai/create" ?
+                      "saturate-100 border-zinc-500"
+                    : ""
+                  }`}
+                >
+                  <div className="">
+                    <FiSidebar />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex rounded-full justify-center items-center">
+              <div
+                className="tooltip tooltip-right"
                 data-tip="Questions? Problems? Ideas? Join our Discord!"
               >
                 <Link
@@ -123,6 +129,7 @@ export default function WorkspaceSelector() {
                 </Link>
               </div>
             </div>
+
             <div className="flex rounded-full justify-center items-center">
               <div
                 className="tooltip tooltip-right"

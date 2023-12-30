@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Match, Switch } from "react-solid-flow"
 import _ from "lodash"
-import { Outlet, useLoaderData, useNavigate, useParams } from "react-router-dom"
+import { Outlet, useNavigate, useParams } from "react-router-dom"
 import { AppStateT } from "@/data/loaders/app"
 import { UserT } from "@/data/loaders/user"
 import SessionOrganizer from "@/components/workspace/sessions/organizer"
@@ -15,10 +15,6 @@ import IntersectIcon from "@/assets/icons/intersect.svg"
 import { fieldFocus } from "@/libraries/field_focus"
 import Lottie from "lottie-light-react"
 import WorkingOnIt from "@/assets/animations/working_on_it.json"
-import {
-  MdKeyboardDoubleArrowLeft,
-  MdKeyboardDoubleArrowRight,
-} from "react-icons/md"
 import Joyride, { Step } from "react-joyride"
 import {
   Tabs,
@@ -26,13 +22,12 @@ import {
   WorkspaceOrganizer,
   WorkspaceSelector,
   WorkspaceSidebar,
-  Data,
   Notepad,
 } from "@/components/experiences/onboarding/v1"
 import AppstateActions from "@/data/actions/app"
 import { Resizable } from "react-resizable"
 import "react-resizable/css/styles.css"
-import eventEmitter, { emit, listen, query } from "@/libraries/events"
+import { emit, query } from "@/libraries/events"
 import useMemory from "@/components/hooks/useMemory"
 import { mAppT } from "@/data/schemas/memory"
 import { useEvent } from "../hooks/useEvent"
@@ -40,7 +35,6 @@ import { Input, InputActions } from "../experiences/input_introduction/v1"
 import { AIsT } from "@/data/schemas/ai"
 import { getAvatar } from "@/libraries/ai"
 import PersonaIcon from "@/assets/icons/persona.svg"
-import { RxPlus } from "react-icons/rx"
 import { handleAIChange } from "@/libraries/session_module"
 import { error } from "@/libraries/logging"
 
@@ -63,30 +57,28 @@ export default function Workspace() {
     _mem.session_id = session_id
   }
 
-  // const { app_state, user_state } = useLoaderData() as LoaderT
   const app_state = useMemory<AppStateT>({ id: "appstate" })
   const user_state = useMemory<UserT>({ id: "user" })
   const ai_state = useMemory<AIsT>({ id: "ais" })
-  // const [run_onboarding, setRunOnboarding] = useState(false)
   const { setPreference, getPreference } = AppstateActions
-  // const [organizer_width, setOrganizerWidth] = useState(250)
 
   const mem = useMemory<{
     run_onboarding: boolean
     organizer_width: number
     max_ais: number
+    sidebar_minimized: boolean
   }>({
     id: "workspace",
     state: {
       run_onboarding: false,
       organizer_width: 250,
       max_ais: 4,
+      sidebar_minimized: false,
     },
   })
 
   const { run_onboarding, organizer_width, max_ais } = mem
 
-  // const workspace_id = useParams().workspace_id
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -118,9 +110,6 @@ export default function Workspace() {
         fieldFocus({ selector: `#input-${session_id}` })
       }, 200)
     })
-
-    // start workspace indexing
-    // queryIndex({ update: true, workspace_id, source: "workspace" })
   }, [])
 
   // check that workspace exists
@@ -184,7 +173,6 @@ export default function Workspace() {
     },
   ]
 
-  const [sidebar_minimized, setSidebarMinimized] = useState(false)
   const steps: Step[] = [
     {
       target: "#Conductor",
@@ -253,14 +241,12 @@ export default function Workspace() {
     emit({
       type: "layout_resize",
     })
-    // setPreference({ key: 'organizer-width', value: size.width });
     const ai_selector_width =
       document.getElementById("WorkspaceSidebarContent")?.offsetWidth || 180
     // @ts-ignore
     const ai_avatar = document.querySelector(".ai")?.firstChild as HTMLElement
     const ai_avatar_width = ai_avatar?.offsetWidth || 0
     mem.max_ais = _.floor(ai_selector_width / (ai_avatar_width + 10), 0)
-    // console.log(max_ais, ai_selector_width)
   }
 
   useEvent({
@@ -270,21 +256,20 @@ export default function Workspace() {
     },
   })
 
+  useEvent({
+    name: "workspace/toggleSidebar",
+    action: () => {
+      mem.sidebar_minimized = !mem.sidebar_minimized
+    },
+  })
+
   return (
     <div className="flex flex-1">
       <Joyride steps={steps} run={run_onboarding} continuous={true} />
-      <div id="Modes" className="relative rounded-md m-0.5 mb-1 overflow-hidden">
-        <div className="absolute -right-1.5 top-1/2 z-10">
-          <div
-            className="cursor-pointer flex justify-center items-center h-6 w-3 bg-zinc-800/90 rounded-sm border-r border-zinc-700/50 tooltip tooltip-right"
-            data-tip="Maximize/minimize sidebar"
-            onClick={() => setSidebarMinimized(!sidebar_minimized)}
-          >
-            {sidebar_minimized ?
-              <MdKeyboardDoubleArrowRight className="text-zinc-400 w-3 h-3" />
-            : <MdKeyboardDoubleArrowLeft className="text-zinc-400 w-3 h-3" />}
-          </div>
-        </div>
+      <div
+        id="Modes"
+        className="relative rounded-md m-0.5 mb-1 overflow-hidden"
+      >
         <Resizable
           width={mem.organizer_width}
           height={1000}
@@ -300,7 +285,7 @@ export default function Workspace() {
         >
           <div
             className={`h-[100dvh] transition-all ${
-              sidebar_minimized ? "w-0 hidden" : (
+              mem.sidebar_minimized ? "w-0 hidden" : (
                 "w-60 min-w-[200px] max-w-lg flex flex-1 flex-col "
               )
             }`}
