@@ -45,7 +45,7 @@
     "material-file-icons": "^2.4.0",
     "mime-types": "^2.1.35",
     "mrmime": "^1.0.1",
-    "msgpackr": "^1.10.0",
+    "msgpackr": "^1.10.1",
     "nanoid": "^5.0.4",
     "p-debounce": "^4.0.0",
     "pdfjs-dist": "^4.0.269",
