@@ -1,4 +1,4 @@
-# Conductor: AGI for creators, professionals, entrepreneurs and organizations
+# Conductor: AI-first digital workbench creators, professionals, entrepreneurs and organizations
 
 <div align="center">
     <img src="./assets/conductor-beta-cover.png" alt="conductor-beta-overview" width="100%"  style="border-radius: 15px; padding-bottom: 20px"/>
@@ -13,9 +13,7 @@
   </a>
 </div>
 
-> Conductor: AI-first digital workbench creators, professionals, entrepreneurs and organizations
-
-Conductor is open-source, decentralized*, community-driven software. Conductor has been designed as a modular platform* that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
+> Conductor is open-source, decentralized*, community-driven software. Conductor has been designed as a modular platform* that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
 
 ## Key Features 🎯
 
