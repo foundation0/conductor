@@ -5,15 +5,15 @@
 </div>
 
 <div align="center">
-  <a href="https://discord.gg/PFMtbdrvXw" target="_blank">
+  <!-- <a href="https://discord.gg/PFMtbdrvXw" target="_blank">
     <img src="https://img.shields.io/badge/discord-join%20chat-blue.svg" alt="Join our Discord" height="20">
-  </a>
+  </a> -->
   <a href="https://twitter.com/conductorc0" target="_blank">
     <img src="https://img.shields.io/badge/X-follow%20-blue.svg" alt="Follow us on X" height="20">
   </a>
 </div>
 
-> Conductor: Multi-modal multi-tool for AI-powered creators, professionals, entrepreneurs and organizations
+> Conductor: AI-first digital workbench creators, professionals, entrepreneurs and organizations
 
 Conductor is open-source, decentralized*, community-driven software. Conductor has been designed as a modular platform* that anyone can extend. Modules can be anything from a new AI model to a new UI component. Module architecture is still in flux but we will be releasing more information soon.
 
@@ -40,7 +40,7 @@ Coming soon 🚧
 
 ## Get started 🚀
 
-> Conductor is free and open-source, but in its current beta state, it is not yet ready for production use. We are working hard to get it there as soon as possible. If you are interested in helping us test Conductor, please join our [Discord](https://discord.gg/PFMtbdrvXw) and say hi!
+> Conductor is free and open-source, but in its current beta state, it is not yet ready for production use. We are working hard to get it there as soon as possible.
 
 
 ### Run Conductor locally
@@ -52,7 +52,7 @@ $ npm run build
 $ npm run preview
 ```
 
-Please note that as the module system is still under development, your milage running local models may vary.
+Please note that as the module system is still under development, your milage running custom modules may vary.
 
 ## Contribute 🤝
 
