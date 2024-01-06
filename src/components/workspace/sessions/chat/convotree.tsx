@@ -331,7 +331,7 @@ const ConversationTree: React.FC<ConversationTreeProps> = ({
                           >
                             <div
                               onClick={() => {
-                                emit({
+                                query({
                                   type: "chat.send",
                                   data: {
                                     target: session_id,
