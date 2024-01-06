@@ -139,13 +139,15 @@ export default function Conductor() {
       // &&
       // !user_state?.experiences?.find((e) => e.id === "onboarding/v1")
     ) {
-      // get the first workspace and its first session
-      const workspace = user_state.workspaces[0]
-      const group = workspace?.groups[0]
-      const folder = group?.folders[0]
-      const session = _.get(folder, "sessions[0]")
-      if (workspace && session) {
-        navigate(`/c/${workspace.id}/${session.id}`)
+      if(location.pathname === "/c/") {
+        // get the first workspace and its first session
+        const workspace = user_state.workspaces[0]
+        const group = workspace?.groups[0]
+        const folder = group?.folders[0]
+        const session = _.get(folder, "sessions[0]")
+        if (workspace && session) {
+          navigate(`/c/${workspace.id}/${session.id}`)
+        }
       }
     }
   }, [location.pathname === "/c/"])
