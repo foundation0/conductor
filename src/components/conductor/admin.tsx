@@ -11,6 +11,8 @@ import useMemory from "../hooks/useMemory"
 import { DataT } from "@/data/schemas/data"
 import { emit, query } from "@/libraries/events"
 import { DataRefT } from "@/data/schemas/workspace"
+import { initial as initialAIs } from "@/data/loaders/ai"
+
 export function Admin() {
   const { user_state } = useLoaderData() as { user_state: UserT }
   const navigate = useNavigate()
@@ -50,6 +52,21 @@ export function Admin() {
     alert("Experiences reset to default")
   }
 
+  async function resetAIs() {
+    await UserActions.updateUser({
+      ...user_state,
+      ais: [
+        {
+          id: "c1",
+          status: 'active',
+          last_used: new Date().getTime(),
+        },
+      ],
+    })
+    navigate("/c/internal::admin")
+    alert("AIs reset to default")
+  }
+
   async function getAllLocalData() {
     const all_keys = await keys()
 
@@ -74,7 +91,7 @@ export function Admin() {
       .value()
     const orphans = _.differenceBy(user_data, workspace_data, "id")
     // console.log(user_data, workspace_data, orphans)
-    if(orphans.length === 0) return alert('No orphans found')
+    if (orphans.length === 0) return alert("No orphans found")
     mem.orphan_data = orphans
   }
   return (
@@ -109,6 +126,19 @@ export function Admin() {
               onClick={() => resetExperiences()}
             >
               Reset experiences
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-row w-full">
+          <div className="flex flex-col flex-shrink mr-4 justify-center">
+            Reset AIs to default
+          </div>
+          <div className="flex flex-grow flex-1 justify-end">
+            <button
+              className="p-btn-primary rounded"
+              onClick={() => resetAIs()}
+            >
+              Reset AIs
             </button>
           </div>
         </div>
