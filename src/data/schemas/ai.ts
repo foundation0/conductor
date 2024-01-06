@@ -66,7 +66,6 @@ const AISs = [
       prompt_suggestions: z.array(z.string()).optional(),
       custom_instructions: z.string().optional(),
     }),
-
   }),
 ]
 export const AIS = AISs[0]

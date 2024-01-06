@@ -24,62 +24,7 @@ import { getAvatar } from "@/libraries/ai"
 import { useDropzone } from "react-dropzone"
 import { emit } from "@/libraries/events"
 
-const examples = {
-  "Mike The Marketer": {
-    name: "Marketer Mike",
-    description:
-      "A digital marketing specialist with a focus on SEO, content marketing, and social media strategies.",
-    audience:
-      "Business owners, marketing professionals, and anyone interested in improving their digital marketing strategies.",
-    background:
-      "Over 12 years of experience in the digital marketing field, working with diverse industries from tech startups to established e-commerce businesses.",
-    styles: ["Friendly, engaging, enthusiastic, passionate"],
-    traits: [
-      { skill: "SEO", value: 1 },
-      { skill: "Content Marketing", value: 1 },
-      { skill: "Social Media Strategies", value: 1 },
-    ],
-    responsibilities: [
-      "Providing advice on SEO strategies",
-      "Guiding content marketing efforts",
-      "Sharing insights on social media engagement",
-      "Analyzing marketing metrics",
-      "Staying updated on the latest digital marketing trends",
-    ],
-    limitations: [
-      "Cannot implement strategies directly on your website or social media platforms",
-      "Cannot access or analyze proprietary data without permission",
-    ],
-    welcome_message:
-      "Hi, I'm Mike the Marketer, I'm an expert on digital marketing. How can I help you today?",
-    prompt_suggestions: [
-      "How can I improve my SEO?",
-      "How can I improve my social media engagement?",
-      "How can I improve my content marketing?",
-    ],
-    response_examples: [
-      {
-        message: "How can I improve my SEO?",
-        response:
-          "To improve your SEO, focus on creating high-quality, relevant content that incorporates your target keywords. Also, ensure your website is mobile-friendly, has fast load times, and includes meta tags for better indexing.",
-      },
-    ],
-  },
-  Empty: {
-    name: "",
-    description: "",
-    audience: "",
-    background: "",
-    styles: [""],
-    traits: [{ skill: "", value: 0 }],
-    responsibilities: [""],
-    limitations: [""],
-    response_examples: [{ message: "", response: "" }],
-    welcome_message: "",
-    prompt_suggestions: [""],
-    custom_instructions: "",
-  },
-}
+import examples from './examples'
 
 const initial = {
   avatar: "",
@@ -102,27 +47,9 @@ const initial = {
 }
 
 export default function CreatePersona() {
-  // const { user_state, ai_state } = useLoaderData() as { user_state: UserT; ai_state: AIsT }
   const user_state = useMemory<UserT>({ id: "user" })
   const ai_state = useMemory<AIsT>({ id: "ais" })
   if (!user_state || !ai_state) return null
-  /* const [creation_in_process, setCreationInProgress] = useState<boolean>(false)
-  const [selected_llm, mem_ai.values_show = ] = useState<string | null>(
-    `${config.defaults.llm_module.id}/${config.defaults.llm_module.variant_id}`,
-  )
-
-  const [values_show, mem_ai.values_show = ] = useState({
-    description: true,
-    audience: false,
-    background: false,
-    styles: false,
-    traits: false,
-    responsibilities: false,
-    limitations: false,
-    response_examples: false,
-  }) */
-
-  // const [values, setValues] = useState<AIT["persona"]>(examples["Empty"])
 
   const mem_ai = useMemory<{
     values: AIT["persona"]
@@ -148,6 +75,63 @@ export default function CreatePersona() {
   })
 
   const { values_show, creation_in_process, selected_llm, values } = mem_ai
+
+  // stupid hack to avoid re-rendering issue with Rich Textarea component and valtio
+  const [name, set_name] = useState("")
+  const [description, set_description] = useState("")
+  const [audience, set_audience] = useState("")
+  const [background, set_background] = useState("")
+  const [styles, set_styles] = useState([""])
+  const [traits, set_traits] = useState([{ skill: "", value: 0 }])
+  const [responsibilities, set_responsibilities] = useState([""])
+  const [limitations, set_limitations] = useState([""])
+  const [response_examples, set_response_examples] = useState([
+    { message: "", response: "" },
+  ])
+  const [welcome_message, set_welcome_message] = useState("")
+  const [prompt_suggestions, set_prompt_suggestions] = useState([""])
+  const [custom_instructions, set_custom_instructions] = useState("")
+
+  useEffect(() => {
+    set_name(mem_ai.values.name)
+    set_description(mem_ai.values.description)
+    if (mem_ai.values) {
+      if (mem_ai.values.audience) {
+        set_audience(mem_ai.values.audience)
+      }
+      if (mem_ai.values.background) {
+        set_background(mem_ai.values.background)
+      }
+      if (mem_ai.values.styles) {
+        set_styles(mem_ai.values.styles)
+      }
+      if (mem_ai.values.traits) {
+        set_traits(mem_ai.values.traits)
+      }
+      if (mem_ai.values.responsibilities) {
+        set_responsibilities(mem_ai.values.responsibilities)
+      }
+      if (mem_ai.values.limitations) {
+        set_limitations(mem_ai.values.limitations)
+      }
+      if (mem_ai.values.response_examples) {
+        set_response_examples(
+          mem_ai.values.response_examples.filter(
+            (example) => example !== undefined,
+          ) as { message: string; response: string }[],
+        )
+      }
+      if (mem_ai.values.welcome_message) {
+        set_welcome_message(mem_ai.values.welcome_message)
+      }
+      if (mem_ai.values.prompt_suggestions) {
+        set_prompt_suggestions(mem_ai.values.prompt_suggestions)
+      }
+      if (mem_ai.values.custom_instructions) {
+        set_custom_instructions(mem_ai.values.custom_instructions)
+      }
+    }
+  }, [JSON.stringify(mem_ai.values)])
 
   const edit_ai_id = useParams().edit_ai_id
   const navigate = useNavigate()
@@ -177,6 +161,9 @@ export default function CreatePersona() {
 
         navigate(`/c/ai/edit/${ai.id}`)
       }
+    } else {
+      _.assign(mem_ai, initial)
+      // navigate(`/c/ai/`)
     }
   }, [edit_ai_id])
 
@@ -255,6 +242,12 @@ export default function CreatePersona() {
     })
     if (!ai) return (mem_ai.creation_in_process = false)
     mem_ai.creation_in_process = false
+    emit({
+      type: "user.updateAILastUsed",
+      data: {
+        ai_id: ai.id,
+      },
+    })
     navigate(`/c/modules`)
   }
 
@@ -383,10 +376,11 @@ export default function CreatePersona() {
                   autoHeight
                   placeholder="What do you call this AI? (e.g. 'Researcher Raymond')"
                   style={{ width: "100%", resize: "none" }}
-                  defaultValue={values["name"]}
-                  onChange={(e) =>
-                    (mem_ai.values = { ...values, name: e.target.value })
-                  }
+                  value={name}
+                  onChange={(e) => {
+                    mem_ai.values.name = e.target.value
+                    set_name(e.target.value)
+                  }}
                   className={textarea}
                 />
               </div>
@@ -449,10 +443,11 @@ export default function CreatePersona() {
                     values["name"] || "Researcher Raymond"
                   } is a world class researcher at the University of Oxford who is passionate about health and fitness')`}
                   style={{ width: "100%", resize: "none" }}
-                  defaultValue={values["description"]}
-                  onChange={(e) =>
-                    (mem_ai.values = { ...values, description: e.target.value })
-                  }
+                  value={description}
+                  onChange={(e) => {
+                    mem_ai.values = { ...values, description: e.target.value }
+                    set_description(e.target.value)
+                  }}
                   className={textarea}
                 />
               </div>
@@ -489,10 +484,11 @@ export default function CreatePersona() {
                       values["name"] || "Researcher Raymond"
                     } talking to? (e.g. 'university students', 'health enthusiasts')`}
                     style={{ width: "100%", resize: "none" }}
-                    defaultValue={values["audience"] || ""}
-                    onChange={(e) =>
-                      (mem_ai.values = { ...values, audience: e.target.value })
-                    }
+                    value={audience || ""}
+                    onChange={(e) => {
+                      mem_ai.values = { ...values, audience: e.target.value }
+                      set_audience(e.target.value)
+                    }}
                     className={textarea}
                   />
                 </div>
@@ -533,7 +529,7 @@ export default function CreatePersona() {
                       values["name"] || "Researcher Raymond"
                     } has a PhD in biochemistry and has published over 100 papers in the field of health and fitness')`}
                     style={{ width: "100%", resize: "none" }}
-                    defaultValue={values["background"] || ""}
+                    value={values["background"] || ""}
                     onChange={(e) =>
                       (mem_ai.values = {
                         ...values,
@@ -582,15 +578,20 @@ export default function CreatePersona() {
                           values["name"] || "Researcher Raymond"
                         } is very informal, friendly, patient, and simplifies scientific jargon to laymen terms')`}
                         style={{ width: "100%", resize: "none" }}
-                        defaultValue={values["styles"]?.[index] || ""}
-                        onChange={(e) =>
-                          (mem_ai.values = {
+                        value={styles?.[index] || ""}
+                        onChange={(e) => {
+                          mem_ai.values = {
                             ...values,
                             styles: values["styles"]?.map((t, i) =>
                               i === index ? e.target.value : t,
                             ),
-                          })
-                        }
+                          }
+                          set_styles(
+                            values["styles"]?.map((t, i) =>
+                              i === index ? e.target.value : t,
+                            ) as string[],
+                          )
+                        }}
                         className={textarea}
                       />
                     </div>
@@ -602,12 +603,12 @@ export default function CreatePersona() {
             <div className={element_class}>
               <div
                 className={headline_class + " cursor-pointer"}
-                onClick={() =>
-                  (mem_ai.values_show = {
+                onClick={() => {
+                  mem_ai.values_show = {
                     ...values_show,
                     traits: !values_show["traits"],
-                  })
-                }
+                  }
+                }}
               >
                 <div className="flex flex-col mr-1 justify-center items-center">
                   {values_show["traits"] ?
@@ -633,9 +634,9 @@ export default function CreatePersona() {
                             "Researcher Raymond's"
                           } traits and skills? (e.g. 'expert at reading academic papers')`}
                           style={{ width: "100%", resize: "none" }}
-                          defaultValue={values["traits"]?.[index]?.skill || ""}
-                          onChange={(e) =>
-                            (mem_ai.values = {
+                          value={traits?.[index]?.skill || ""}
+                          onChange={(e) => {
+                            mem_ai.values = {
                               ...values,
                               traits: values["traits"]?.map((t, i) => {
                                 if (i === index && t) {
@@ -646,8 +647,19 @@ export default function CreatePersona() {
                                   }
                                 } else return t
                               }) as { skill: string; value: number }[],
-                            })
-                          }
+                            }
+                            set_traits(
+                              values["traits"]?.map((t, i) => {
+                                if (i === index && t) {
+                                  return {
+                                    ...t,
+                                    skill: e.target.value || "",
+                                    value: 1,
+                                  }
+                                } else return t
+                              }) as { skill: string; value: number }[],
+                            )
+                          }}
                           className={textarea}
                         />
                       </div>
@@ -662,6 +674,12 @@ export default function CreatePersona() {
                               (_, i) => i !== index,
                             ),
                           }
+                          set_traits(
+                            values["traits"]?.filter((_, i) => i !== index) as {
+                              skill: string
+                              value: number
+                            }[],
+                          )
                         }}
                       >
                         <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
@@ -682,6 +700,10 @@ export default function CreatePersona() {
                           { skill: "", value: 0 },
                         ],
                       }
+                      set_traits([
+                        ...(values["traits"] || []),
+                        { skill: "", value: 0 },
+                      ] as { skill: string; value: number }[])
                     }}
                   >
                     <RiAddCircleFill />
@@ -733,7 +755,7 @@ export default function CreatePersona() {
                             values["name"] || "Researcher Raymond"
                           } should always suggest follow up questions.')`}
                           style={{ width: "100%", resize: "none" }}
-                          defaultValue={values["responsibilities"]?.[index] || ""}
+                          value={responsibilities?.[index] || ""}
                           onChange={(e) => {
                             mem_ai.values = {
                               ...values,
@@ -741,6 +763,11 @@ export default function CreatePersona() {
                                 (t, i) => (i === index ? e.target.value : t),
                               ),
                             }
+                            set_responsibilities(
+                              values["responsibilities"]?.map((t, i) =>
+                                i === index ? e.target.value : t,
+                              ) as string[],
+                            )
                           }}
                           className={textarea}
                         />
@@ -756,6 +783,11 @@ export default function CreatePersona() {
                               "responsibilities"
                             ]?.filter((_, i) => i !== index),
                           }
+                          set_responsibilities(
+                            values["responsibilities"]?.filter(
+                              (_, i) => i !== index,
+                            ) as string[],
+                          )
                         }}
                       >
                         <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
@@ -778,6 +810,10 @@ export default function CreatePersona() {
                           "",
                         ],
                       }
+                      set_responsibilities([
+                        ...(values["responsibilities"] || []),
+                        "",
+                      ] as string[])
                     }}
                   >
                     <RiAddCircleFill />
@@ -819,7 +855,7 @@ export default function CreatePersona() {
                       (values["name"] && values["name"]) || "Researcher Raymond"
                     }! I can help you research any topic or material you might have!')`}
                     style={{ width: "100%", resize: "none" }}
-                    defaultValue={values["welcome_message"] || ""}
+                    value={values["welcome_message"] || ""}
                     onChange={(e) =>
                       (mem_ai.values = {
                         ...values,
@@ -869,7 +905,7 @@ export default function CreatePersona() {
                           autoHeight
                           placeholder={`What are the key learnings in the document?`}
                           style={{ width: "100%", resize: "none" }}
-                          defaultValue={values["prompt_suggestions"]?.[index] || ""}
+                          value={prompt_suggestions?.[index] || ""}
                           onChange={(e) => {
                             mem_ai.values = {
                               ...values,
@@ -879,6 +915,11 @@ export default function CreatePersona() {
                                 i === index ? e.target.value : t,
                               ),
                             }
+                            set_prompt_suggestions(
+                              values["prompt_suggestions"]?.map((t, i) =>
+                                i === index ? e.target.value : t,
+                              ) as string[],
+                            )
                           }}
                           className={textarea}
                         />
@@ -894,6 +935,11 @@ export default function CreatePersona() {
                               "prompt_suggestions"
                             ]?.filter((_, i) => i !== index),
                           }
+                          set_prompt_suggestions(
+                            values["prompt_suggestions"]?.filter(
+                              (_, i) => i !== index,
+                            ) as string[],
+                          )
                         }}
                       >
                         <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
@@ -916,6 +962,10 @@ export default function CreatePersona() {
                           "",
                         ],
                       }
+                      set_prompt_suggestions([
+                        ...(values["prompt_suggestions"] || []),
+                        "",
+                      ] as string[])
                     }}
                   >
                     <RiAddCircleFill />
@@ -961,15 +1011,20 @@ export default function CreatePersona() {
                             values["name"] || "Researcher Raymond"
                           } can't tell lies')`}
                           style={{ width: "100%", resize: "none" }}
-                          defaultValue={values["limitations"]?.[index] || ""}
-                          onChange={(e) =>
-                            (mem_ai.values = {
+                          value={limitations?.[index] || ""}
+                          onChange={(e) => {
+                            mem_ai.values = {
                               ...values,
                               limitations: values["limitations"]?.map((t, i) =>
                                 i === index ? e.target.value : t,
                               ),
-                            })
-                          }
+                            }
+                            set_limitations(
+                              values["limitations"]?.map((t, i) =>
+                                i === index ? e.target.value : t,
+                              ) as string[],
+                            )
+                          }}
                           className={textarea}
                         />
                       </div>
@@ -984,6 +1039,11 @@ export default function CreatePersona() {
                               (_, i) => i !== index,
                             ),
                           }
+                          set_limitations(
+                            values["limitations"]?.filter(
+                              (_, i) => i !== index,
+                            ) as string[],
+                          )
                         }}
                       >
                         <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
@@ -1001,6 +1061,10 @@ export default function CreatePersona() {
                         ...values,
                         limitations: [...(values["limitations"] || []), ""],
                       }
+                      set_limitations([
+                        ...(values["limitations"] || []),
+                        "",
+                      ] as string[])
                     }}
                   >
                     <RiAddCircleFill />
@@ -1055,8 +1119,8 @@ export default function CreatePersona() {
                                 "message"
                               ] || ""
                             }
-                            onChange={(e) =>
-                              (mem_ai.values = {
+                            onChange={(e) => {
+                              mem_ai.values = {
                                 ...values,
                                 response_examples: values[
                                   "response_examples"
@@ -1068,8 +1132,18 @@ export default function CreatePersona() {
                                     }
                                   } else return t
                                 }) as { message: string; response: string }[],
-                              })
-                            }
+                              }
+                              set_response_examples(
+                                values["response_examples"]?.map((t, i) => {
+                                  if (i === index && t) {
+                                    return {
+                                      ...t,
+                                      message: e.target.value || "",
+                                    }
+                                  } else return t
+                                }) as { message: string; response: string }[],
+                              )
+                            }}
                             className={textarea}
                           />
                         </div>
@@ -1090,8 +1164,8 @@ export default function CreatePersona() {
                                 "response"
                               ] || ""
                             }
-                            onChange={(e) =>
-                              (mem_ai.values = {
+                            onChange={(e) => {
+                              mem_ai.values = {
                                 ...values,
                                 response_examples: values[
                                   "response_examples"
@@ -1103,8 +1177,18 @@ export default function CreatePersona() {
                                     }
                                   } else return t
                                 }) as { message: string; response: string }[],
-                              })
-                            }
+                              }
+                              set_response_examples(
+                                values["response_examples"]?.map((t, i) => {
+                                  if (i === index && t) {
+                                    return {
+                                      ...t,
+                                      response: e.target.value || "",
+                                    }
+                                  } else return t
+                                }) as { message: string; response: string }[],
+                              )
+                            }}
                             className={textarea}
                           />
                         </div>
@@ -1121,6 +1205,11 @@ export default function CreatePersona() {
                               "response_examples"
                             ]?.filter((_, i) => i !== index),
                           }
+                          set_response_examples(
+                            values["response_examples"]?.filter(
+                              (_, i) => i !== index,
+                            ) as { message: string; response: string }[],
+                          )
                         }}
                       >
                         <RiAddCircleFill className="rotate-45 w-3 text-zinc-500 hover:text-red-400" />
@@ -1142,6 +1231,10 @@ export default function CreatePersona() {
                           { message: "", response: "" },
                         ],
                       }
+                      set_response_examples([
+                        ...(values["response_examples"] || []),
+                        { message: "", response: "" },
+                      ] as { message: string; response: string }[])
                     }}
                   >
                     <RiAddCircleFill />

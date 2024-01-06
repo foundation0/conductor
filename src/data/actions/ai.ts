@@ -22,15 +22,18 @@ const API: { [key: string]: Function } = {
     const ais = _.cloneDeep(AIState.get())
 
     // check for duplicate name
-    const same_name_ai = ais.find((ai: AIT) => ai.meta.name === persona["name"])
+    const same_name_ai = ais.filter(
+      (ai: AIT) => ai.meta.name === persona["name"],
+    )
 
-    if (same_name_ai) {
-      const already_installed_ai = user_state.ais?.find(
-        (user_ai) => user_ai.id === ai.id,
-      )
-      // if same name ai exists and is already installed, return error
-      if (same_name_ai && already_installed_ai)
-        return error({ message: "You already have this AI." })
+    if (same_name_ai.length > 0) {
+      // const already_installed_ai = user_state.ais?.find(
+      //   (user_ai) => user_ai.id === persona["name"],
+      // )
+      // // if same name ai exists and is already installed, return error
+      // if (same_name_ai && already_installed_ai)
+      //   return error({ message: "You already have this AI." })
+      persona["name"] = `${persona["name"]} ${same_name_ai.length + 1}`
     }
 
     const ai: AIT = {
@@ -50,16 +53,14 @@ const API: { [key: string]: Function } = {
     if (AIS.safeParse(ai).success !== true)
       return error({ message: "Invalid AI" })
 
-    // add ai to the list if it doesn't exist
-    if (!same_name_ai) {
-      ais.push(ai)
-      await AIState.set(ais)
-    }
+    // add ai to the list
+    ais.push(ai)
+    await AIState.set(ais)
 
     // add ai to user
     const u = { ...user_state, ais: user_state.ais || [] }
     u.ais?.push({
-      id: same_name_ai?.id || ai.id,
+      id: ai.id,
       status: "active",
     })
 
