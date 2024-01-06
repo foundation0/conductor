@@ -27,6 +27,33 @@ export const LLMModuleS = LLModulesSs[0]
 
 export type LLMModuleT = z.infer<(typeof LLModulesSs)[0]>
 
+export const PersonaS = z.object({
+  name: z.string().min(1),
+  description: z.string().min(1),
+  background: z.string().optional(),
+  styles: z.array(z.string()).optional(),
+  audience: z.string().optional(),
+  responsibilities: z.array(z.string()).optional(),
+  response_examples: z
+    .array(
+      z
+        .object({
+          message: z.string(),
+          response: z.string(),
+        })
+        .optional(),
+    )
+    .optional(),
+  limitations: z.array(z.string()).optional(),
+  traits: z
+    .array(z.object({ skill: z.string(), value: z.number().min(-1).max(1) }))
+    .optional(),
+  welcome_message: z.string().optional(),
+  prompt_suggestions: z.array(z.string()).optional(),
+  custom_instructions: z.string().optional(),
+})
+export type Persona = z.infer<typeof PersonaS>
+
 const AISs = [
   z.object({
     _v: z.literal(1),
@@ -45,33 +72,13 @@ const AISs = [
       description: z.string().optional(),
       tags: z.array(z.string()).optional(),
     }),
-    persona: z.object({
-      name: z.string().min(1),
-      description: z.string().min(1),
-      background: z.string().optional(),
-      styles: z.array(z.string()).optional(),
-      audience: z.string().optional(),
-      responsibilities: z.array(z.string()).optional(),
-      response_examples: z
-        .array(
-          z.object({
-            message: z.string(),
-            response: z.string(),
-          }).optional()
-        )
-        .optional(),
-      limitations: z.array(z.string()).optional(),
-      traits: z.array(z.object({ skill: z.string(), value: z.number().min(-1).max(1) })).optional(),
-      welcome_message: z.string().optional(),
-      prompt_suggestions: z.array(z.string()).optional(),
-      custom_instructions: z.string().optional(),
-    }),
+    persona: PersonaS,
   }),
 ]
 export const AIS = AISs[0]
 
 export type AIT = z.infer<(typeof AISs)[0]>
-export type PersonaT = Pick<AIT, 'persona'>
+export type PersonaT = Pick<AIT, "persona">
 
 export const AIsS = z.array(AISs[0])
 export type AIsT = z.infer<typeof AIsS>

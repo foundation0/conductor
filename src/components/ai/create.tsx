@@ -6,14 +6,14 @@ import { RichTextarea } from "rich-textarea"
 import generate_llm_module_options from "@/libraries/generate_llm_module_options"
 import Select from "react-select"
 import AIIcon from "@/assets/icons/ai.svg"
-import CameraIcon from "@/assets/icons/camera.svg"
 import { RiAddCircleFill } from "react-icons/ri"
 import {
+  MdClose,
   MdOutlineAddAPhoto,
   MdOutlineKeyboardArrowDown,
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md"
-import { AIS, AIT, AIsT, LLMModuleT } from "@/data/schemas/ai"
+import { AIS, AIT, AIsT, LLMModuleT, PersonaS } from "@/data/schemas/ai"
 import { fieldFocus } from "@/libraries/field_focus"
 import _ from "lodash"
 import { error } from "@/libraries/logging"
@@ -24,7 +24,8 @@ import { getAvatar } from "@/libraries/ai"
 import { useDropzone } from "react-dropzone"
 import { emit } from "@/libraries/events"
 
-import examples from './examples'
+import examples from "./examples"
+import { cn } from "@/libraries/utilities"
 
 const initial = {
   avatar: "",
@@ -91,6 +92,7 @@ export default function CreatePersona() {
   const [welcome_message, set_welcome_message] = useState("")
   const [prompt_suggestions, set_prompt_suggestions] = useState([""])
   const [custom_instructions, set_custom_instructions] = useState("")
+  const [imported_ai_json, set_imported_ai_json] = useState("")
 
   useEffect(() => {
     set_name(mem_ai.values.name)
@@ -170,6 +172,13 @@ export default function CreatePersona() {
   const setExample = useCallback((example: any) => {
     const e = _.get(examples, example.value)
     if (e) mem_ai.values = { ...e }
+  }, [])
+
+  const importAI = useCallback((ai: any) => {
+    const AI = PersonaS.safeParse(ai)
+    if (AI.success) {
+      mem_ai.values = AI.data
+    }
   }, [])
 
   const element_class =
@@ -320,10 +329,24 @@ export default function CreatePersona() {
             AI Creator
           </div>
           <div
-            className={`flex flex-1 justify-end items-end mb-4 ${
+            className={`flex flex-1 justify-end items-end mb-4 gap-2 ${
               edit_ai_id && "hidden"
             }`}
           >
+            <button
+              className={
+                "flex flex-row justify-center items-center bg-zinc-800/30 hover:bg-zinc-900/70 border border-zinc-700 border-t-zinc-600/70 rounded-md py-2 px-4 cursor-pointer text-zinc-500 hover:text-zinc-200 text-xs font-semibold transition-all h-[38px]"
+              }
+              onClick={() => {
+                // open import AI modal
+                const importAiDialog = document.getElementById(
+                  "import-ai",
+                ) as HTMLDialogElement
+                importAiDialog?.showModal()
+              }}
+            >
+              Import AI
+            </button>
             <Select
               className="react-select-container w-[200px]"
               classNamePrefix="react-select"
@@ -1288,6 +1311,53 @@ export default function CreatePersona() {
           </div>
         </div>
       </div>
+      <dialog
+        id="import-ai"
+        className="ModuleSetting modal w-full w-max-4xl h-max-[80dvh]"
+      >
+        <div className="modal-box bg-zinc-800/95 border-t border-t-zinc-600 relative">
+          <div className="absolute right-3 top-3">
+            <MdClose
+              className="cursor-pointer h-3 w-3 text-zinc-300 transition-all hover:text-zinc-100 hover:bg-zinc-700 rounded-full"
+              onClick={() => {
+                const dialog = document.getElementById(
+                  "import-ai",
+                ) as HTMLDialogElement
+                dialog.close()
+              }}
+            />
+          </div>
+          <RichTextarea
+            rows={20}
+            placeholder={`Paste your AI's JSON here`}
+            style={{ width: "100%", background: '#222', color: '#fff' }}
+            value={imported_ai_json}
+            className="p-0 border border-zinc-700 rounded font-mono text-[10px] p-3"
+            onChange={(e) => {
+              set_imported_ai_json(e.target.value)
+            }}
+          />
+
+          <button
+            className="p-btn-primary"
+            onClick={(e) => {
+              try {
+                const ai = JSON.parse(imported_ai_json)
+                importAI(ai)
+                set_imported_ai_json("")
+                const dialog = document.getElementById(
+                  "import-ai",
+                ) as HTMLDialogElement
+                dialog.close()
+              } catch (e) {
+                error({ message: "Invalid JSON" })
+              }
+            }}
+          >
+            Import AI
+          </button>
+        </div>
+      </dialog>
     </div>
   )
 }

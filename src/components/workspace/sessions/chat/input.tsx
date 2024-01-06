@@ -88,8 +88,9 @@ export default function Input({
 
   useEvent({
     name: ["sessions/change", "sessions/tokensUpdate"],
-    action: async ({ target }: { target: string }) => {
-      if (target === session_id) await computeUsedMemory()
+    target: session_id,
+    action: async () => {
+      await computeUsedMemory()
     },
   })
 
