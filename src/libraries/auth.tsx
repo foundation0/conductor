@@ -217,6 +217,23 @@ export async function createBuffer({
   return { buffer, buffer_key }
 }
 
+export async function getBuffer({ username }: { username: string }) {
+  const buffer_key = buf2hex({
+    input: createHash({ str: username }) as Uint8Array,
+  })
+  const buffer = await get({ key: buffer_key })
+  if (!buffer) {
+    const buffer = await getKV(buffer_key)
+    if (b4a.isBuffer(buffer)) return unpack(buffer)
+  }
+  if (
+    !buffer ||
+    (buffer?.data && !BufferObjectS.safeParse(buffer.data).success)
+  )
+    return error({ message: "invalid buffer" })
+  return buffer
+}
+
 export async function authenticateUser({
   username,
   password,
@@ -229,20 +246,16 @@ export async function authenticateUser({
   buffer?: { data: z.infer<typeof BufferObjectS> }
 }) {
   // get buffer
-  const buffer_key = buf2hex({
-    input: createHash({ str: username }) as Uint8Array,
-  })
-  if (!buffer) buffer = await get({ key: buffer_key })
-  if (!buffer) {
-    buffer = await getKV(buffer_key)
-    if (b4a.isBuffer(buffer)) buffer = unpack(buffer)
-  }
-
-  if (
-    !buffer ||
-    (buffer?.data && !BufferObjectS.safeParse(buffer.data).success)
-  )
-    return error({ message: "invalid buffer" })
+  // const buffer_key = buf2hex({
+  //   input: createHash({ str: username }) as Uint8Array,
+  // })
+  // if (!buffer) buffer = await get({ key: buffer_key })
+  // if (!buffer) {
+  //   buffer = await getKV(buffer_key)
+  //   if (b4a.isBuffer(buffer)) buffer = unpack(buffer)
+  // }
+  if (!buffer) buffer = await getBuffer({ username })
+  if (!buffer) return error({ message: "buffer not found" })
 
   // try to open buffer
   let opened_buffer: any

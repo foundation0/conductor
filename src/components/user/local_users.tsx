@@ -14,6 +14,7 @@ import UsersActions from "@/data/actions/users"
 import eventEmitter from "@/libraries/events"
 import { FaUserPlus } from "react-icons/fa"
 import { ph } from "@/libraries/logging"
+import { getBuffer } from "@/libraries/auth"
 
 export function LocalUsersPage() {
   let { users_state } = useLoaderData() as { users_state: UsersT }
@@ -21,6 +22,7 @@ export function LocalUsersPage() {
   let location = useLocation()
   let auth = useAuth()
   const [loginInProgress, setLoginInProgress] = useState<boolean>(false)
+  const [show_reminder, setShowReminder] = useState<string>("")
 
   let [users, setUsers] = useState<any[]>(
     _(Object.keys(users_state || {}))
@@ -55,6 +57,11 @@ export function LocalUsersPage() {
       ph().capture("auth/_success")
       navigate(from, { replace: true })
     })
+  }
+
+  async function showPasswordReminder(){
+    const buffer = await getBuffer({ username: active_user.username })
+    buffer?.data?.reminder ? setShowReminder(buffer?.data?.reminder) : setShowReminder("")
   }
 
   // set focus to input
@@ -197,6 +204,7 @@ export function LocalUsersPage() {
                   )}
                 </button>
               </label>{" "}
+              
               {/* {typeof PublicKeyCredential !== "undefined" ? (
                 <div className="flex flex-row justify-center items-center">
                   <div
@@ -208,6 +216,10 @@ export function LocalUsersPage() {
                 </div>
               ) : null} */}
             </div>
+            {show_reminder ? <div><div className="text-xs mt-2 text-zinc-400">"{show_reminder}"</div></div> : 
+              <div className="text-xs mt-2 text-zinc-600 hover:text-zinc-200 transition-all cursor-pointer" onClick={() => showPasswordReminder()}>Forgot your password?</div>
+            }
+            
             {/* {typeof PublicKeyCredential !== "undefined" ? (
               <div className="my-2">
                 <div className="text-xs text-zinc-400/90">
@@ -224,6 +236,7 @@ export function LocalUsersPage() {
                       key={user.id}
                       onClick={async () => {
                         await setActiveUser(user)
+                        setShowReminder("")
                         setTimeout(() => {
                           fieldFocus({ selector: "#authentication_password" })
                         }, 200)
