@@ -109,12 +109,15 @@ export async function createUser({
   })
   if (!buffer) return error({ message: "invalid buffer" })
 
+  const password_hash = await securePassword({ password, salt: "temps4lt" })
+
   const user: Partial<z.infer<typeof UserS>> = {
     ...generateUser({ public_key: buf2hex({ input: key_pair.public_key }) }),
     _v: 1,
     id: getAddress({ public_key: key_pair.public_key }),
     master_key,
     master_password,
+    password_hash: buf2hex({ input: password_hash }),
     public_key: buf2hex({ input: key_pair.public_key }),
     meta: {
       username,
@@ -257,30 +260,35 @@ export async function authenticateUser({
   //   if (b4a.isBuffer(buffer)) buffer = unpack(buffer)
   // }
 
-  // TEMPORARY HACK
-  const existing_user = await getKV(`${username}:user`)
-  if (!existing_user) return error({ message: "invalid user" })
-
-  // temp fix to local auth bug
-  // if user doesn't have password saved, this is a legacy object
-  // we need to save the password hash for now
-  // will be fixed with data channels
-  if(!existing_user?.password_hash) {
-    const password_hash = await securePassword({ password, salt: 'temps4lt' })
-    existing_user.password_hash = buf2hex({ input: password_hash })
-    await setKV(`${username}:user`, existing_user)
-  } else {
-    const valid = await verifyPassword({ password, hash: hex2buf({ input: existing_user.password_hash }), salt: 'temps4lt' })
-    if(!valid) {
-      return error({ message: "invalid password" })
-    }
-  }
-
-  return existing_user
-
-
   if (!buffer) buffer = await getBuffer({ username })
-  if (!buffer) return error({ message: "buffer not found" })
+
+  if (!buffer) {
+    // return error({ message: "buffer not found" })
+    // TEMPORARY HACK
+    const existing_user = await getKV(`${username}:user`)
+    if (!existing_user) return error({ message: "invalid user" })
+
+    // temp fix to local auth bug
+    // if user doesn't have password saved, this is a legacy object
+    // we need to save the password hash for now
+    // will be fixed with data channels
+    if (!existing_user?.password_hash) {
+      const password_hash = await securePassword({ password, salt: "temps4lt" })
+      existing_user.password_hash = buf2hex({ input: password_hash })
+      await setKV(`${username}:user`, existing_user)
+    } else {
+      const valid = await verifyPassword({
+        password,
+        hash: hex2buf({ input: existing_user.password_hash }),
+        salt: "temps4lt",
+      })
+      if (!valid) {
+        return error({ message: "invalid password" })
+      }
+    }
+
+    return existing_user
+  }
 
   // try to open buffer
   let opened_buffer: any
