@@ -10,7 +10,9 @@ import {
   hex2buf,
   keyPair,
   randomBytes,
+  securePassword,
   signMessage,
+  verifyPassword,
 } from "@/security/common"
 import { get, set } from "./cloudflare"
 import { get as getKV, set as setKV } from "idb-keyval"
@@ -254,6 +256,29 @@ export async function authenticateUser({
   //   buffer = await getKV(buffer_key)
   //   if (b4a.isBuffer(buffer)) buffer = unpack(buffer)
   // }
+
+  // TEMPORARY HACK
+  const existing_user = await getKV(`${username}:user`)
+  if (!existing_user) return error({ message: "invalid user" })
+
+  // temp fix to local auth bug
+  // if user doesn't have password saved, this is a legacy object
+  // we need to save the password hash for now
+  // will be fixed with data channels
+  if(!existing_user?.password_hash) {
+    const password_hash = await securePassword({ password, salt: 'temps4lt' })
+    existing_user.password_hash = buf2hex({ input: password_hash })
+    await setKV(`${username}:user`, existing_user)
+  } else {
+    const valid = await verifyPassword({ password, hash: hex2buf({ input: existing_user.password_hash }), salt: 'temps4lt' })
+    if(!valid) {
+      return error({ message: "invalid password" })
+    }
+  }
+
+  return existing_user
+
+
   if (!buffer) buffer = await getBuffer({ username })
   if (!buffer) return error({ message: "buffer not found" })
 

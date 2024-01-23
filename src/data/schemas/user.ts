@@ -11,6 +11,7 @@ export const UserS = z.object({
   master_key: z.string(),
   master_password: z.string(),
   public_key: z.string().length(66),
+  password_hash: z.any().optional(),
   meta: z.object({
     name: z.string().optional(),
     username: z.string().min(1),
